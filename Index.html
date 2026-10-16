@@ -1,0 +1,236 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#050a14">
+<title>MJ AI - Majlis Jubel Intelligence</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#050a14;color:#d9f5ff;
+ font-family:Arial,sans-serif;min-height:100vh;
+ display:flex;justify-content:center;
+}
+main{width:100%;max-width:480px;padding:24px 18px}
+h1{text-align:center;letter-spacing:6px;color:#56dfff}
+.sub{text-align:center;color:#7799ad;font-size:12px}
+.core{
+ width:170px;height:170px;border-radius:50%;
+ border:2px solid #37cfff;margin:28px auto;
+ display:grid;place-items:center;
+ box-shadow:0 0 24px #087ca855,inset 0 0 25px #087ca855;
+}
+.core span{font-size:65px;color:#66e7ff}
+.status{text-align:center;color:#7ce8ff;font-size:13px}
+.panel{
+ border:1px solid #183c52;border-radius:14px;
+ background:#0a1422;padding:15px;margin-top:16px
+}
+#log{min-height:90px;white-space:pre-wrap;line-height:1.6;
+ overflow-wrap:anywhere;font-size:14px}
+input{
+ width:100%;padding:13px;background:#07101c;
+ color:white;border:1px solid #24506a;border-radius:9px;
+ font-size:15px
+}
+button{
+ padding:12px;border:1px solid #287b9b;
+ border-radius:9px;background:#0d293b;color:#a9efff;
+ font-weight:bold
+}
+.controls{display:flex;gap:8px;margin-top:10px}
+.controls button{flex:1}
+.primary{background:#075b79}
+small{color:#809caf;line-height:1.6}
+</style>
+</head>
+<body>
+<main>
+ <h1>MJ AI</h1>
+ <div class="sub">MAJLIS JUBEL INTELLIGENCE</div>
+
+ <div class="core"><span>◉</span></div>
+ <div class="status" id="status">SYSTEM ONLINE</div>
+
+ <section class="panel">
+  <b>MJ TERMINAL</b>
+  <div id="log">MJ: Sistem siap. Tekan tombol mikrofon untuk memulai.</div>
+ </section>
+
+ <section class="panel">
+  <input id="cmd" placeholder="Ketik perintah di sini...">
+  <div class="controls">
+   <button class="primary" id="send">KIRIM</button>
+   <button id="mic">🎙 BICARA</button>
+  </div>
+  <div class="controls">
+   <button id="stop">HENTIKAN SUARA</button>
+   <button id="mem">LIHAT MEMORI</button>
+  </div>
+ </section>
+
+ <section class="panel">
+  <b>PERINTAH MJ AI</b>
+  <p><small>
+   • "Halo MJ"<br>
+   • "Ingat saya suka tema biru"<br>
+   • "Apa yang kamu ingat"<br>
+   • "Cari tutorial HTML"<br>
+   • "Buka YouTube"<br>
+   • "Buka WhatsApp"<br>
+   • "Buka ChatGPT"<br>
+   • "Jam berapa"<br>
+   • "Hapus semua ingatan"
+  </small></p>
+ </section>
+ <p class="sub">MJ AI v0.1 · ANDROID EDITION</p>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const log = $('log');
+const status = $('status');
+const KEY = 'mj_ai_memory_v1';
+
+function memories(){
+ try{return JSON.parse(localStorage.getItem(KEY)||'[]')}
+ catch(e){return []}
+}
+
+function say(text){
+ log.textContent = 'MJ: ' + text;
+ if ('speechSynthesis' in window) {
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'id-ID';
+  u.rate = 0.95;
+  speechSynthesis.speak(u);
+ }
+}
+
+function searchWeb(q){
+ location.href =
+  'https://www.google.com/search?q='+encodeURIComponent(q);
+}
+
+function run(raw){
+ const q = raw.trim();
+ if(!q)return;
+ log.textContent = 'KAMU: '+q;
+ const s = q.toLowerCase();
+
+ if(s.startsWith('ingat ')){
+  const m = memories();
+  m.push(q.slice(6));
+  localStorage.setItem(KEY,JSON.stringify(m));
+  say('Siap. Catatan berhasil disimpan di perangkat ini.');
+ }
+ else if(s.includes('apa yang kamu ingat')||
+         s.includes('lihat memori')){
+  const m=memories();
+  say(m.length ? 'Catatan tersimpan: '+m.join('. ')
+    : 'Belum ada catatan tersimpan.');
+ }
+ else if(s.includes('hapus semua ingatan')){
+  if(confirm('Yakin menghapus semua memori MJ AI?')){
+   localStorage.removeItem(KEY);
+   say('Semua catatan lokal telah dihapus.');
+  }
+ }
+ else if(s.startsWith('cari ')||s.startsWith('search ')){
+  const query=q.slice(q.indexOf(' ')+1);
+  say('Siap. Membuka pencarian internet.');
+  setTimeout(()=>searchWeb(query),500);
+ }
+ else if(s.includes('buka youtube')){
+  say('Siap. Membuka YouTube.');
+  location.href='https://m.youtube.com/';
+ }
+ else if(s.includes('buka whatsapp')){
+  say('Siap. Membuka WhatsApp.');
+  location.href='https://web.whatsapp.com/';
+ }
+ else if(s.includes('buka chatgpt')){
+  say('Siap. Membuka ChatGPT.');
+  location.href='https://chatgpt.com/';
+ }
+ else if(s.includes('jam berapa')){
+  say('Waktu perangkat menunjukkan '+
+   new Date().toLocaleTimeString('id-ID'));
+ }
+ else if(s.includes('halo')||s.includes('hai')){
+  say('Halo! MJ siap membantu. Apa yang bisa saya bantu?');
+ }
+ else if(s.includes('siapa kamu')){
+  say('Saya MJ, Majlis Jubel Intelligence, asisten pribadi Anda.');
+ }
+ else{
+  say('Perintah belum tersedia di versi ini. Silakan coba perintah yang tertera di layar.');
+ }
+}
+
+$('send').onclick=()=>{
+ run($('cmd').value);
+ $('cmd').value='';
+};
+
+$('cmd').addEventListener('keydown',e=>{
+ if(e.key==='Enter')$('send').click();
+});
+
+$('stop').onclick=()=>{
+ if('speechSynthesis' in window)speechSynthesis.cancel();
+ status.textContent='SUARA DIHENTIKAN';
+};
+
+$('mem').onclick=()=>{
+ const m=memories();
+ log.textContent=m.length
+  ?'MEMORI MJ AI:\n'+m.map((x,i)=>(i+1)+'. '+x).join('\n')
+  :'Belum ada memori.';
+};
+
+const Speech = window.SpeechRecognition ||
+               window.webkitSpeechRecognition;
+
+if(Speech){
+ const rec=new Speech();
+ rec.lang='id-ID';
+ rec.continuous=false;
+ rec.interimResults=false;
+
+ $('mic').onclick=()=>{
+  try{
+   status.textContent='MENDENGARKAN...';
+   rec.start();
+  }catch(e){
+   status.textContent='TUNGGU, LALU COBA LAGI';
+  }
+ };
+
+ rec.onresult=e=>{
+  const text=e.results[0][0].transcript;
+  $('cmd').value=text;
+  status.textContent='PERINTAH DITERIMA';
+  run(text);
+ };
+
+ rec.onerror=()=>{
+  status.textContent='SUARA GAGAL · CEK IZIN MIKROFON';
+ };
+
+ rec.onend=()=>{
+  if(status.textContent==='MENDENGARKAN...')
+   status.textContent='SYSTEM ONLINE';
+ };
+}else{
+ $('mic').onclick=()=>{
+  alert('Pengenalan suara tidak tersedia. Coba Chrome Android.');
+ };
+}
+</script>
+</body>
+  </html>
+  
