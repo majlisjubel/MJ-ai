@@ -2,301 +2,249 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#050a14">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#090406">
 <title>MJ AI - Majlis Jubel Intelligence</title>
 <style>
-*{box-sizing:border-box}
-body{
- margin:0;background:#050a14;color:#d9f5ff;
- font-family:Arial,sans-serif;min-height:100vh;
- display:flex;justify-content:center
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  /* Nuansa gelap pekat dengan efek gradasi merah darah & bulan merah */
+  background-color: #050203;
+  background-image: 
+    radial-gradient(circle at 85% 10%, rgba(200, 16, 46, 0.25) 0%, transparent 40%),
+    radial-gradient(circle at 15% 90%, rgba(100, 10, 20, 0.2) 0%, transparent 50%);
+  color: #f1d6d8;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  height: 100vh;
+  overflow: hidden;
 }
-main{width:100%;max-width:500px;padding:22px 16px}
-h1{text-align:center;letter-spacing:7px;color:#56dfff;margin-bottom:6px}
-.sub{text-align:center;color:#7799ad;font-size:11px;letter-spacing:2px}
-.core{
- width:145px;height:145px;border-radius:50%;
- border:2px solid #37cfff;margin:24px auto;
- display:grid;place-items:center;
- box-shadow:0 0 30px #087ca855,inset 0 0 25px #087ca855;
- animation:pulse 3s infinite
+main {
+  width: 100%;
+  max-width: 500px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: rgba(9, 4, 6, 0.85);
+  backdrop-filter: blur(10px);
+  border-left: 1px solid #330d12;
+  border-right: 1px solid #330d12;
+  box-shadow: 0 0 40px rgba(150, 10, 25, 0.15);
 }
-.core span{font-size:58px;color:#66e7ff}
-@keyframes pulse{50%{box-shadow:0 0 42px #087ca888,inset 0 0 35px #087ca855}}
-.status{text-align:center;color:#7ce8ff;font-size:12px}
-.panel{
- border:1px solid #183c52;border-radius:14px;
- background:#0a1422;padding:14px;margin-top:14px
+header {
+  padding: 16px;
+  background: rgba(13, 5, 8, 0.95);
+  border-bottom: 1px solid #330d12;
+  text-align: center;
 }
-#log{
- min-height:100px;max-height:340px;overflow-y:auto;
- white-space:pre-wrap;overflow-wrap:anywhere;
- line-height:1.6;font-size:14px
+header h1 {
+  font-size: 20px;
+  color: #ff334b;
+  letter-spacing: 3px;
+  font-weight: 800;
+  text-shadow: 0 0 10px rgba(255, 51, 75, 0.4);
 }
-input{
- width:100%;padding:14px;background:#07101c;color:white;
- border:1px solid #24506a;border-radius:9px;font-size:15px
+header .sub {
+  font-size: 10px;
+  color: #a87d82;
+  letter-spacing: 2px;
+  margin-top: 2px;
 }
-button{
- padding:12px 8px;border:1px solid #287b9b;
- border-radius:9px;background:#0d293b;color:#a9efff;
- font-weight:bold;cursor:pointer
+header .status {
+  font-size: 11px;
+  color: #ff4d66;
+  margin-top: 4px;
 }
-button:disabled{opacity:.5}
-.controls{display:flex;gap:8px;margin-top:9px}
-.controls button{flex:1}
-.primary{background:#075b79}
-small{color:#809caf;line-height:1.8}
-footer{text-align:center;color:#54768a;font-size:10px;margin:20px 0}
+#chat-container {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.msg {
+  max-width: 85%;
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+.msg.user {
+  align-self: flex-end;
+  background: linear-gradient(135deg, #800f1f, #c9184a);
+  color: #ffffff;
+  border-bottom-right-radius: 4px;
+  box-shadow: 0 4px 15px rgba(201, 24, 74, 0.3);
+}
+.msg.bot {
+  align-self: flex-start;
+  background: #14080b;
+  color: #f1d6d8;
+  border: 1px solid #3d1218;
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+.typing {
+  font-style: italic;
+  color: #a87d82;
+  font-size: 12px;
+}
+.input-panel {
+  padding: 12px;
+  background: rgba(13, 5, 8, 0.95);
+  border-top: 1px solid #330d12;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.input-box {
+  display: flex;
+  gap: 8px;
+}
+input {
+  flex: 1;
+  padding: 12px 16px;
+  background: #1a0a0f;
+  border: 1px solid #4a151d;
+  border-radius: 24px;
+  color: #fff;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.3s;
+}
+input:focus { 
+  border-color: #ff334b; 
+  box-shadow: 0 0 10px rgba(255, 51, 75, 0.2);
+}
+button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #a4161a, #e5383b);
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 13px;
+  box-shadow: 0 4px 12px rgba(229, 56, 59, 0.3);
+  transition: opacity 0.2s;
+}
+button:active { opacity: 0.8; }
+button:disabled { opacity: 0.4; }
+.btn-secondary { 
+  background: #1a0a0f; 
+  border: 1px solid #4a151d; 
+  color: #d9b8bc; 
+  box-shadow: none;
+}
+.quick-btns {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+.quick-btns::-webkit-scrollbar { display: none; }
+.quick-btns button {
+  white-space: nowrap;
+  font-size: 11px;
+  padding: 6px 12px;
+}
 </style>
 </head>
 <body>
+
 <main>
- <h1>MJ AI</h1>
- <div class="sub">MAJLIS JUBEL INTELLIGENCE</div>
+ <header>
+  <h1>MJ AI</h1>
+  <div class="sub">MAJLIS JUBEL INTELLIGENCE</div>
+  <div class="status" id="status">● SANGAT SIAP</div>
+ </header>
 
- <div class="core"><span>◉</span></div>
- <div class="status" id="status">SYSTEM ONLINE</div>
+ <div id="chat-container">
+  <div class="msg bot">Salam, Ahli MJ! Terminal MJ AI diaktifkan di bawah langit malam merah. Ada yang bisa dibantu?</div>
+ </div>
 
- <section class="panel">
-  <b>MJ TERMINAL</b>
-  <div id="log" aria-live="polite">MJ: Halo! Saya MJ AI. Silakan tanya apa saja.</div>
- </section>
-
- <section class="panel">
-  <input id="cmd" placeholder="Tanya sesuatu kepada MJ..." autocomplete="off">
-  <div class="controls">
-   <button class="primary" id="send">KIRIM</button>
-   <button id="mic">🎙 BICARA</button>
+ <div class="input-panel">
+  <div class="quick-btns">
+   <button class="btn-secondary" onclick="sendQuick('Siapa kamu?')">👑 Siapa kamu?</button>
+   <button class="btn-secondary" onclick="sendQuick('Jam berapa?')">⏰ Jam berapa?</button>
+   <button class="btn-secondary" onclick="sendQuick('Halo MJ')">🔥 Halo MJ</button>
   </div>
-  <div class="controls">
-   <button id="stop">HENTIKAN SUARA</button>
-   <button id="mem">LIHAT MEMORI</button>
+  <div class="input-box">
+   <input id="cmd" placeholder="Ketik pesan ke MJ..." autocomplete="off">
+   <button id="send">Kirim</button>
+   <button id="mic" class="btn-secondary">🎙️</button>
   </div>
-  <div class="controls">
-   <button id="clear">BERSIHKAN CHAT</button>
-   <button id="forget">HAPUS MEMORI</button>
-  </div>
- </section>
-
- <section class="panel">
-  <b>PERINTAH CEPAT</b>
-  <p><small>
-   • Halo MJ<br>
-   • Ingat saya suka tema biru<br>
-   • Apa yang kamu ingat<br>
-   • Cari tutorial HTML<br>
-   • Buka YouTube<br>
-   • Buka WhatsApp<br>
-   • Buka ChatGPT<br>
-   • Jam berapa<br>
-   • Siapa kamu?
-  </small></p>
- </section>
- <footer>MJ AI v1.0 · ANDROID EDITION</footer>
+ </div>
 </main>
 
 <script>
 const $ = id => document.getElementById(id);
-const log = $('log');
+const chat = $('chat-container');
 const status = $('status');
-const send = $('send');
-const KEY = 'mj_ai_memory_v1';
+const sendBtn = $('send');
 const API = 'https://mj-ai-api.rkidul416.workers.dev/';
 
-function memories(){
- try{return JSON.parse(localStorage.getItem(KEY)||'[]')}
- catch(e){return []}
+function addMsg(text, sender) {
+  const div = document.createElement('div');
+  div.className = 'msg ' + sender;
+  div.innerText = text;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  return div;
 }
 
-function show(text){
- log.textContent = text;
- log.scrollTop = log.scrollHeight;
+function say(text) {
+  if ('speechSynthesis' in window) {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'id-ID';
+    speechSynthesis.speak(u);
+  }
 }
 
-function say(text){
- show('MJ: '+text);
- if('speechSynthesis' in window){
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = 'id-ID';
-  u.rate = 0.95;
-  speechSynthesis.speak(u);
- }
-}
+async function run(q) {
+  if (!q.trim()) return;
+  
+  addMsg(q, 'user');
+  $('cmd').value = '';
+  
+  const loadingMsg = addMsg('MJ sedang meracik jawaban...', 'bot typing');
+  status.innerText = '● MEMPROSES...';
+  sendBtn.disabled = true;
 
-function searchWeb(q){
- location.href='https://www.google.com/search?q='+encodeURIComponent(q);
-}
-
-async function run(raw){
- const q = raw.trim();
- if(!q)return;
-
- show('KAMU: '+q+'\n\nMJ sedang berpikir...');
- status.textContent='MEMPROSES...';
- send.disabled=true;
- const s=q.toLowerCase();
-
- try {
-  if(s.startsWith('ingat ')){
-   const m=memories();
-   m.push(q.slice(6));
-   localStorage.setItem(KEY,JSON.stringify(m));
-   status.textContent='MEMORI TERSIMPAN';
-   say('Siap! Catatan berhasil disimpan di perangkat ini.');
-   return;
-  }
-
-  if(s.includes('apa yang kamu ingat')||s.includes('lihat memori')){
-   const m=memories();
-   status.textContent='MEMORI LOKAL';
-   say(m.length?'Catatan tersimpan: '+m.join('. '):'Belum ada catatan tersimpan.');
-   return;
-  }
-
-  if(s.includes('hapus semua ingatan')||s.includes('hapus memori')){
-   if(confirm('Yakin menghapus semua memori MJ AI?')){
-    localStorage.removeItem(KEY);
-    say('Semua memori lokal telah dihapus.');
-   }else{
-    say('Penghapusan memori dibatalkan.');
-   }
-   return;
-  }
-
-  if(s.startsWith('cari ')||s.startsWith('search ')){
-   say('Membuka pencarian internet.');
-   setTimeout(()=>searchWeb(q.slice(q.indexOf(' ')+1)),500);
-   return;
-  }
-
-  if(s.includes('buka youtube')){
-   location.href='https://m.youtube.com/';
-   return;
-  }
-  if(s.includes('buka whatsapp')){
-   location.href='https://web.whatsapp.com/';
-   return;
-  }
-  if(s.includes('buka chatgpt')){
-   location.href='https://chatgpt.com/';
-   return;
-  }
-  if(s.includes('jam berapa')){
-   say('Waktu perangkat menunjukkan '+new Date().toLocaleTimeString('id-ID'));
-   return;
-  }
-  if(s.includes('siapa kamu')){
-   say('Saya MJ, Majlis Jubel Intelligence, asisten pribadi yang menggunakan Gemini untuk membantu menjawab pertanyaan.');
-   return;
-  }
-  if(s==='halo'||s==='hai'||s==='halo mj'||s==='hai mj'){
-   say('Halo! MJ siap membantu. Apa yang ingin kamu tanyakan?');
-   return;
-  }
-
-  status.textContent='MENGHUBUNGI GEMINI...';
-
-  const response = await fetch(API, {
-   method: 'POST',
-   headers: { 'Content-Type': 'application/json' },
-   body: JSON.stringify({ message: q })
-  });
-
-  const textData = await response.text();
-  let data;
   try {
-   data = JSON.parse(textData);
-  } catch(e) {
-   data = { answer: textData }; // Paksa tampilkan teks mentah jika bukan JSON murni
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: q })
+    });
+    
+    const data = await res.json();
+    loadingMsg.remove();
+
+    if (!res.ok) throw new Error(data.error || 'Gagal tersambung');
+
+    addMsg(data.answer, 'bot');
+    say(data.answer);
+    status.innerText = '● ONLINE';
+
+  } catch (err) {
+    loadingMsg.remove();
+    addMsg('Maaf, ralat koneksi: ' + err.message, 'bot');
+    status.innerText = '● KONEKSI GAGAL';
+  } finally {
+    sendBtn.disabled = false;
   }
-
-  const finalAnswer = data.answer || data.error || textData;
-
-  status.textContent='MJ AI ONLINE';
-  say(String(finalAnswer).trim());
-
- } catch(error) {
-  console.error('MJ AI Error:', error);
-  status.textContent='KONEKSI GAGAL';
-  say('Maaf, terjadi kendala koneksi ke server AI. Coba lagi ya.');
- } finally {
-  send.disabled=false;
- }
 }
 
-send.onclick=()=>{
- const q=$('cmd').value;
- $('cmd').value='';
- run(q);
-};
-
-$('cmd').addEventListener('keydown',e=>{
- if(e.key==='Enter'&&!send.disabled)send.click();
-});
-
-$('stop').onclick=()=>{
- if('speechSynthesis' in window)speechSynthesis.cancel();
- status.textContent='SUARA DIHENTIKAN';
-};
-
-$('mem').onclick=()=>{
- const m=memories();
- show(m.length?'MEMORI MJ AI:\n'+m.map((x,i)=>(i+1)+'. '+x).join('\n'):'Belum ada memori tersimpan.');
-};
-
-$('clear').onclick=()=>{
- show('MJ TERMINAL\nChat dibersihkan. Silakan mulai percakapan baru.');
- status.textContent='SYSTEM ONLINE';
- if('speechSynthesis' in window)speechSynthesis.cancel();
-};
-
-$('forget').onclick=()=>{
- if(confirm('Hapus semua memori MJ AI di perangkat ini?')){
-  localStorage.removeItem(KEY);
-  say('Semua memori lokal telah dihapus.');
- }
-};
-
-const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-if(Speech){
- const rec = new Speech();
- rec.lang = 'id-ID';
- rec.continuous = false;
- rec.interimResults = false;
-
- $('mic').onclick=()=>{
-  try{
-   status.textContent='MENDENGARKAN...';
-   rec.start();
-  }catch(e){
-   status.textContent='TUNGGU SEBENTAR';
-  }
- };
-
- rec.onresult=e=>{
-  const text = e.results[0][0].transcript;
-  $('cmd').value = text;
-  run(text);
- };
-
- rec.onerror=()=>{
-  status.textContent='CEK IZIN MIKROFON';
- };
-
- rec.onend=()=>{
-  if(status.textContent==='MENDENGARKAN...'){
-   status.textContent='SYSTEM ONLINE';
-  }
- };
-}else{
- $('mic').onclick=()=>{
-  alert('Fitur mikrofon tidak didukung browser ini. Coba Chrome Android.');
- };
-}
+sendBtn.onclick = () => run($('cmd').value);
+$('cmd').onkeydown = e => { if (e.key === 'Enter') sendBtn.click(); };
+function sendQuick(txt) { run(txt); }
 </script>
+
 </body>
 </html>
