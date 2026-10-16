@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -10,39 +11,45 @@
 body{
  margin:0;background:#050a14;color:#d9f5ff;
  font-family:Arial,sans-serif;min-height:100vh;
- display:flex;justify-content:center;
+ display:flex;justify-content:center
 }
-main{width:100%;max-width:480px;padding:24px 18px}
-h1{text-align:center;letter-spacing:6px;color:#56dfff}
-.sub{text-align:center;color:#7799ad;font-size:12px}
+main{width:100%;max-width:500px;padding:22px 16px}
+h1{text-align:center;letter-spacing:7px;color:#56dfff;margin-bottom:6px}
+.sub{text-align:center;color:#7799ad;font-size:11px;letter-spacing:2px}
 .core{
- width:170px;height:170px;border-radius:50%;
- border:2px solid #37cfff;margin:28px auto;
+ width:145px;height:145px;border-radius:50%;
+ border:2px solid #37cfff;margin:24px auto;
  display:grid;place-items:center;
- box-shadow:0 0 24px #087ca855,inset 0 0 25px #087ca855;
+ box-shadow:0 0 30px #087ca855,inset 0 0 25px #087ca855;
+ animation:pulse 3s infinite
 }
-.core span{font-size:65px;color:#66e7ff}
-.status{text-align:center;color:#7ce8ff;font-size:13px}
+.core span{font-size:58px;color:#66e7ff}
+@keyframes pulse{50%{box-shadow:0 0 42px #087ca888,inset 0 0 35px #087ca855}}
+.status{text-align:center;color:#7ce8ff;font-size:12px}
 .panel{
  border:1px solid #183c52;border-radius:14px;
- background:#0a1422;padding:15px;margin-top:16px
+ background:#0a1422;padding:14px;margin-top:14px
 }
-#log{min-height:90px;white-space:pre-wrap;line-height:1.6;
- overflow-wrap:anywhere;font-size:14px}
+#log{
+ min-height:100px;max-height:340px;overflow-y:auto;
+ white-space:pre-wrap;overflow-wrap:anywhere;
+ line-height:1.6;font-size:14px
+}
 input{
- width:100%;padding:13px;background:#07101c;
- color:white;border:1px solid #24506a;border-radius:9px;
- font-size:15px
+ width:100%;padding:14px;background:#07101c;color:white;
+ border:1px solid #24506a;border-radius:9px;font-size:15px
 }
 button{
- padding:12px;border:1px solid #287b9b;
+ padding:12px 8px;border:1px solid #287b9b;
  border-radius:9px;background:#0d293b;color:#a9efff;
- font-weight:bold
+ font-weight:bold;cursor:pointer
 }
-.controls{display:flex;gap:8px;margin-top:10px}
+button:disabled{opacity:.5}
+.controls{display:flex;gap:8px;margin-top:9px}
 .controls button{flex:1}
 .primary{background:#075b79}
-small{color:#809caf;line-height:1.6}
+small{color:#809caf;line-height:1.8}
+footer{text-align:center;color:#54768a;font-size:10px;margin:20px 0}
 </style>
 </head>
 <body>
@@ -55,11 +62,11 @@ small{color:#809caf;line-height:1.6}
 
  <section class="panel">
   <b>MJ TERMINAL</b>
-  <div id="log">MJ: Sistem siap. Tekan tombol mikrofon untuk memulai.</div>
+  <div id="log" aria-live="polite">MJ: Halo! Saya MJ AI. Silakan tanya apa saja.</div>
  </section>
 
  <section class="panel">
-  <input id="cmd" placeholder="Ketik perintah di sini...">
+  <input id="cmd" placeholder="Tanya sesuatu kepada MJ..." autocomplete="off">
   <div class="controls">
    <button class="primary" id="send">KIRIM</button>
    <button id="mic">🎙 BICARA</button>
@@ -68,39 +75,50 @@ small{color:#809caf;line-height:1.6}
    <button id="stop">HENTIKAN SUARA</button>
    <button id="mem">LIHAT MEMORI</button>
   </div>
+  <div class="controls">
+   <button id="clear">BERSIHKAN CHAT</button>
+   <button id="forget">HAPUS MEMORI</button>
+  </div>
  </section>
 
  <section class="panel">
-  <b>PERINTAH MJ AI</b>
+  <b>PERINTAH CEPAT</b>
   <p><small>
-   • "Halo MJ"<br>
-   • "Ingat saya suka tema biru"<br>
-   • "Apa yang kamu ingat"<br>
-   • "Cari tutorial HTML"<br>
-   • "Buka YouTube"<br>
-   • "Buka WhatsApp"<br>
-   • "Buka ChatGPT"<br>
-   • "Jam berapa"<br>
-   • "Hapus semua ingatan"
+   • Halo MJ<br>
+   • Ingat saya suka tema biru<br>
+   • Apa yang kamu ingat<br>
+   • Cari tutorial HTML<br>
+   • Buka YouTube<br>
+   • Buka WhatsApp<br>
+   • Buka ChatGPT<br>
+   • Jam berapa<br>
+   • Siapa kamu?
   </small></p>
  </section>
- <p class="sub">MJ AI v0.1 · ANDROID EDITION</p>
+ <footer>MJ AI v1.0 · ANDROID EDITION</footer>
 </main>
 
 <script>
 const $ = id => document.getElementById(id);
 const log = $('log');
 const status = $('status');
+const send = $('send');
 const KEY = 'mj_ai_memory_v1';
+const API = 'https://mj-ai-api.rkidul416.workers.dev/';
 
 function memories(){
  try{return JSON.parse(localStorage.getItem(KEY)||'[]')}
  catch(e){return []}
 }
 
+function show(text){
+ log.textContent = text;
+ log.scrollTop = log.scrollHeight;
+}
+
 function say(text){
- log.textContent = 'MJ: ' + text;
- if ('speechSynthesis' in window) {
+ show('MJ: '+text);
+ if('speechSynthesis' in window){
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = 'id-ID';
@@ -110,73 +128,115 @@ function say(text){
 }
 
 function searchWeb(q){
- location.href =
-  'https://www.google.com/search?q='+encodeURIComponent(q);
+ location.href='https://www.google.com/search?q='+encodeURIComponent(q);
 }
 
-function run(raw){
+async function run(raw){
  const q = raw.trim();
  if(!q)return;
- log.textContent = 'KAMU: '+q;
- const s = q.toLowerCase();
 
- if(s.startsWith('ingat ')){
-  const m = memories();
-  m.push(q.slice(6));
-  localStorage.setItem(KEY,JSON.stringify(m));
-  say('Siap. Catatan berhasil disimpan di perangkat ini.');
- }
- else if(s.includes('apa yang kamu ingat')||
-         s.includes('lihat memori')){
-  const m=memories();
-  say(m.length ? 'Catatan tersimpan: '+m.join('. ')
-    : 'Belum ada catatan tersimpan.');
- }
- else if(s.includes('hapus semua ingatan')){
-  if(confirm('Yakin menghapus semua memori MJ AI?')){
-   localStorage.removeItem(KEY);
-   say('Semua catatan lokal telah dihapus.');
+ show('KAMU: '+q+'\n\nMJ sedang berpikir...');
+ status.textContent='MEMPROSES...';
+ send.disabled=true;
+ const s=q.toLowerCase();
+
+ try{
+  if(s.startsWith('ingat ')){
+   const m=memories();
+   m.push(q.slice(6));
+   localStorage.setItem(KEY,JSON.stringify(m));
+   status.textContent='MEMORI TERSIMPAN';
+   say('Siap! Catatan berhasil disimpan di perangkat ini.');
+   return;
   }
- }
- else if(s.startsWith('cari ')||s.startsWith('search ')){
-  const query=q.slice(q.indexOf(' ')+1);
-  say('Siap. Membuka pencarian internet.');
-  setTimeout(()=>searchWeb(query),500);
- }
- else if(s.includes('buka youtube')){
-  say('Siap. Membuka YouTube.');
-  location.href='https://m.youtube.com/';
- }
- else if(s.includes('buka whatsapp')){
-  say('Siap. Membuka WhatsApp.');
-  location.href='https://web.whatsapp.com/';
- }
- else if(s.includes('buka chatgpt')){
-  say('Siap. Membuka ChatGPT.');
-  location.href='https://chatgpt.com/';
- }
- else if(s.includes('jam berapa')){
-  say('Waktu perangkat menunjukkan '+
-   new Date().toLocaleTimeString('id-ID'));
- }
- else if(s.includes('halo')||s.includes('hai')){
-  say('Halo! MJ siap membantu. Apa yang bisa saya bantu?');
- }
- else if(s.includes('siapa kamu')){
-  say('Saya MJ, Majlis Jubel Intelligence, asisten pribadi Anda.');
- }
- else{
-  say('Perintah belum tersedia di versi ini. Silakan coba perintah yang tertera di layar.');
+
+  if(s.includes('apa yang kamu ingat')||s.includes('lihat memori')){
+   const m=memories();
+   status.textContent='MEMORI LOKAL';
+   say(m.length?'Catatan tersimpan: '+m.join('. '):'Belum ada catatan tersimpan.');
+   return;
+  }
+
+  if(s.includes('hapus semua ingatan')||s.includes('hapus memori')){
+   if(confirm('Yakin menghapus semua memori MJ AI?')){
+    localStorage.removeItem(KEY);
+    say('Semua memori lokal telah dihapus.');
+   }else{
+    say('Penghapusan memori dibatalkan.');
+   }
+   return;
+  }
+
+  if(s.startsWith('cari ')||s.startsWith('search ')){
+   say('Membuka pencarian internet.');
+   setTimeout(()=>searchWeb(q.slice(q.indexOf(' ')+1)),500);
+   return;
+  }
+
+  if(s.includes('buka youtube')){
+   location.href='https://m.youtube.com/';
+   return;
+  }
+  if(s.includes('buka whatsapp')){
+   location.href='https://web.whatsapp.com/';
+   return;
+  }
+  if(s.includes('buka chatgpt')){
+   location.href='https://chatgpt.com/';
+   return;
+  }
+  if(s.includes('jam berapa')){
+   say('Waktu perangkat menunjukkan '+new Date().toLocaleTimeString('id-ID'));
+   return;
+  }
+  if(s.includes('siapa kamu')){
+   say('Saya MJ, Majlis Jubel Intelligence, asisten pribadi yang menggunakan Gemini untuk membantu menjawab pertanyaan.');
+   return;
+  }
+  if(s==='halo'||s==='hai'||s==='halo mj'||s==='hai mj'){
+   say('Halo! MJ siap membantu. Apa yang ingin kamu tanyakan?');
+   return;
+  }
+
+  status.textContent='MENGHUBUNGI GEMINI...';
+
+  const response=await fetch(API,{
+   method:'POST',
+   headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({message:q})
+  });
+
+  let data;
+  try{data=await response.json()}
+  catch(e){throw new Error('Respons Worker bukan JSON yang valid.')}
+
+  if(!response.ok){
+   throw new Error(data.error||'HTTP '+response.status);
+  }
+  if(typeof data.answer!=='string'||!data.answer.trim()){
+   throw new Error('Jawaban AI kosong.');
+  }
+
+  status.textContent='MJ AI ONLINE';
+  say(data.answer.trim());
+
+ }catch(error){
+  console.error('MJ AI:',error);
+  status.textContent='KONEKSI GAGAL';
+  say('Maaf, MJ belum bisa menjawab saat ini. Periksa koneksi internet dan pengaturan Worker Cloudflare, lalu coba lagi.');
+ }finally{
+  send.disabled=false;
  }
 }
 
-$('send').onclick=()=>{
- run($('cmd').value);
+send.onclick=()=>{
+ const q=$('cmd').value;
  $('cmd').value='';
+ run(q);
 };
 
 $('cmd').addEventListener('keydown',e=>{
- if(e.key==='Enter')$('send').click();
+ if(e.key==='Enter'&&!send.disabled)send.click();
 });
 
 $('stop').onclick=()=>{
@@ -186,13 +246,23 @@ $('stop').onclick=()=>{
 
 $('mem').onclick=()=>{
  const m=memories();
- log.textContent=m.length
-  ?'MEMORI MJ AI:\n'+m.map((x,i)=>(i+1)+'. '+x).join('\n')
-  :'Belum ada memori.';
+ show(m.length?'MEMORI MJ AI:\n'+m.map((x,i)=>(i+1)+'. '+x).join('\n'):'Belum ada memori tersimpan.');
 };
 
-const Speech = window.SpeechRecognition ||
-               window.webkitSpeechRecognition;
+$('clear').onclick=()=>{
+ show('MJ TERMINAL\nChat dibersihkan. Silakan mulai percakapan baru.');
+ status.textContent='SYSTEM ONLINE';
+ if('speechSynthesis' in window)speechSynthesis.cancel();
+};
+
+$('forget').onclick=()=>{
+ if(confirm('Hapus semua memori MJ AI di perangkat ini?')){
+  localStorage.removeItem(KEY);
+  say('Semua memori lokal telah dihapus.');
+ }
+};
+
+const Speech=window.SpeechRecognition||window.webkitSpeechRecognition;
 
 if(Speech){
  const rec=new Speech();
@@ -205,30 +275,30 @@ if(Speech){
    status.textContent='MENDENGARKAN...';
    rec.start();
   }catch(e){
-   status.textContent='TUNGGU, LALU COBA LAGI';
+   status.textContent='TUNGGU SEBENTAR';
   }
  };
 
  rec.onresult=e=>{
   const text=e.results[0][0].transcript;
   $('cmd').value=text;
-  status.textContent='PERINTAH DITERIMA';
   run(text);
  };
 
  rec.onerror=()=>{
-  status.textContent='SUARA GAGAL · CEK IZIN MIKROFON';
+  status.textContent='CEK IZIN MIKROFON';
  };
 
  rec.onend=()=>{
-  if(status.textContent==='MENDENGARKAN...')
+  if(status.textContent==='MENDENGARKAN...'){
    status.textContent='SYSTEM ONLINE';
+  }
  };
 }else{
  $('mic').onclick=()=>{
-  alert('Pengenalan suara tidak tersedia. Coba Chrome Android.');
+  alert('Fitur mikrofon tidak didukung browser ini. Coba Chrome Android.');
  };
 }
 </script>
 </body>
-  </html>
+</html>
