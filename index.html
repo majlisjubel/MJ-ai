@@ -139,7 +139,8 @@ async function run(raw){
  send.disabled=true;
  const s=q.toLowerCase();
 
- try{
+ try {
+  // Cek perintah lokal terlebih dahulu
   if(s.startsWith('ingat ')){
    const m=memories();
    m.push(q.slice(6));
@@ -197,33 +198,41 @@ async function run(raw){
    return;
   }
 
+  // Jika bukan perintah lokal, kirim ke Cloudflare Worker (Gemini API)
   status.textContent='MENGHUBUNGI GEMINI...';
 
-  const response=await fetch(API,{
-   method:'POST',
-   headers:{'Content-Type':'application/json'},
-   body:JSON.stringify({message:q})
+  const response = await fetch(API, {
+   method: 'POST',
+   headers: {
+    'Content-Type': 'application/json'
+   },
+   body: JSON.stringify({ message: q })
   });
 
+  const textData = await response.text();
   let data;
-  try{data=await response.json()}
-  catch(e){throw new Error('Respons Worker bukan JSON yang valid.')}
+  try {
+   data = JSON.parse(textData);
+  } catch(e) {
+   throw new Error('Respons Worker tidak valid: ' + textData);
+  }
 
   if(!response.ok){
-   throw new Error(data.error||'HTTP '+response.status);
+   throw new Error(data.error || 'HTTP error ' + response.status);
   }
-  if(typeof data.answer!=='string'||!data.answer.trim()){
-   throw new Error('Jawaban AI kosong.');
+
+  if(!data.answer || typeof data.answer !== 'string'){
+   throw new Error('Format jawaban AI kosong.');
   }
 
   status.textContent='MJ AI ONLINE';
   say(data.answer.trim());
 
- }catch(error){
-  console.error('MJ AI:',error);
+ } catch(error) {
+  console.error('MJ AI Error:', error);
   status.textContent='KONEKSI GAGAL';
-  say('Maaf, MJ belum bisa menjawab saat ini. Periksa koneksi internet dan pengaturan Worker Cloudflare, lalu coba lagi.');
- }finally{
+  say('Maaf, MJ belum bisa menjawab saat ini. Periksa koneksi internet atau coba lagi.');
+ } finally {
   send.disabled=false;
  }
 }
@@ -261,13 +270,13 @@ $('forget').onclick=()=>{
  }
 };
 
-const Speech=window.SpeechRecognition||window.webkitSpeechRecognition;
+const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if(Speech){
- const rec=new Speech();
- rec.lang='id-ID';
- rec.continuous=false;
- rec.interimResults=false;
+ const rec = new Speech();
+ rec.lang = 'id-ID';
+ rec.continuous = false;
+ rec.interimResults = false;
 
  $('mic').onclick=()=>{
   try{
@@ -279,8 +288,8 @@ if(Speech){
  };
 
  rec.onresult=e=>{
-  const text=e.results[0][0].transcript;
-  $('cmd').value=text;
+  const text = e.results[0][0].transcript;
+  $('cmd').value = text;
   run(text);
  };
 
