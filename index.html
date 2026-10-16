@@ -2,18 +2,15 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#090406">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#070204">
 <title>MJ AI - Majlis Jubel Intelligence</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  /* Nuansa gelap pekat dengan efek gradasi merah darah & bulan merah */
-  background-color: #050203;
-  background-image: 
-    radial-gradient(circle at 85% 10%, rgba(200, 16, 46, 0.25) 0%, transparent 40%),
-    radial-gradient(circle at 15% 90%, rgba(100, 10, 20, 0.2) 0%, transparent 50%);
-  color: #f1d6d8;
+  background-color: #070204;
+  background-image: radial-gradient(circle at 50% 0%, rgba(180, 15, 35, 0.18) 0%, transparent 60%);
+  color: #e6d0d2;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   display: flex;
   justify-content: center;
@@ -22,135 +19,160 @@ body {
 }
 main {
   width: 100%;
-  max-width: 500px;
+  max-width: 480px;
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: rgba(9, 4, 6, 0.85);
-  backdrop-filter: blur(10px);
-  border-left: 1px solid #330d12;
-  border-right: 1px solid #330d12;
-  box-shadow: 0 0 40px rgba(150, 10, 25, 0.15);
+  background: rgba(10, 3, 5, 0.95);
+  border-left: 1px solid #260a0f;
+  border-right: 1px solid #260a0f;
 }
+
+/* Header */
 header {
-  padding: 16px;
-  background: rgba(13, 5, 8, 0.95);
-  border-bottom: 1px solid #330d12;
+  padding: 14px 16px;
+  background: rgba(15, 4, 7, 0.98);
+  border-bottom: 1px solid #260a0f;
   text-align: center;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.5);
 }
 header h1 {
-  font-size: 20px;
+  font-size: 17px;
   color: #ff334b;
-  letter-spacing: 3px;
-  font-weight: 800;
-  text-shadow: 0 0 10px rgba(255, 51, 75, 0.4);
+  letter-spacing: 2px;
+  font-weight: 700;
 }
 header .sub {
+  font-size: 9px;
+  color: #8c6368;
+  letter-spacing: 1.5px;
+  margin-top: 1px;
+}
+header .status-bar {
   font-size: 10px;
-  color: #a87d82;
-  letter-spacing: 2px;
-  margin-top: 2px;
-}
-header .status {
-  font-size: 11px;
   color: #ff4d66;
-  margin-top: 4px;
+  margin-top: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
 }
+.dot {
+  width: 6px; height: 6px;
+  background: #ff334b;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #ff334b;
+}
+
+/* Chat Container */
 #chat-container {
   flex: 1;
   padding: 16px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
+  scroll-behavior: smooth;
 }
 .msg {
-  max-width: 85%;
-  padding: 12px 16px;
-  border-radius: 14px;
-  font-size: 14px;
+  max-width: 84%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 13.5px;
   line-height: 1.5;
   word-wrap: break-word;
 }
 .msg.user {
   align-self: flex-end;
-  background: linear-gradient(135deg, #800f1f, #c9184a);
+  background: #b5172f;
   color: #ffffff;
-  border-bottom-right-radius: 4px;
-  box-shadow: 0 4px 15px rgba(201, 24, 74, 0.3);
+  border-bottom-right-radius: 3px;
 }
 .msg.bot {
   align-self: flex-start;
-  background: #14080b;
-  color: #f1d6d8;
-  border: 1px solid #3d1218;
-  border-bottom-left-radius: 4px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  background: #140508;
+  color: #f0dcde;
+  border: 1px solid #2e0d12;
+  border-bottom-left-radius: 3px;
 }
-.typing {
+.msg.typing {
+  color: #8c6368;
   font-style: italic;
-  color: #a87d82;
   font-size: 12px;
 }
+
+/* Input Panel */
 .input-panel {
   padding: 12px;
-  background: rgba(13, 5, 8, 0.95);
-  border-top: 1px solid #330d12;
+  background: rgba(15, 4, 7, 0.98);
+  border-top: 1px solid #260a0f;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
-.input-box {
-  display: flex;
-  gap: 8px;
-}
-input {
-  flex: 1;
-  padding: 12px 16px;
-  background: #1a0a0f;
-  border: 1px solid #4a151d;
-  border-radius: 24px;
-  color: #fff;
-  font-size: 14px;
-  outline: none;
-  transition: all 0.3s;
-}
-input:focus { 
-  border-color: #ff334b; 
-  box-shadow: 0 0 10px rgba(255, 51, 75, 0.2);
-}
-button {
-  padding: 10px 16px;
-  border: none;
-  border-radius: 20px;
-  background: linear-gradient(135deg, #a4161a, #e5383b);
-  color: #fff;
-  font-weight: bold;
-  cursor: pointer;
-  font-size: 13px;
-  box-shadow: 0 4px 12px rgba(229, 56, 59, 0.3);
-  transition: opacity 0.2s;
-}
-button:active { opacity: 0.8; }
-button:disabled { opacity: 0.4; }
-.btn-secondary { 
-  background: #1a0a0f; 
-  border: 1px solid #4a151d; 
-  color: #d9b8bc; 
-  box-shadow: none;
-}
+
+/* Quick Buttons */
 .quick-btns {
   display: flex;
   gap: 6px;
   overflow-x: auto;
-  padding-bottom: 4px;
+  padding-bottom: 2px;
   scrollbar-width: none;
 }
 .quick-btns::-webkit-scrollbar { display: none; }
-.quick-btns button {
-  white-space: nowrap;
+.quick-btn {
+  background: #170609;
+  border: 1px solid #330f14;
+  color: #d1a3a8;
+  padding: 5px 10px;
+  border-radius: 12px;
   font-size: 11px;
-  padding: 6px 12px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.quick-btn:active { background: #b5172f; color: #fff; }
+
+/* Input Box */
+.input-box {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+input {
+  flex: 1;
+  padding: 11px 14px;
+  background: #120406;
+  border: 1px solid #330f14;
+  border-radius: 20px;
+  color: #fff;
+  font-size: 13.5px;
+  outline: none;
+}
+input:focus { 
+  border-color: #ff334b; 
+}
+button.send-btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 20px;
+  background: #b5172f;
+  color: #fff;
+  font-weight: bold;
+  font-size: 12px;
+  cursor: pointer;
+}
+button.send-btn:disabled { opacity: 0.4; }
+
+button.icon-btn {
+  background: #170609;
+  border: 1px solid #330f14;
+  color: #d1a3a8;
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-size: 14px;
 }
 </style>
 </head>
@@ -160,23 +182,23 @@ button:disabled { opacity: 0.4; }
  <header>
   <h1>MJ AI</h1>
   <div class="sub">MAJLIS JUBEL INTELLIGENCE</div>
-  <div class="status" id="status">● SANGAT SIAP</div>
+  <div class="status-bar"><span class="dot"></span><span id="status">ONLINE</span></div>
  </header>
 
  <div id="chat-container">
-  <div class="msg bot">Salam, Ahli MJ! Terminal MJ AI diaktifkan di bawah langit malam merah. Ada yang bisa dibantu?</div>
+  <div class="msg bot">Salam, Ahli MJ! Terminal diaktifkan. Ada yang bisa dibantu hari ini?</div>
  </div>
 
  <div class="input-panel">
   <div class="quick-btns">
-   <button class="btn-secondary" onclick="sendQuick('Siapa kamu?')">👑 Siapa kamu?</button>
-   <button class="btn-secondary" onclick="sendQuick('Jam berapa?')">⏰ Jam berapa?</button>
-   <button class="btn-secondary" onclick="sendQuick('Halo MJ')">🔥 Halo MJ</button>
+   <button class="quick-btn" onclick="sendQuick('Siapa kamu?')">👑 Siapa kamu?</button>
+   <button class="quick-btn" onclick="sendQuick('Jam berapa?')">⏰ Jam berapa?</button>
+   <button class="quick-btn" onclick="sendQuick('Halo MJ')">🔥 Halo MJ</button>
   </div>
   <div class="input-box">
-   <input id="cmd" placeholder="Ketik pesan ke MJ..." autocomplete="off">
-   <button id="send">Kirim</button>
-   <button id="mic" class="btn-secondary">🎙️</button>
+   <input id="cmd" placeholder="Ketik pesan..." autocomplete="off">
+   <button class="icon-btn" id="mic" title="Bicara">🎙️</button>
+   <button class="send-btn" id="send">Kirim</button>
   </div>
  </div>
 </main>
@@ -212,8 +234,8 @@ async function run(q) {
   addMsg(q, 'user');
   $('cmd').value = '';
   
-  const loadingMsg = addMsg('MJ sedang meracik jawaban...', 'bot typing');
-  status.innerText = '● MEMPROSES...';
+  const loadingMsg = addMsg('Sedang berpikir...', 'msg bot typing');
+  status.innerText = 'MEMPROSES...';
   sendBtn.disabled = true;
 
   try {
@@ -230,12 +252,12 @@ async function run(q) {
 
     addMsg(data.answer, 'bot');
     say(data.answer);
-    status.innerText = '● ONLINE';
+    status.innerText = 'ONLINE';
 
   } catch (err) {
     loadingMsg.remove();
-    addMsg('Maaf, ralat koneksi: ' + err.message, 'bot');
-    status.innerText = '● KONEKSI GAGAL';
+    addMsg('Ralat: ' + err.message, 'bot');
+    status.innerText = 'KONEKSI GAGAL';
   } finally {
     sendBtn.disabled = false;
   }
