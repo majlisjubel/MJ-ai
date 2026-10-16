@@ -140,7 +140,6 @@ async function run(raw){
  const s=q.toLowerCase();
 
  try {
-  // Cek perintah lokal terlebih dahulu
   if(s.startsWith('ingat ')){
    const m=memories();
    m.push(q.slice(6));
@@ -198,14 +197,11 @@ async function run(raw){
    return;
   }
 
-  // Jika bukan perintah lokal, kirim ke Cloudflare Worker (Gemini API)
   status.textContent='MENGHUBUNGI GEMINI...';
 
   const response = await fetch(API, {
    method: 'POST',
-   headers: {
-    'Content-Type': 'application/json'
-   },
+   headers: { 'Content-Type': 'application/json' },
    body: JSON.stringify({ message: q })
   });
 
@@ -214,24 +210,18 @@ async function run(raw){
   try {
    data = JSON.parse(textData);
   } catch(e) {
-   throw new Error('Respons Worker tidak valid: ' + textData);
+   data = { answer: textData }; // Paksa tampilkan teks mentah jika bukan JSON murni
   }
 
-  if(!response.ok){
-   throw new Error(data.error || 'HTTP error ' + response.status);
-  }
-
-  if(!data.answer || typeof data.answer !== 'string'){
-   throw new Error('Format jawaban AI kosong.');
-  }
+  const finalAnswer = data.answer || data.error || textData;
 
   status.textContent='MJ AI ONLINE';
-  say(data.answer.trim());
+  say(String(finalAnswer).trim());
 
  } catch(error) {
   console.error('MJ AI Error:', error);
   status.textContent='KONEKSI GAGAL';
-  say('Maaf, MJ belum bisa menjawab saat ini. Periksa koneksi internet atau coba lagi.');
+  say('Maaf, terjadi kendala koneksi ke server AI. Coba lagi ya.');
  } finally {
   send.disabled=false;
  }
