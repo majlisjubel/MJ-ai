@@ -3,18 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#070204">
-<title>MJ AI - Majlis Jubel Intelligence</title>
+<meta name="theme-color" content="#050203">
+<title>MJ AI - Visual Novel Mode</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body {
   height: 100%;
-  background-color: #070204;
-  background-image: radial-gradient(circle at 50% 0%, rgba(180, 15, 35, 0.18) 0%, transparent 60%);
-  color: #e6d0d2;
+  /* Background bisa diganti URL gambar karakter atau tema merah gelap khas MJ */
+  background-color: #050203;
+  background-image: linear-gradient(rgba(5, 2, 3, 0.6), rgba(5, 2, 3, 0.85)), url('https://ibb.co.com/V0QJWJk4');
+  background-size: cover;
+  background-position: center;
+  color: #f3e8e8;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   overflow: hidden;
 }
+
 main {
   width: 100%;
   max-width: 480px;
@@ -22,185 +26,146 @@ main {
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  background: rgba(10, 3, 5, 0.98);
-  border-left: 1px solid #260a0f;
-  border-right: 1px solid #260a0f;
+  justify-content: space-between;
+  padding: 12px;
+  position: relative;
 }
 
-/* Header */
-header {
-  padding: 12px 16px;
-  background: rgba(15, 4, 7, 0.98);
-  border-bottom: 1px solid #260a0f;
-  text-align: center;
-  flex-shrink: 0;
-}
-header h1 {
-  font-size: 16px;
-  color: #ff334b;
-  letter-spacing: 2px;
-  font-weight: 700;
-}
-header .sub {
-  font-size: 9px;
-  color: #8c6368;
-  letter-spacing: 1.5px;
-  margin-top: 1px;
-}
-header .status-bar {
-  font-size: 10px;
-  color: #ff4d66;
-  margin-top: 3px;
+/* Status Bar ala VN (Atas) */
+.vn-top-bar {
   display: flex;
+  gap: 10px;
   align-items: center;
-  justify-content: center;
-  gap: 5px;
+  font-size: 11px;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  padding: 6px 12px;
+  border-radius: 20px;
+  align-self: flex-start;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
-.dot {
-  width: 6px; height: 6px;
-  background: #ff334b;
-  border-radius: 50%;
-  box-shadow: 0 0 6px #ff334b;
+.vn-badge {
+  background: rgba(181, 23, 47, 0.8);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: bold;
 }
 
-/* Chat Container */
+/* Area Cerita / Narasi / Chat di Tengah */
 #chat-container {
   flex: 1;
-  padding: 16px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  justify-content: flex-end;
   gap: 12px;
-}
-.msg {
-  max-width: 85%;
-  padding: 10px 14px;
-  border-radius: 12px;
-  font-size: 13.5px;
-  line-height: 1.5;
-  word-wrap: break-word;
-}
-.msg.user {
-  align-self: flex-end;
-  background: #b5172f;
-  color: #ffffff;
-  border-bottom-right-radius: 3px;
-}
-.msg.bot {
-  align-self: flex-start;
-  background: #140508;
-  color: #f0dcde;
-  border: 1px solid #2e0d12;
-  border-bottom-left-radius: 3px;
-}
-.msg.typing {
-  color: #8c6368;
-  font-style: italic;
-  font-size: 12px;
+  padding: 10px 0;
+  scroll-behavior: smooth;
 }
 
-/* Input Panel - Dijamin gak bakal ketutupan lagi */
-.input-panel {
-  padding: 10px 12px;
-  background: rgba(15, 4, 7, 0.98);
-  border-top: 1px solid #260a0f;
+/* Kotak Narasi / Dialog bergaya Visual Novel */
+.vn-dialogue {
+  background: rgba(10, 3, 5, 0.75);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(181, 23, 47, 0.3);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #fce4e6;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.vn-dialogue.user-action {
+  background: rgba(181, 23, 47, 0.35);
+  border-color: rgba(255, 51, 75, 0.5);
+  font-style: italic;
+  text-align: right;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Panel Input Melayang di Bawah */
+.vn-input-panel {
+  background: rgba(12, 4, 6, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(181, 23, 47, 0.4);
+  border-radius: 16px;
+  padding: 8px 12px;
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 8px;
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.7);
   flex-shrink: 0;
 }
 
-/* Quick Buttons */
-.quick-btns {
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  padding-bottom: 2px;
-  scrollbar-width: none;
-}
-.quick-btns::-webkit-scrollbar { display: none; }
-.quick-btn {
-  background: #170609;
-  border: 1px solid #330f14;
-  color: #d1a3a8;
-  padding: 5px 10px;
-  border-radius: 12px;
-  font-size: 11px;
-  white-space: nowrap;
-  cursor: pointer;
-}
-.quick-btn:active { background: #b5172f; color: #fff; }
-
-/* Input Box */
-.input-box {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-input {
+.vn-input-panel input {
   flex: 1;
-  padding: 11px 14px;
-  background: #120406;
-  border: 1px solid #330f14;
-  border-radius: 20px;
-  color: #fff;
-  font-size: 13.5px;
-  outline: none;
-}
-input:focus { 
-  border-color: #ff334b; 
-}
-button.send-btn {
-  padding: 10px 16px;
+  background: transparent;
   border: none;
-  border-radius: 20px;
-  background: #b5172f;
   color: #fff;
-  font-weight: bold;
-  font-size: 12px;
-  cursor: pointer;
+  font-size: 14px;
+  outline: none;
+  padding: 8px;
 }
-button.send-btn:disabled { opacity: 0.4; }
+.vn-input-panel input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
 
-button.icon-btn {
-  background: #170609;
-  border: 1px solid #330f14;
-  color: #d1a3a8;
-  width: 38px; height: 38px;
+/* Tombol Kirim Melayang Khas */
+.vn-send-btn {
+  background: #b5172f;
+  border: none;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   display: grid;
   place-items: center;
+  color: white;
   cursor: pointer;
-  font-size: 14px;
+  box-shadow: 0 2px 10px rgba(181, 23, 47, 0.5);
   flex-shrink: 0;
+}
+.vn-send-btn:disabled { opacity: 0.4; }
+
+.vn-icon-btn {
+  background: transparent;
+  border: none;
+  color: #d1a3a8;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
 }
 </style>
 </head>
 <body>
 
 <main>
- <header>
-  <h1>MJ AI</h1>
-  <div class="sub">MAJLIS JUBEL INTELLIGENCE</div>
-  <div class="status-bar"><span class="dot"></span><span id="status">ONLINE</span></div>
- </header>
-
- <div id="chat-container">
-  <div class="msg bot">Salam, Ahli MJ! Terminal diaktifkan. Ada yang bisa dibantu hari ini?</div>
- </div>
-
- <div class="input-panel">
-  <div class="quick-btns">
-   <button class="quick-btn" onclick="sendQuick('Siapa kamu?')">👑 Siapa kamu?</button>
-   <button class="quick-btn" onclick="sendQuick('Jam berapa?')">⏰ Jam berapa?</button>
-   <button class="quick-btn" onclick="sendQuick('Halo MJ')">🔥 Halo MJ</button>
+  <!-- Bar Atas ala Game VN -->
+  <div class="vn-top-bar">
+    <span>👑 <span class="vn-badge">MJ AI</span></span>
+    <span>💬 <span id="status">Online</span></span>
   </div>
-  <div class="input-box">
-   <input id="cmd" placeholder="Ketik pesan..." autocomplete="off">
-   <button class="icon-btn" id="mic" title="Bicara">🎙️</button>
-   <button class="send-btn" id="send">Kirim</button>
+
+  <!-- Area Narasi / Dialog Utama -->
+  <div id="chat-container">
+    <div class="vn-dialogue">
+      "Salam, Ahli MJ. Terminal Majlis Jubel Intelligence aktif di bawah bayang-bayang malam. Masukkan dialog atau tindakan berikutnya..."
+    </div>
   </div>
- </div>
+
+  <!-- Panel Input Bawah Transparan -->
+  <div class="vn-input-panel">
+    <button class="vn-icon-btn" id="mic" title="Bicara">🎙️</button>
+    <input id="cmd" placeholder="Masukkan dialog atau tindakan berikutnya..." autocomplete="off">
+    <button class="vn-send-btn" id="send">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+    </button>
+  </div>
 </main>
 
 <script>
@@ -210,9 +175,9 @@ const status = $('status');
 const sendBtn = $('send');
 const API = 'https://mj-ai-api.rkidul416.workers.dev/';
 
-function addMsg(text, sender) {
+function addDialogue(text, isUser = false) {
   const div = document.createElement('div');
-  div.className = 'msg ' + sender;
+  div.className = isUser ? 'vn-dialogue user-action' : 'vn-dialogue';
   div.innerText = text;
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
@@ -231,11 +196,11 @@ function say(text) {
 async function run(q) {
   if (!q.trim()) return;
   
-  addMsg(q, 'user');
+  addDialogue(q, true);
   $('cmd').value = '';
   
-  const loadingMsg = addMsg('Sedang berpikir...', 'msg bot typing');
-  status.innerText = 'MEMPROSES...';
+  const loading = addDialogue('MJ sedang memikirkan alur...');
+  status.innerText = 'Memproses...';
   sendBtn.disabled = true;
 
   try {
@@ -246,18 +211,18 @@ async function run(q) {
     });
     
     const data = await res.json();
-    loadingMsg.remove();
+    loading.remove();
 
     if (!res.ok) throw new Error(data.error || 'Gagal tersambung');
 
-    addMsg(data.answer, 'bot');
+    addDialogue(data.answer, false);
     say(data.answer);
-    status.innerText = 'ONLINE';
+    status.innerText = 'Online';
 
   } catch (err) {
-    loadingMsg.remove();
-    addMsg('Ralat: ' + err.message, 'bot');
-    status.innerText = 'KONEKSI GAGAL';
+    loading.remove();
+    addDialogue('Ralat: ' + err.message);
+    status.innerText = 'Error';
   } finally {
     sendBtn.disabled = false;
   }
@@ -265,7 +230,6 @@ async function run(q) {
 
 sendBtn.onclick = () => run($('cmd').value);
 $('cmd').onkeydown = e => { if (e.key === 'Enter') sendBtn.click(); };
-function sendQuick(txt) { run(txt); }
 </script>
 
 </body>
