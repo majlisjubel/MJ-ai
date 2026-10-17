@@ -10,7 +10,7 @@
 html, body {
   height: 100%;
   background-color: #050203;
-  /* Link Direct Gambar ImgBB Kamu */
+  /* Latar belakang gambar dengan gradasi gelap tipis di atasnya */
   background-image: linear-gradient(rgba(5, 2, 3, 0.4), rgba(5, 2, 3, 0.8)), url('https://i.ibb.co.com/gbPmMmcK/file-00000000d8c08207ac4c93cd9137f78e.png');
   background-size: cover;
   background-position: center;
@@ -62,34 +62,37 @@ main {
   flex-direction: column;
   justify-content: flex-start;
   gap: 14px;
-  padding: 10px 0;
+  padding: 14px 2px;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
 }
 
-/* Kotak Dialog Transparan Banget + Warna Teks Mencolok & Jelas */
+/* Gaya Teks Baris Transparan ala Visual Novel Murni */
 .vn-dialogue {
-  background: rgba(15, 5, 8, 0.45); /* Kotak transparan tipis */
-  backdrop-filter: blur(6px);
-  border: 1px solid rgba(255, 77, 102, 0.25); /* Garis tepi merah tipis elean */
-  border-radius: 12px;
-  padding: 12px 16px;
+  background: rgba(10, 3, 5, 0.55); /* Transparan gelap halus */
+  backdrop-filter: blur(4px);
+  border-top: 1px solid rgba(255, 77, 102, 0.3);
+  border-bottom: 1px solid rgba(255, 77, 102, 0.3);
+  padding: 12px 18px;
   font-size: 14.5px;
-  line-height: 1.65;
-  color: #fff6f7; /* Putih kemerahan terang, sangat mencolok dan kontras */
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  line-height: 1.7;
+  color: #ffffff;
+  text-align: center; /* Teks di tengah seperti narasi game VN */
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
   animation: fadeIn 0.3s ease-in-out;
   word-wrap: break-word;
 }
 
-/* Gaya kalau aksi dari user */
+/* Gaya Teks Aksi User */
 .vn-dialogue.user-action {
-  background: rgba(181, 23, 47, 0.35);
-  border-color: rgba(255, 51, 75, 0.5);
+  background: rgba(181, 23, 47, 0.45);
+  border-color: rgba(255, 51, 75, 0.6);
   color: #ffccd5;
   font-style: italic;
   text-align: right;
+  border-radius: 10px;
+  border-top: none;
+  border-bottom: none;
 }
 
 @keyframes fadeIn {
@@ -156,7 +159,7 @@ main {
 <main>
   <!-- Bar Atas -->
   <div class="vn-top-bar">
-    <span>🥱 <span class="vn-badge">MJ AI</span></span>
+    <span>👑 <span class="vn-badge">MJ AI</span></span>
     <span>💬 <span id="status">Online</span></span>
   </div>
 
