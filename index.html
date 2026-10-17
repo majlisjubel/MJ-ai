@@ -10,7 +10,6 @@
 html, body {
   height: 100%;
   background-color: #050203;
-  /* Latar belakang gambar dengan gradasi gelap tipis di atasnya */
   background-image: linear-gradient(rgba(5, 2, 3, 0.4), rgba(5, 2, 3, 0.8)), url('https://i.ibb.co.com/gbPmMmcK/file-00000000d8c08207ac4c93cd9137f78e.png');
   background-size: cover;
   background-position: center;
@@ -32,7 +31,7 @@ main {
   position: relative;
 }
 
-/* Status Bar ala VN (Atas) */
+/* Status Bar ala VN */
 .vn-top-bar {
   display: flex;
   gap: 10px;
@@ -67,9 +66,8 @@ main {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Gaya Teks Baris Transparan ala Visual Novel Murni */
 .vn-dialogue {
-  background: rgba(10, 3, 5, 0.55); /* Transparan gelap halus */
+  background: rgba(10, 3, 5, 0.55);
   backdrop-filter: blur(4px);
   border-top: 1px solid rgba(255, 77, 102, 0.3);
   border-bottom: 1px solid rgba(255, 77, 102, 0.3);
@@ -77,13 +75,12 @@ main {
   font-size: 14.5px;
   line-height: 1.7;
   color: #ffffff;
-  text-align: center; /* Teks di tengah seperti narasi game VN */
+  text-align: center;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
   animation: fadeIn 0.3s ease-in-out;
   word-wrap: break-word;
 }
 
-/* Gaya Teks Aksi User */
 .vn-dialogue.user-action {
   background: rgba(181, 23, 47, 0.45);
   border-color: rgba(255, 51, 75, 0.6);
@@ -100,7 +97,7 @@ main {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Panel Input Melayang di Bawah */
+/* Panel Input */
 .vn-input-panel {
   background: rgba(12, 4, 6, 0.85);
   backdrop-filter: blur(12px);
@@ -128,7 +125,6 @@ main {
   color: rgba(255, 255, 255, 0.4);
 }
 
-/* Tombol Kirim Melayang */
 .vn-send-btn {
   background: #b5172f;
   border: none;
@@ -148,9 +144,22 @@ main {
   background: transparent;
   border: none;
   color: #d1a3a8;
-  font-size: 16px;
+  font-size: 18px;
   cursor: pointer;
   padding: 4px;
+  transition: transform 0.2s, color 0.2s;
+}
+
+/* Efek saat mic aktif merekam */
+.vn-icon-btn.recording {
+  color: #ff4d66;
+  transform: scale(1.2);
+  animation: pulse 1s infinite alternate;
+}
+
+@keyframes pulse {
+  from { opacity: 0.6; }
+  to { opacity: 1; }
 }
 </style>
 </head>
@@ -172,7 +181,7 @@ main {
 
   <!-- Panel Input Bawah -->
   <div class="vn-input-panel">
-    <button class="vn-icon-btn" id="mic" title="Bicara">🎙️</button>
+    <button class="vn-icon-btn" id="mic" title="Bicara lewat Suara">🎙️</button>
     <input id="cmd" placeholder="Masukkan dialog atau tindakan..." autocomplete="off">
     <button class="vn-send-btn" id="send">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
@@ -185,7 +194,7 @@ const $ = id => document.getElementById(id);
 const chat = $('chat-container');
 const status = $('status');
 const sendBtn = $('send');
-// URL API sudah diubah ke subdomain kustom agar bebas blokir ISP
+const micBtn = $('mic');
 const API = 'https://api.mj-ai.my.id/';
 
 function addDialogue(text, isUser = false) {
@@ -243,6 +252,51 @@ async function run(q) {
   } finally {
     sendBtn.disabled = false;
   }
+}
+
+/* FITUR VOICE INPUT (MENDENGARKAN SUARA) */
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if (SpeechRecognition) {
+  const recognition = new SpeechRecognition();
+  recognition.lang = 'id-ID';
+  recognition.interimResults = false;
+
+  micBtn.onclick = () => {
+    try {
+      recognition.start();
+      micBtn.classList.add('recording');
+      status.innerText = 'Mendengarkan...';
+    } catch (e) {
+      recognition.stop();
+      micBtn.classList.remove('recording');
+      status.innerText = 'Online';
+    }
+  };
+
+  recognition.onresult = (e) => {
+    const transcript = e.results[0][0].transcript;
+    $('cmd').value = transcript;
+    micBtn.classList.remove('recording');
+    run(transcript); // Otomatis kirim setelah selesai bicara
+  };
+
+  recognition.onerror = (e) => {
+    micBtn.classList.remove('recording');
+    status.innerText = 'Online';
+    alert('Gagal mendeteksi suara / izin mikrofon ditolak.');
+  };
+
+  recognition.onend = () => {
+    micBtn.classList.remove('recording');
+    if (status.innerText === 'Mendengarkan...') {
+      status.innerText = 'Online';
+    }
+  };
+} else {
+  micBtn.onclick = () => {
+    alert('Browser kamu tidak mendukung perekaman suara direct.');
+  };
 }
 
 sendBtn.onclick = () => run($('cmd').value);
