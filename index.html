@@ -10,12 +10,12 @@
 html, body {
   height: 100%;
   background-color: #050203;
-  /* Link Direct Gambar ImgBB Kamu */
-  background-image: linear-gradient(rgba(5, 2, 3, 0.6), rgba(5, 2, 3, 0.85)), url('https://i.ibb.co.com/gbPmMmcK/file-00000000d8c08207ac4c93cd9137f78e.png');
+  /* Gradasi agak tipis di atas agar latar belakang gambar tetap terang & jelas */
+  background-image: linear-gradient(rgba(5, 2, 3, 0.3), rgba(5, 2, 3, 0.75)), url('https://i.ibb.co.com/gbPmMmcK/file-00000000d8c08207ac4c93cd9137f78e.png');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
-  color: #f3e8e8;
+  color: #ffffff;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   overflow: hidden;
 }
@@ -38,12 +38,12 @@ main {
   gap: 10px;
   align-items: center;
   font-size: 11px;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(6px);
   padding: 6px 12px;
   border-radius: 20px;
   align-self: flex-start;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   flex-shrink: 0;
   z-index: 10;
 }
@@ -54,39 +54,38 @@ main {
   font-weight: bold;
 }
 
-/* Area Cerita / Narasi / Chat di Tengah (Bisa di-scroll lancar) */
+/* Area Chat / Dialog Transparan */
 #chat-container {
   flex: 1;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  gap: 12px;
-  padding: 10px 0;
+  gap: 16px;
+  padding: 16px 4px;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
 }
 
-/* Kotak Narasi / Dialog bergaya Visual Novel */
+/* Gaya Teks Dialog Transparan tapi Jelas (Tanpa Kotak Solid) */
 .vn-dialogue {
-  background: rgba(10, 3, 5, 0.8);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(181, 23, 47, 0.35);
-  border-radius: 12px;
-  padding: 14px 16px;
-  font-size: 14px;
-  line-height: 1.6;
-  color: #fce4e6;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  background: transparent;
+  padding: 4px 8px;
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: #ffffff;
+  text-align: center; /* Teks narasi di tengah ala game visual novel */
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 0, 0, 0.7);
   animation: fadeIn 0.3s ease-in-out;
   word-wrap: break-word;
 }
 
+/* Gaya kalau aksi dari user */
 .vn-dialogue.user-action {
-  background: rgba(181, 23, 47, 0.4);
-  border-color: rgba(255, 51, 75, 0.6);
+  color: #ffccd5;
   font-style: italic;
   text-align: right;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
 }
 
 @keyframes fadeIn {
@@ -96,7 +95,7 @@ main {
 
 /* Panel Input Melayang di Bawah */
 .vn-input-panel {
-  background: rgba(12, 4, 6, 0.9);
+  background: rgba(12, 4, 6, 0.85);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(181, 23, 47, 0.4);
   border-radius: 16px;
@@ -122,7 +121,7 @@ main {
   color: rgba(255, 255, 255, 0.4);
 }
 
-/* Tombol Kirim Melayang Khas */
+/* Tombol Kirim Melayang */
 .vn-send-btn {
   background: #b5172f;
   border: none;
@@ -151,23 +150,23 @@ main {
 <body>
 
 <main>
-  <!-- Bar Atas ala Game VN -->
+  <!-- Bar Atas -->
   <div class="vn-top-bar">
     <span>👑 <span class="vn-badge">MJ AI</span></span>
     <span>💬 <span id="status">Online</span></span>
   </div>
 
-  <!-- Area Narasi / Dialog Utama -->
+  <!-- Area Narasi & Chat Transparan -->
   <div id="chat-container">
     <div class="vn-dialogue">
-      "Salam, Ahli MJ. Terminal Majlis Jubel Intelligence aktif di bawah bayang-bayang malam. Masukkan dialog atau tindakan berikutnya..."
+      "Salam, Ahli MJ. Terminal Majlis Jubel Intelligence aktif. Masukkan dialog atau tindakan berikutnya..."
     </div>
   </div>
 
-  <!-- Panel Input Bawah Transparan -->
+  <!-- Panel Input Bawah -->
   <div class="vn-input-panel">
     <button class="vn-icon-btn" id="mic" title="Bicara">🎙️</button>
-    <input id="cmd" placeholder="Masukkan dialog atau tindakan berikutnya..." autocomplete="off">
+    <input id="cmd" placeholder="Masukkan dialog atau tindakan..." autocomplete="off">
     <button class="vn-send-btn" id="send">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
     </button>
@@ -187,7 +186,6 @@ function addDialogue(text, isUser = false) {
   div.innerText = text;
   chat.appendChild(div);
   
-  /* Otomatis scroll ke pesan terbaru */
   setTimeout(() => {
     chat.scrollTop = chat.scrollHeight;
   }, 50);
@@ -210,7 +208,7 @@ async function run(q) {
   addDialogue(q, true);
   $('cmd').value = '';
   
-  const loading = addDialogue('MJ sedang memikirkan alur...');
+  const loading = addDialogue('...');
   status.innerText = 'Memproses...';
   sendBtn.disabled = true;
 
