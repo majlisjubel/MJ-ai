@@ -10,8 +10,8 @@
 html, body {
   height: 100%;
   background-color: #050203;
-  /* Gradasi agak tipis di atas agar latar belakang gambar tetap terang & jelas */
-  background-image: linear-gradient(rgba(5, 2, 3, 0.3), rgba(5, 2, 3, 0.75)), url('https://i.ibb.co.com/gbPmMmcK/file-00000000d8c08207ac4c93cd9137f78e.png');
+  /* Link Direct Gambar ImgBB Kamu */
+  background-image: linear-gradient(rgba(5, 2, 3, 0.4), rgba(5, 2, 3, 0.8)), url('https://i.ibb.co.com/gbPmMmcK/file-00000000d8c08207ac4c93cd9137f78e.png');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
@@ -38,7 +38,7 @@ main {
   gap: 10px;
   align-items: center;
   font-size: 11px;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(6px);
   padding: 6px 12px;
   border-radius: 20px;
@@ -54,38 +54,42 @@ main {
   font-weight: bold;
 }
 
-/* Area Chat / Dialog Transparan */
+/* Area Chat / Dialog */
 #chat-container {
   flex: 1;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  gap: 16px;
-  padding: 16px 4px;
+  gap: 14px;
+  padding: 10px 0;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
 }
 
-/* Gaya Teks Dialog Transparan tapi Jelas (Tanpa Kotak Solid) */
+/* Kotak Dialog Transparan Banget + Warna Teks Mencolok & Jelas */
 .vn-dialogue {
-  background: transparent;
-  padding: 4px 8px;
+  background: rgba(15, 5, 8, 0.45); /* Kotak transparan tipis */
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 77, 102, 0.25); /* Garis tepi merah tipis elean */
+  border-radius: 12px;
+  padding: 12px 16px;
   font-size: 14.5px;
   line-height: 1.65;
-  color: #ffffff;
-  text-align: center; /* Teks narasi di tengah ala game visual novel */
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 0, 0, 0.7);
+  color: #fff6f7; /* Putih kemerahan terang, sangat mencolok dan kontras */
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
   animation: fadeIn 0.3s ease-in-out;
   word-wrap: break-word;
 }
 
 /* Gaya kalau aksi dari user */
 .vn-dialogue.user-action {
+  background: rgba(181, 23, 47, 0.35);
+  border-color: rgba(255, 51, 75, 0.5);
   color: #ffccd5;
   font-style: italic;
   text-align: right;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
 }
 
 @keyframes fadeIn {
@@ -156,10 +160,10 @@ main {
     <span>💬 <span id="status">Online</span></span>
   </div>
 
-  <!-- Area Narasi & Chat Transparan -->
+  <!-- Area Narasi & Chat -->
   <div id="chat-container">
     <div class="vn-dialogue">
-      "Salam, Ahli MJ. Terminal Majlis Jubel Intelligence aktif. Masukkan dialog atau tindakan berikutnya..."
+      "Haiii, saya MJ, asisten pribadi Tuan Ibnu. Apapun keperluan anda bisa dibicarakan dengan saya."
     </div>
   </div>
 
