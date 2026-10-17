@@ -197,6 +197,9 @@ const sendBtn = $('send');
 const micBtn = $('mic');
 const API = 'https://api.mj-ai.my.id/';
 
+// Variabel menyimpan elemen pemutar audio ElevenLabs
+let currentAudio = null;
+
 // Memori percakapan berurutan agar AI tidak lupa topik sebelumnya
 let history = [
   { role: 'model', parts: [{ text: 'Haiii, saya MJ, asisten pribadi Tuan Ibnu. Apapun keperluan anda bisa dibicarakan dengan saya.' }] }
@@ -215,9 +218,37 @@ function addDialogue(text, isUser = false) {
   return div;
 }
 
-function say(text) {
+// FUNGSI BARU: Utamakan ElevenLabs Audio (Base64), Fallback ke Web Speech API jika gagal
+function playAudioResponse(audioBase64, textFallback) {
+  // Matikan audio lama jika masih berputar
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
   if ('speechSynthesis' in window) {
     speechSynthesis.cancel();
+  }
+
+  // 1. Jika ada audio ElevenLabs
+  if (audioBase64) {
+    try {
+      currentAudio = new Audio("data:audio/mp3;base64," + audioBase64);
+      currentAudio.play().catch(e => {
+        console.warn("Autoplay terhalang browser, mencoba fallback suara HP...", e);
+        fallbackSpeech(textFallback);
+      });
+      return;
+    } catch (e) {
+      console.error("Gagal memutar ElevenLabs:", e);
+    }
+  }
+
+  // 2. Fallback Suara Bawaan HP jika audio ElevenLabs kosong/error
+  fallbackSpeech(textFallback);
+}
+
+function fallbackSpeech(text) {
+  if ('speechSynthesis' in window) {
     const u = new SpeechSynthesisUtterance(text);
     u.lang = 'id-ID';
     speechSynthesis.speak(u);
@@ -256,7 +287,8 @@ async function run(q) {
     // Simpan balasan AI ke memori agar pembahasan berikutnya tetap nyambung
     history.push({ role: 'model', parts: [{ text: reply }] });
 
-    say(reply);
+    // PUTAR SUARA DARI ELEVENLABS DATA AUDIO
+    playAudioResponse(data.audio, reply);
     status.innerText = 'Online';
 
   } catch (err) {
