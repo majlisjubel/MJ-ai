@@ -197,6 +197,11 @@ const sendBtn = $('send');
 const micBtn = $('mic');
 const API = 'https://api.mj-ai.my.id/';
 
+// Memori percakapan berurutan agar AI tidak lupa topik sebelumnya
+let history = [
+  { role: 'model', parts: [{ text: 'Haiii, saya MJ, asisten pribadi Tuan Ibnu. Apapun keperluan anda bisa dibicarakan dengan saya.' }] }
+];
+
 function addDialogue(text, isUser = false) {
   const div = document.createElement('div');
   div.className = isUser ? 'vn-dialogue user-action' : 'vn-dialogue';
@@ -225,15 +230,19 @@ async function run(q) {
   addDialogue(q, true);
   $('cmd').value = '';
   
+  // Masukkan riwayat pesan pengguna ke dalam memori
+  history.push({ role: 'user', parts: [{ text: q }] });
+
   const loading = addDialogue('...');
   status.innerText = 'Memproses...';
   sendBtn.disabled = true;
 
   try {
+    // Kirim pesan beserta seluruh riwayat obrolan ke backend Cloudflare Worker
     const res = await fetch(API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: q })
+      body: JSON.stringify({ contents: history, message: q })
     });
     
     const data = await res.json();
@@ -241,14 +250,21 @@ async function run(q) {
 
     if (!res.ok) throw new Error(data.error || 'Gagal tersambung');
 
-    addDialogue(data.answer, false);
-    say(data.answer);
+    const reply = data.answer || "Maaf, tidak ada respon.";
+    addDialogue(reply, false);
+    
+    // Simpan balasan AI ke memori agar pembahasan berikutnya tetap nyambung
+    history.push({ role: 'model', parts: [{ text: reply }] });
+
+    say(reply);
     status.innerText = 'Online';
 
   } catch (err) {
     loading.remove();
     addDialogue('Ralat: ' + err.message);
     status.innerText = 'Error';
+    // Hapus input terakhir jika gagal agar riwayat tidak rusak
+    history.pop();
   } finally {
     sendBtn.disabled = false;
   }
@@ -278,13 +294,13 @@ if (SpeechRecognition) {
     const transcript = e.results[0][0].transcript;
     $('cmd').value = transcript;
     micBtn.classList.remove('recording');
-    run(transcript); // Otomatis kirim setelah selesai bicara
+    run(transcript); // Otomatis kirim pesan setelah selesai bicara
   };
 
   recognition.onerror = (e) => {
     micBtn.classList.remove('recording');
     status.innerText = 'Online';
-    alert('Gagal mendeteksi suara / izin mikrofon ditolak.');
+    alert('Gagal mendeteksi suara / izin mikrofon belum diberikan.');
   };
 
   recognition.onend = () => {
@@ -295,7 +311,7 @@ if (SpeechRecognition) {
   };
 } else {
   micBtn.onclick = () => {
-    alert('Browser kamu tidak mendukung perekaman suara direct.');
+    alert('Browser kamu tidak mendukung perekaman suara langsung.');
   };
 }
 
