@@ -185,7 +185,8 @@ const $ = id => document.getElementById(id);
 const chat = $('chat-container');
 const status = $('status');
 const sendBtn = $('send');
-const API = 'https://mj-ai-api.rkidul416.workers.dev/';
+// URL API sudah diubah ke subdomain kustom agar bebas blokir ISP
+const API = 'https://api.mj-ai.my.id/';
 
 function addDialogue(text, isUser = false) {
   const div = document.createElement('div');
