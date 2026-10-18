@@ -8,7 +8,7 @@ const mjSprite = $('mj-sprite');
 const API = 'https://api.mj-ai.my.id/';
 
 // PIN VALID TUAN IBNU
-const VALID_PIN = "10052003";
+const VALID_PIN = "hadanuri114";
 
 let userPIN = localStorage.getItem('MJ_PIN') || "";
 
