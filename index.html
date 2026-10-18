@@ -10,7 +10,7 @@
 html, body {
   height: 100%;
   background-color: #050203;
-  /* Background Kafe */
+  /* Background Kafe Malam */
   background-image: linear-gradient(rgba(5, 2, 3, 0.4), rgba(5, 2, 3, 0.75)), url('./1792329882709.png');
   background-size: cover;
   background-position: center;
@@ -32,6 +32,7 @@ main {
   position: relative;
 }
 
+/* Status Bar ala VN */
 .vn-top-bar {
   display: flex;
   gap: 10px;
@@ -53,9 +54,14 @@ main {
   border-radius: 10px;
   font-weight: bold;
 }
-.vn-status-group { display: flex; align-items: center; gap: 8px; }
 
-/* Visual Novel Stage & Sprite Bernapas */
+.vn-status-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Stage Visual Novel & Karakter Sprite Bernapas */
 .vn-stage {
   flex: 1;
   display: flex;
@@ -80,6 +86,7 @@ main {
   100% { transform: translateY(-8px) scale(1.015); }
 }
 
+/* Area Chat / Dialog */
 #chat-container {
   max-height: 180px;
   overflow-y: auto;
@@ -89,6 +96,7 @@ main {
   gap: 10px;
   padding: 8px 2px;
   scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
   z-index: 10;
 }
 
@@ -120,11 +128,27 @@ main {
   border-bottom: none;
 }
 
+/* Tombol Putar Ulang Suara */
+.audio-play-btn {
+  display: inline-block;
+  margin-left: 8px;
+  background: rgba(181, 23, 47, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  font-size: 12px;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Panel Input Bawah */
 .vn-input-panel {
   background: rgba(12, 4, 6, 0.88);
   backdrop-filter: blur(12px);
@@ -149,7 +173,9 @@ main {
   outline: none;
   padding: 8px;
 }
-.vn-input-panel input::placeholder { color: rgba(255, 255, 255, 0.4); }
+.vn-input-panel input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
 
 .vn-send-btn {
   background: #b5172f;
@@ -175,33 +201,52 @@ main {
   padding: 4px;
   transition: transform 0.2s, color 0.2s;
 }
-.vn-icon-btn.active { color: #ff4d66; }
+
+.vn-icon-btn.active {
+  color: #ff4d66;
+}
+
+.vn-icon-btn.recording {
+  color: #ff4d66;
+  transform: scale(1.2);
+  animation: pulse 1s infinite alternate;
+}
+
+@keyframes pulse {
+  from { opacity: 0.6; }
+  to { opacity: 1; }
+}
 </style>
 </head>
 <body>
 
 <main>
+  <!-- Bar Atas -->
   <div class="vn-top-bar">
-    <div>👑 <span class="vn-badge">MJ AI</span></div>
+    <div>
+      👑 <span class="vn-badge">MJ AI</span>
+    </div>
     <div class="vn-status-group">
-      <button class="vn-icon-btn" id="key-btn" title="Verifikasi">🔑</button>
+      <button class="vn-icon-btn" id="key-btn" title="Verifikasi Identitas Tuan">🔑</button>
       <span>💬 <span id="status">Online</span></span>
     </div>
   </div>
 
+  <!-- Area Stage Karakter Sprite -->
   <div class="vn-stage">
-    <!-- Sprite awal netral -->
     <img id="mj-sprite" class="mj-sprite" src="./netral.png" alt="MJ Character">
   </div>
 
+  <!-- Area Narasi & Chat -->
   <div id="chat-container">
     <div class="vn-dialogue">
       "Haiii, saya MJ, asisten pribadi virtual. Ada yang bisa saya bantu?"
     </div>
   </div>
 
+  <!-- Panel Input Bawah -->
   <div class="vn-input-panel">
-    <button class="vn-icon-btn" id="mic" title="Bicara">🎙️</button>
+    <button class="vn-icon-btn" id="mic" title="Bicara lewat Suara">🎙️</button>
     <input id="cmd" placeholder="Masukkan dialog atau tindakan..." autocomplete="off">
     <button class="vn-send-btn" id="send">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
@@ -214,11 +259,35 @@ const $ = id => document.getElementById(id);
 const chat = $('chat-container');
 const status = $('status');
 const sendBtn = $('send');
+const micBtn = $('mic');
 const keyBtn = $('key-btn');
 const mjSprite = $('mj-sprite');
 const API = 'https://api.mj-ai.my.id/';
 
-// Mapping ekspresi sesuai file di repository lo
+// PIN VALID TUAN IBNU
+const VALID_PIN = "10052003";
+
+let userPIN = localStorage.getItem('MJ_PIN') || "";
+
+function updateAccessUI() {
+  if (userPIN === VALID_PIN) {
+    keyBtn.classList.add('active');
+  } else {
+    userPIN = "";
+    localStorage.removeItem('MJ_PIN');
+    keyBtn.classList.remove('active');
+  }
+}
+
+updateAccessUI();
+
+let currentAudio = null;
+
+let history = [
+  { role: 'model', parts: [{ text: 'Haiii, saya MJ, asisten pribadi virtual. Ada yang bisa saya bantu?' }] }]
+;
+
+// Mapping File Ekspresi Sesuai Repo Lo
 const EXPRESSIONS = {
   netral: './netral.png',
   senang: './senang.png',
@@ -241,49 +310,95 @@ function changeExpression(expressionName) {
 
 function autoDetectExpression(text) {
   const lower = text.toLowerCase();
-  if (lower.includes('haha') || lower.includes('senang') || lower.includes('suka') || lower.includes('😊')) changeExpression('senang');
-  else if (lower.includes('maaf') || lower.includes('sedih') || lower.includes('😭')) changeExpression('sedih');
-  else if (lower.includes('marah') || lower.includes('kesal') || lower.includes('😠')) changeExpression('marah');
-  else if (lower.includes('wah') || lower.includes('kaget') || lower.includes('😲')) changeExpression('kaget');
-  else if (lower.includes('malu') || lower.includes('tuan') || lower.includes('😳')) changeExpression('blushing');
-  else if (lower.includes('bingung') || lower.includes('pikir') || lower.includes('🤔')) changeExpression('bingung');
-  else changeExpression('netral');
+  if (lower.includes('marah') || lower.includes('kesal') || lower.includes('sabar') || lower.includes('😠') || lower.includes('😡')) {
+    changeExpression('marah');
+  } else if (lower.includes('haha') || lower.includes('senang') || lower.includes('suka') || lower.includes('😊') || lower.includes('halo')) {
+    changeExpression('senang');
+  } else if (lower.includes('maaf') || lower.includes('sedih') || lower.includes('😭') || lower.includes('kecewa')) {
+    changeExpression('sedih');
+  } else if (lower.includes('wah') || lower.includes('kaget') || lower.includes('😲') || lower.includes('apa')) {
+    changeExpression('kaget');
+  } else if (lower.includes('malu') || lower.includes('tuan') || lower.includes('😳')) {
+    changeExpression('blushing');
+  } else if (lower.includes('bingung') || lower.includes('pikir') || lower.includes('🤔') || lower.includes('bagaimana')) {
+    changeExpression('bingung');
+  } else {
+    changeExpression('netral');
+  }
 }
-
-const VALID_PIN = "10052003";
-let userPIN = localStorage.getItem('MJ_PIN') || "";
-
-function updateAccessUI() {
-  if (userPIN === VALID_PIN) keyBtn.classList.add('active');
-  else { userPIN = ""; localStorage.removeItem('MJ_PIN'); keyBtn.classList.remove('active'); }
-}
-updateAccessUI();
-
-let history = [{ role: 'model', parts: [{ text: 'Haiii, saya MJ, asisten pribadi virtual. Ada yang bisa saya bantu?' }] }];
 
 keyBtn.onclick = () => {
-  const pin = prompt("Masukkan PIN Verifikasi Tuan Ibnu:", userPIN);
+  const pin = prompt("Masukkan PIN Verifikasi Tuan Ibnu (Kosongkan jika ingin masuk sebagai Tamu):", userPIN);
   if (pin !== null) {
     const cleanPin = pin.trim();
-    if (cleanPin === VALID_PIN) { userPIN = cleanPin; localStorage.setItem('MJ_PIN', userPIN); alert("Verifikasi Berhasil!"); }
-    else { userPIN = ""; localStorage.removeItem('MJ_PIN'); alert("Mode Tamu."); }
+    if (cleanPin === VALID_PIN) {
+      userPIN = cleanPin;
+      localStorage.setItem('MJ_PIN', userPIN);
+      alert("Verifikasi Berhasil! MJ mengenali Tuan Ibnu.");
+    } else if (cleanPin === "") {
+      userPIN = "";
+      localStorage.removeItem('MJ_PIN');
+      alert("Masuk sebagai Mode Tamu.");
+    } else {
+      userPIN = "";
+      localStorage.removeItem('MJ_PIN');
+      alert("PIN Salah! Anda masuk sebagai Mode Tamu.");
+    }
     updateAccessUI();
   }
 };
 
-function addDialogue(text, isUser = false) {
+function addDialogue(text, isUser = false, audioBase64 = null) {
   const div = document.createElement('div');
   div.className = isUser ? 'vn-dialogue user-action' : 'vn-dialogue';
   div.innerText = text;
+
+  if (audioBase64 && !isUser) {
+    const playBtn = document.createElement('button');
+    playBtn.className = 'audio-play-btn';
+    playBtn.innerText = '🔊';
+    playBtn.title = 'Putar Suara';
+    playBtn.onclick = () => playAudioResponse(audioBase64, text);
+    div.appendChild(playBtn);
+  }
+
   chat.appendChild(div);
-  setTimeout(() => { chat.scrollTop = chat.scrollHeight; }, 50);
+  
+  setTimeout(() => {
+    chat.scrollTop = chat.scrollHeight;
+  }, 50);
+  
   return div;
+}
+
+function playAudioResponse(audioBase64, textFallback) {
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
+  if ('speechSynthesis' in window) {
+    speechSynthesis.cancel();
+  }
+
+  if (audioBase64) {
+    try {
+      currentAudio = new Audio("data:audio/mp3;base64," + audioBase64);
+      currentAudio.play().catch(e => {
+        console.warn("Autoplay terhalang browser...", e);
+      });
+      return;
+    } catch (e) {
+      console.error("Gagal memutar ElevenLabs:", e);
+    }
+  }
 }
 
 async function run(q) {
   if (!q.trim()) return;
+  
   addDialogue(q, true);
   $('cmd').value = '';
+  
   history.push({ role: 'user', parts: [{ text: q }] });
 
   const loading = addDialogue('...');
@@ -294,17 +409,28 @@ async function run(q) {
     const res = await fetch(API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: history, message: q, passcode: userPIN, pin: userPIN, pass: userPIN })
+      body: JSON.stringify({ 
+        contents: history, 
+        message: q,
+        passcode: userPIN,
+        pin: userPIN,
+        pass: userPIN
+      })
     });
+    
     const data = await res.json();
     loading.remove();
-    if (!res.ok) throw new Error(data.error || 'Gagal');
 
-    const reply = data.answer || "Respon kosong.";
-    addDialogue(reply, false);
+    if (!res.ok) throw new Error(data.error || 'Gagal tersambung');
+
+    const reply = data.answer || "Maaf, tidak ada respon.";
+    
+    addDialogue(reply, false, data.audio);
     autoDetectExpression(reply);
     history.push({ role: 'model', parts: [{ text: reply }] });
+
     status.innerText = 'Online';
+
   } catch (err) {
     loading.remove();
     addDialogue('Ralat: ' + err.message);
@@ -315,8 +441,52 @@ async function run(q) {
   }
 }
 
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+micBtn.onclick = () => {
+  if (!SpeechRecognition) {
+    alert('Browser kamu tidak mendukung perekaman suara langsung.');
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = 'id-ID';
+  recognition.interimResults = false;
+
+  try {
+    recognition.start();
+    micBtn.classList.add('recording');
+    status.innerText = 'Mendengarkan...';
+  } catch (e) {
+    recognition.stop();
+    micBtn.classList.remove('recording');
+    status.innerText = 'Online';
+  }
+
+  recognition.onresult = (e) => {
+    const transcript = e.results[0][0].transcript;
+    $('cmd').value = transcript;
+    micBtn.classList.remove('recording');
+    run(transcript);
+  };
+
+  recognition.onerror = (e) => {
+    micBtn.classList.remove('recording');
+    status.innerText = 'Online';
+    alert('Gagal mendeteksi suara / izin mikrofon belum diberikan.');
+  };
+
+  recognition.onend = () => {
+    micBtn.classList.remove('recording');
+    if (status.innerText === 'Mendengarkan...') {
+      status.innerText = 'Online';
+    }
+  };
+};
+
 sendBtn.onclick = () => run($('cmd').value);
 $('cmd').onkeydown = e => { if (e.key === 'Enter') sendBtn.click(); };
 </script>
+
 </body>
 </html>
