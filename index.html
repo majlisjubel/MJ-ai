@@ -256,7 +256,7 @@ const keyBtn = $('key-btn');
 const bgLayer = $('bg-layer');
 const API = 'https://api.mj-ai.my.id/';
 
-// 7 LINK EKSPRESI DARI IMGBB TUAN
+// 7 LINK EKSPRESI IMGBB
 const sprites = {
   biasa: "https://i.ibb.co.com/gbPmMmcK/file-00000000d8c08207ac4c93cd9137f78e.png",
   senyum: "https://i.ibb.co.com/kFk326N/file-0000000088648211b2abc737acf9224e.png",
@@ -311,7 +311,7 @@ keyBtn.onclick = () => {
   }
 };
 
-// FUNGSI MENGUBAH BACKGROUND FULL SCREEN DENGAN EFEK HALUS
+// FUNGSI UBAH BACKGROUND EKSPRESI DENGAN TRANSISI HALUS
 function changeExpression(expressionTag) {
   const tag = (expressionTag || 'biasa').toLowerCase();
   const newImgUrl = sprites[tag] || sprites.biasa;
@@ -400,18 +400,19 @@ async function run(q) {
 
     let reply = data.answer || "[biasa] Maaf, tidak ada respon.";
     
-    // DETEKSI EKSPRESI DARI TAG TEKS AI
+    // PERBAIKAN: DETEKSI & BERSIHKAN TAG EKSPRESI DARI KOTAK CHAT
     const match = reply.match(/^\[(biasa\vert{}senyum\vert{}kaget\vert{}mikir\vert{}malu\vert{}marah\vert{}sedih)\]/i);
     let expression = 'biasa';
     if (match) {
       expression = match[1].toLowerCase();
+      // Menghapus tag [ekspresi] agar tidak ikut muncul di dialog
       reply = reply.replace(/^\[(biasa\vert{}senyum\vert{}kaget\vert{}mikir\vert{}malu\vert{}marah\vert{}sedih)\]\s*/i, ''); 
     }
     
-    // Ubah background layar sesuai ekspresi AI secara otomatis
+    // Ubah latar belakang layar sesuai emosi AI
     changeExpression(expression);
 
-    // Tampilkan balasan teks bersih
+    // Tampilkan pesan bersih tanpa tag
     addDialogue(reply, false, data.audio);
     
     history.push({ role: 'model', parts: [{ text: reply }] });
