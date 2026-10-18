@@ -11,7 +11,7 @@ html, body {
   height: 100%;
   background-color: #050203;
   /* Background Kafe Malam */
-  background-image: linear-gradient(rgba(5, 2, 3, 0.3), rgba(5, 2, 3, 0.7)), url('./1792329882709.png');
+  background-image: linear-gradient(rgba(5, 2, 3, 0.2), rgba(5, 2, 3, 0.6)), url('./1792329882709.png');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
@@ -73,6 +73,7 @@ main {
   align-items: center;
   overflow: hidden;
   z-index: 1;
+  pointer-events: none;
 }
 
 .mj-sprite {
@@ -91,40 +92,38 @@ main {
 
 /* Area Chat / Dialog Melayang Transparan di atas Karakter */
 #chat-container {
-  position: absolute;
-  left: 12px;
-  right: 12px;
-  bottom: 75px;
-  max-height: 55vh;
+  flex: 1;
+  max-height: 52vh;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  justify-content: flex-end;
+  gap: 8px;
   padding: 10px 4px;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
   z-index: 15;
+  margin-top: 45px;
 }
 
 .vn-dialogue {
-  background: rgba(15, 5, 8, 0.68);
-  backdrop-filter: blur(8px);
-  border-top: 1px solid rgba(255, 77, 102, 0.35);
-  border-bottom: 1px solid rgba(255, 77, 102, 0.35);
+  background: rgba(10, 3, 5, 0.45);
+  backdrop-filter: blur(6px);
+  border-top: 1px solid rgba(255, 77, 102, 0.25);
+  border-bottom: 1px solid rgba(255, 77, 102, 0.25);
   border-radius: 10px;
-  padding: 12px 16px;
-  font-size: 14px;
-  line-height: 1.6;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  line-height: 1.5;
   color: #ffffff;
-  text-align: center;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
   animation: fadeIn 0.3s ease-in-out;
   word-wrap: break-word;
 }
 
 .vn-dialogue.user-action {
-  background: rgba(181, 23, 47, 0.5);
-  border-color: rgba(255, 51, 75, 0.6);
+  background: rgba(181, 23, 47, 0.35);
+  border-color: rgba(255, 51, 75, 0.4);
   color: #ffccd5;
   font-style: italic;
   text-align: right;
@@ -155,20 +154,18 @@ main {
 
 /* Panel Input Bawah */
 .vn-input-panel {
-  position: absolute;
-  left: 10px;
-  right: 10px;
-  bottom: 10px;
-  background: rgba(12, 4, 6, 0.85);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(181, 23, 47, 0.4);
+  background: rgba(12, 4, 6, 0.75);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(181, 23, 47, 0.35);
   border-radius: 16px;
   padding: 8px 12px;
   display: flex;
   align-items: center;
   gap: 8px;
-  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+  flex-shrink: 0;
   z-index: 20;
+  margin-bottom: 4px;
 }
 
 .vn-input-panel input {
@@ -294,7 +291,7 @@ let history = [
   { role: 'model', parts: [{ text: 'Haiii, saya MJ, asisten pribadi virtual. Ada yang bisa saya bantu?' }] }
 ];
 
-// Mapping File Ekspresi Sesuai Repo Lo
+// Mapping File Ekspresi Sesuai Nama File di Repo GitHub
 const EXPRESSIONS = {
   netral: './netral.png',
   senang: './senang.png',
@@ -302,7 +299,7 @@ const EXPRESSIONS = {
   marah: './marah.png',
   kaget: './kaget.png',
   blushing: './blushing.png',
-  bingung: './berfikir.png'
+  berfikir: './berfikir.png'
 };
 
 function changeExpression(expressionName) {
@@ -317,18 +314,34 @@ function changeExpression(expressionName) {
 
 function autoDetectExpression(text) {
   const lower = text.toLowerCase();
-  if (lower.includes('marah') || lower.includes('kesal') || lower.includes('sabar') || lower.includes('😠') || lower.includes('😡')) {
+  
+  // 1. Prioritas Utama: Tag Emosi / Emoji
+  if (lower.includes('[marah]') || lower.includes('😠') || lower.includes('😡')) {
     changeExpression('marah');
-  } else if (lower.includes('haha') || lower.includes('senang') || lower.includes('suka') || lower.includes('😊') || lower.includes('halo')) {
-    changeExpression('senang');
-  } else if (lower.includes('maaf') || lower.includes('sedih') || lower.includes('😭') || lower.includes('kecewa')) {
+  } else if (lower.includes('[sedih]') || lower.includes('😭') || lower.includes('💔')) {
     changeExpression('sedih');
-  } else if (lower.includes('wah') || lower.includes('kaget') || lower.includes('😲') || lower.includes('apa')) {
-    changeExpression('kaget');
-  } else if (lower.includes('malu') || lower.includes('tuan') || lower.includes('😳')) {
+  } else if (lower.includes('[blushing]') || lower.includes('[malu]') || lower.includes('😳')) {
     changeExpression('blushing');
-  } else if (lower.includes('bingung') || lower.includes('pikir') || lower.includes('🤔') || lower.includes('bagaimana')) {
-    changeExpression('bingung');
+  } else if (lower.includes('[kaget]') || lower.includes('😲') || lower.includes('😱')) {
+    changeExpression('kaget');
+  } else if (lower.includes('[berfikir]') || lower.includes('[bingung]') || lower.includes('🤔')) {
+    changeExpression('berfikir');
+  } else if (lower.includes('[senang]') || lower.includes('😊') || lower.includes('😁') || lower.includes('😄')) {
+    changeExpression('senang');
+  } 
+  // 2. Deteksi Kata Kunci Kalimat
+  else if (lower.includes('marah') || lower.includes('kesal') || lower.includes('benci')) {
+    changeExpression('marah');
+  } else if (lower.includes('sedih') || lower.includes('kecewa') || lower.includes('maaf')) {
+    changeExpression('sedih');
+  } else if (lower.includes('senang') || lower.includes('suka') || lower.includes('haha') || lower.includes('senyum')) {
+    changeExpression('senang');
+  } else if (lower.includes('kaget') || lower.includes('terkejut') || lower.includes('wah')) {
+    changeExpression('kaget');
+  } else if (lower.includes('malu') || lower.includes('blush')) {
+    changeExpression('blushing');
+  } else if (lower.includes('berfikir') || lower.includes('pikir') || lower.includes('bingung') || lower.includes('renungkan')) {
+    changeExpression('berfikir');
   } else {
     changeExpression('netral');
   }
