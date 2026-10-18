@@ -104,13 +104,13 @@ main {
 .audio-play-btn {
   display: inline-block;
   margin-left: 8px;
-  background: rgba(181, 23, 47, 0.7);
-  border: none;
+  background: rgba(181, 23, 47, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   color: #fff;
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  font-size: 11px;
+  width: 26px;
+  height: 26px;
+  font-size: 12px;
   cursor: pointer;
   vertical-align: middle;
 }
@@ -229,11 +229,20 @@ const micBtn = $('mic');
 const keyBtn = $('key-btn');
 const API = 'https://api.mj-ai.my.id/';
 
-// KUNCI VERIFIKASI TUAN IBNU (Disimpan di Penyimpanan Browser / LocalStorage)
+// PIN VALID TERHUBUNG DENGAN WORKER
+const VALID_PIN = "10052003";
+
+// Mengambil PIN terdaftar dari browser
 let userPIN = localStorage.getItem('MJ_PIN') || "";
 
-// Jika PIN sudah tersimpan, nyalakan warna tombol kunci
-if (userPIN) keyBtn.classList.add('active');
+// Cek status PIN saat halaman dimuat
+if (userPIN === VALID_PIN) {
+  keyBtn.classList.add('active');
+} else {
+  userPIN = "";
+  localStorage.removeItem('MJ_PIN');
+  keyBtn.classList.remove('active');
+}
 
 let currentAudio = null;
 
@@ -241,18 +250,26 @@ let history = [
   { role: 'model', parts: [{ text: 'Haiii, saya MJ, asisten pribadi virtual. Ada yang bisa saya bantu?' }] }
 ];
 
-// Tombol kunci untuk memasukkan PIN rahasia Tuan
+// Tombol verifikasi PIN
 keyBtn.onclick = () => {
   const pin = prompt("Masukkan PIN Verifikasi Tuan Ibnu (Kosongkan jika ingin masuk sebagai Tamu):", userPIN);
   if (pin !== null) {
-    userPIN = pin.trim();
-    localStorage.setItem('MJ_PIN', userPIN);
-    if (userPIN) {
+    const cleanPin = pin.trim();
+    if (cleanPin === VALID_PIN) {
+      userPIN = cleanPin;
+      localStorage.setItem('MJ_PIN', userPIN);
       keyBtn.classList.add('active');
-      alert("PIN Verifikasi disimpan. MJ akan mengenali Tuan!");
-    } else {
+      alert("Verifikasi Berhasil! MJ mengenali Tuan Ibnu.");
+    } else if (cleanPin === "") {
+      userPIN = "";
+      localStorage.removeItem('MJ_PIN');
       keyBtn.classList.remove('active');
-      alert("Mode Tamu diaktifkan.");
+      alert("Masuk sebagai Mode Tamu.");
+    } else {
+      userPIN = "";
+      localStorage.removeItem('MJ_PIN');
+      keyBtn.classList.remove('active');
+      alert("PIN Salah! Anda akan masuk sebagai Mode Tamu.");
     }
   }
 };
@@ -262,11 +279,12 @@ function addDialogue(text, isUser = false, audioBase64 = null) {
   div.className = isUser ? 'vn-dialogue user-action' : 'vn-dialogue';
   div.innerText = text;
 
-  // Jika ada data audio ElevenLabs, tambahkan tombol play manual
+  // Hanya tampilkan tombol 🔊 jika ada audio ElevenLabs
   if (audioBase64 && !isUser) {
     const playBtn = document.createElement('button');
     playBtn.className = 'audio-play-btn';
     playBtn.innerText = '🔊';
+    playBtn.title = 'Putar Suara';
     playBtn.onclick = () => playAudioResponse(audioBase64, text);
     div.appendChild(playBtn);
   }
@@ -326,14 +344,13 @@ async function run(q) {
   sendBtn.disabled = true;
 
   try {
-    // Kirim pesan, riwayat, DAN passcode PIN rahasia ke backend Worker
     const res = await fetch(API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
         contents: history, 
         message: q,
-        passcode: userPIN // Mengirim PIN verifikasi rahasia
+        passcode: userPIN 
       })
     });
     
@@ -344,13 +361,11 @@ async function run(q) {
 
     const reply = data.answer || "Maaf, tidak ada respon.";
     
-    // Tampilkan balasan & sertakan tombol putar suara
+    // Tampilkan pesan & beri tombol audio (🔊), TANPA memutar suara otomatis
     addDialogue(reply, false, data.audio);
     
     history.push({ role: 'model', parts: [{ text: reply }] });
 
-    // Otomatis putar suara ElevenLabs saat balasan masuk
-    playAudioResponse(data.audio, reply);
     status.innerText = 'Online';
 
   } catch (err) {
