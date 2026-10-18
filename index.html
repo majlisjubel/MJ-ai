@@ -15,7 +15,7 @@ html, body {
   overflow: hidden;
 }
 
-/* BACKGROUND FULL SCREEN (SPRITE KARAKTER BERUBAH DI SINI) */
+/* BACKGROUND FULL SCREEN (BERUBAH SESUAI EKSPRESI) */
 .vn-bg-layer {
   position: absolute;
   top: 0;
@@ -82,13 +82,13 @@ main {
   gap: 8px;
 }
 
-/* Area Chat / Dialog Mengambang di Bawah */
+/* Area Chat / Dialog (DIPERBAIKI AGAR BISA DI-SCROLL DENGAN NORMAL) */
 #chat-container {
   flex: 1;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: flex-start; /* Dikembalikan ke flex-start agar bisa di-scroll ke atas */
   gap: 12px;
   padding: 10px 2px;
   scroll-behavior: smooth;
@@ -400,20 +400,21 @@ async function run(q) {
 
     let reply = data.answer || "[biasa] Maaf, tidak ada respon.";
     
-    // PERBAIKAN: DETEKSI & BERSIHKAN TAG EKSPRESI DARI KOTAK CHAT
-    const match = reply.match(/^\[(biasa\vert{}senyum\vert{}kaget\vert{}mikir\vert{}malu\vert{}marah\vert{}sedih)\]/i);
+    // PERBAIKAN REGEX PEMBERSIH TAG (Mendukung spasi atau variasi format tag di awal kalimat)
     let expression = 'biasa';
+    const match = reply.match(/\[(biasa\vert{}senyum\vert{}kaget\vert{}mikir\vert{}malu\vert{}marah\vert{}sedih)\]/i);
     if (match) {
       expression = match[1].toLowerCase();
-      // Menghapus tag [ekspresi] agar tidak ikut muncul di dialog
-      reply = reply.replace(/^\[(biasa\vert{}senyum\vert{}kaget\vert{}mikir\vert{}malu\vert{}marah\vert{}sedih)\]\s*/i, ''); 
     }
+    
+    // Hapus seluruh tag emosi dari teks yang akan ditampilkan di kotak chat
+    let cleanReply = reply.replace(/\[(biasa\vert{}senyum\vert{}kaget\vert{}mikir\vert{}malu\vert{}marah\vert{}sedih)\]/gi, '').trim();
     
     // Ubah latar belakang layar sesuai emosi AI
     changeExpression(expression);
 
     // Tampilkan pesan bersih tanpa tag
-    addDialogue(reply, false, data.audio);
+    addDialogue(cleanReply, false, data.audio);
     
     history.push({ role: 'model', parts: [{ text: reply }] });
 
