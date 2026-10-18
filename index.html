@@ -36,12 +36,13 @@ main {
   display: flex;
   gap: 10px;
   align-items: center;
+  justify-content: space-between;
+  width: 100%;
   font-size: 11px;
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(6px);
   padding: 6px 12px;
   border-radius: 20px;
-  align-self: flex-start;
   border: 1px solid rgba(255, 255, 255, 0.15);
   flex-shrink: 0;
   z-index: 10;
@@ -51,6 +52,12 @@ main {
   padding: 2px 8px;
   border-radius: 10px;
   font-weight: bold;
+}
+
+.vn-status-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* Area Chat / Dialog */
@@ -79,6 +86,7 @@ main {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
   animation: fadeIn 0.3s ease-in-out;
   word-wrap: break-word;
+  position: relative;
 }
 
 .vn-dialogue.user-action {
@@ -90,6 +98,21 @@ main {
   border-radius: 10px;
   border-top: none;
   border-bottom: none;
+}
+
+/* Tombol Putar Ulang Suara */
+.audio-play-btn {
+  display: inline-block;
+  margin-left: 8px;
+  background: rgba(181, 23, 47, 0.7);
+  border: none;
+  color: #fff;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 11px;
+  cursor: pointer;
+  vertical-align: middle;
 }
 
 @keyframes fadeIn {
@@ -150,7 +173,10 @@ main {
   transition: transform 0.2s, color 0.2s;
 }
 
-/* Efek saat mic aktif merekam */
+.vn-icon-btn.active {
+  color: #ff4d66;
+}
+
 .vn-icon-btn.recording {
   color: #ff4d66;
   transform: scale(1.2);
@@ -168,14 +194,19 @@ main {
 <main>
   <!-- Bar Atas -->
   <div class="vn-top-bar">
-    <span>👑 <span class="vn-badge">MJ AI</span></span>
-    <span>💬 <span id="status">Online</span></span>
+    <div>
+      👑 <span class="vn-badge">MJ AI</span>
+    </div>
+    <div class="vn-status-group">
+      <button class="vn-icon-btn" id="key-btn" title="Verifikasi Identitas Tuan">🔑</button>
+      <span>💬 <span id="status">Online</span></span>
+    </div>
   </div>
 
   <!-- Area Narasi & Chat -->
   <div id="chat-container">
     <div class="vn-dialogue">
-      "Haiii, saya MJ, asisten pribadi Tuan Ibnu. Apapun keperluan anda bisa dibicarakan dengan saya."
+      "Haiii, saya MJ, asisten pribadi virtual. Ada yang bisa saya bantu?"
     </div>
   </div>
 
@@ -195,20 +226,51 @@ const chat = $('chat-container');
 const status = $('status');
 const sendBtn = $('send');
 const micBtn = $('mic');
+const keyBtn = $('key-btn');
 const API = 'https://api.mj-ai.my.id/';
 
-// Variabel menyimpan elemen pemutar audio ElevenLabs
+// KUNCI VERIFIKASI TUAN IBNU (Disimpan di Penyimpanan Browser / LocalStorage)
+let userPIN = localStorage.getItem('MJ_PIN') || "";
+
+// Jika PIN sudah tersimpan, nyalakan warna tombol kunci
+if (userPIN) keyBtn.classList.add('active');
+
 let currentAudio = null;
 
-// Memori percakapan berurutan agar AI tidak lupa topik sebelumnya
 let history = [
-  { role: 'model', parts: [{ text: 'Haiii, saya MJ, asisten pribadi Tuan Ibnu. Apapun keperluan anda bisa dibicarakan dengan saya.' }] }
+  { role: 'model', parts: [{ text: 'Haiii, saya MJ, asisten pribadi virtual. Ada yang bisa saya bantu?' }] }
 ];
 
-function addDialogue(text, isUser = false) {
+// Tombol kunci untuk memasukkan PIN rahasia Tuan
+keyBtn.onclick = () => {
+  const pin = prompt("Masukkan PIN Verifikasi Tuan Ibnu (Kosongkan jika ingin masuk sebagai Tamu):", userPIN);
+  if (pin !== null) {
+    userPIN = pin.trim();
+    localStorage.setItem('MJ_PIN', userPIN);
+    if (userPIN) {
+      keyBtn.classList.add('active');
+      alert("PIN Verifikasi disimpan. MJ akan mengenali Tuan!");
+    } else {
+      keyBtn.classList.remove('active');
+      alert("Mode Tamu diaktifkan.");
+    }
+  }
+};
+
+function addDialogue(text, isUser = false, audioBase64 = null) {
   const div = document.createElement('div');
   div.className = isUser ? 'vn-dialogue user-action' : 'vn-dialogue';
   div.innerText = text;
+
+  // Jika ada data audio ElevenLabs, tambahkan tombol play manual
+  if (audioBase64 && !isUser) {
+    const playBtn = document.createElement('button');
+    playBtn.className = 'audio-play-btn';
+    playBtn.innerText = '🔊';
+    playBtn.onclick = () => playAudioResponse(audioBase64, text);
+    div.appendChild(playBtn);
+  }
+
   chat.appendChild(div);
   
   setTimeout(() => {
@@ -218,9 +280,7 @@ function addDialogue(text, isUser = false) {
   return div;
 }
 
-// FUNGSI BARU: Utamakan ElevenLabs Audio (Base64), Fallback ke Web Speech API jika gagal
 function playAudioResponse(audioBase64, textFallback) {
-  // Matikan audio lama jika masih berputar
   if (currentAudio) {
     currentAudio.pause();
     currentAudio = null;
@@ -229,12 +289,11 @@ function playAudioResponse(audioBase64, textFallback) {
     speechSynthesis.cancel();
   }
 
-  // 1. Jika ada audio ElevenLabs
   if (audioBase64) {
     try {
       currentAudio = new Audio("data:audio/mp3;base64," + audioBase64);
       currentAudio.play().catch(e => {
-        console.warn("Autoplay terhalang browser, mencoba fallback suara HP...", e);
+        console.warn("Autoplay terhalang browser, mencoba fallback suara...", e);
         fallbackSpeech(textFallback);
       });
       return;
@@ -243,7 +302,6 @@ function playAudioResponse(audioBase64, textFallback) {
     }
   }
 
-  // 2. Fallback Suara Bawaan HP jika audio ElevenLabs kosong/error
   fallbackSpeech(textFallback);
 }
 
@@ -261,7 +319,6 @@ async function run(q) {
   addDialogue(q, true);
   $('cmd').value = '';
   
-  // Masukkan riwayat pesan pengguna ke dalam memori
   history.push({ role: 'user', parts: [{ text: q }] });
 
   const loading = addDialogue('...');
@@ -269,11 +326,15 @@ async function run(q) {
   sendBtn.disabled = true;
 
   try {
-    // Kirim pesan beserta seluruh riwayat obrolan ke backend Cloudflare Worker
+    // Kirim pesan, riwayat, DAN passcode PIN rahasia ke backend Worker
     const res = await fetch(API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: history, message: q })
+      body: JSON.stringify({ 
+        contents: history, 
+        message: q,
+        passcode: userPIN // Mengirim PIN verifikasi rahasia
+      })
     });
     
     const data = await res.json();
@@ -282,12 +343,13 @@ async function run(q) {
     if (!res.ok) throw new Error(data.error || 'Gagal tersambung');
 
     const reply = data.answer || "Maaf, tidak ada respon.";
-    addDialogue(reply, false);
     
-    // Simpan balasan AI ke memori agar pembahasan berikutnya tetap nyambung
+    // Tampilkan balasan & sertakan tombol putar suara
+    addDialogue(reply, false, data.audio);
+    
     history.push({ role: 'model', parts: [{ text: reply }] });
 
-    // PUTAR SUARA DARI ELEVENLABS DATA AUDIO
+    // Otomatis putar suara ElevenLabs saat balasan masuk
     playAudioResponse(data.audio, reply);
     status.innerText = 'Online';
 
@@ -295,14 +357,13 @@ async function run(q) {
     loading.remove();
     addDialogue('Ralat: ' + err.message);
     status.innerText = 'Error';
-    // Hapus input terakhir jika gagal agar riwayat tidak rusak
     history.pop();
   } finally {
     sendBtn.disabled = false;
   }
 }
 
-/* FITUR VOICE INPUT (MENDENGARKAN SUARA) */
+/* FITUR VOICE INPUT */
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if (SpeechRecognition) {
@@ -326,7 +387,7 @@ if (SpeechRecognition) {
     const transcript = e.results[0][0].transcript;
     $('cmd').value = transcript;
     micBtn.classList.remove('recording');
-    run(transcript); // Otomatis kirim pesan setelah selesai bicara
+    run(transcript);
   };
 
   recognition.onerror = (e) => {
