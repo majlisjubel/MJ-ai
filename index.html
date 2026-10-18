@@ -15,7 +15,7 @@ html, body {
   overflow: hidden;
 }
 
-/* BACKGROUND FULL SCREEN (BERUBAH SESUAI EKSPRESI) */
+/* BACKGROUND FULL SCREEN (SPRITE KARAKTER) */
 .vn-bg-layer {
   position: absolute;
   top: 0;
@@ -29,7 +29,7 @@ html, body {
   z-index: 1;
 }
 
-/* EFEK GELAP/GRADASI AGAR TEKS TERBACA JELAS */
+/* OVERLAY GRADASI DARK */
 .vn-overlay {
   position: absolute;
   top: 0;
@@ -54,7 +54,7 @@ main {
   z-index: 3;
 }
 
-/* Status Bar ala VN */
+/* Status Bar */
 .vn-top-bar {
   display: flex;
   gap: 10px;
@@ -82,13 +82,13 @@ main {
   gap: 8px;
 }
 
-/* Area Chat / Dialog (DIPERBAIKI AGAR BISA DI-SCROLL DENGAN NORMAL) */
+/* Area Chat BISA SCROLL */
 #chat-container {
   flex: 1;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start; /* Dikembalikan ke flex-start agar bisa di-scroll ke atas */
+  justify-content: flex-start;
   gap: 12px;
   padding: 10px 2px;
   scroll-behavior: smooth;
@@ -195,15 +195,8 @@ main {
   transition: transform 0.2s, color 0.2s;
 }
 
-.vn-icon-btn.active {
-  color: #ff4d66;
-}
-
-.vn-icon-btn.recording {
-  color: #ff4d66;
-  transform: scale(1.2);
-  animation: pulse 1s infinite alternate;
-}
+.vn-icon-btn.active { color: #ff4d66; }
+.vn-icon-btn.recording { color: #ff4d66; transform: scale(1.2); animation: pulse 1s infinite alternate; }
 
 @keyframes pulse {
   from { opacity: 0.6; }
@@ -213,35 +206,33 @@ main {
 </head>
 <body>
 
-  <!-- LAYER BACKGROUND & EKSPRESI KARAKTER FULL SCREEN -->
+  <!-- LAYER BACKGROUND & EKSPRESI -->
   <div id="bg-layer" class="vn-bg-layer" style="background-image: url('https://i.ibb.co.com/gbPmMmcK/file-00000000d8c08207ac4c93cd9137f78e.png');"></div>
   <div class="vn-overlay"></div>
 
 <main>
-  <!-- Bar Atas -->
+  <!-- Top Bar -->
   <div class="vn-top-bar">
-    <div>
-      👑 <span class="vn-badge">MJ AI</span>
-    </div>
+    <div>👑 <span class="vn-badge">MJ AI</span></div>
     <div class="vn-status-group">
-      <button class="vn-icon-btn" id="key-btn" title="Verifikasi Identitas Tuan">🔑</button>
+      <button class="vn-icon-btn" id="key-btn" title="Verifikasi PIN">🔑</button>
       <span>💬 <span id="status">Online</span></span>
     </div>
   </div>
 
-  <!-- Area Narasi & Chat -->
+  <!-- Area Chat -->
   <div id="chat-container">
     <div class="vn-dialogue">
       "Haiii, saya MJ, asisten pribadi virtual. Ada yang bisa saya bantu?"
     </div>
   </div>
 
-  <!-- Panel Input Bawah -->
+  <!-- Input Bar -->
   <div class="vn-input-panel">
-    <button class="vn-icon-btn" id="mic" title="Bicara lewat Suara">🎙️</button>
-    <input id="cmd" placeholder="Masukkan dialog atau tindakan..." autocomplete="off">
+    <button class="vn-icon-btn" id="mic">🎙️</button>
+    <input id="cmd" placeholder="Masukkan dialog..." autocomplete="off">
     <button class="vn-send-btn" id="send">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
     </button>
   </div>
 </main>
@@ -256,7 +247,7 @@ const keyBtn = $('key-btn');
 const bgLayer = $('bg-layer');
 const API = 'https://api.mj-ai.my.id/';
 
-// 7 LINK EKSPRESI IMGBB
+// 7 LINK FOTO IMGBB SESUAI INPUT TUAN
 const sprites = {
   biasa: "https://i.ibb.co.com/gbPmMmcK/file-00000000d8c08207ac4c93cd9137f78e.png",
   senyum: "https://i.ibb.co.com/kFk326N/file-0000000088648211b2abc737acf9224e.png",
@@ -267,9 +258,7 @@ const sprites = {
   sedih: "https://i.ibb.co.com/4g06zDZ6/1792299320411.png"
 };
 
-// PIN VALID TUAN IBNU
 const VALID_PIN = "10052003";
-
 let userPIN = localStorage.getItem('MJ_PIN') || "";
 
 function updateAccessUI() {
@@ -281,39 +270,33 @@ function updateAccessUI() {
     keyBtn.classList.remove('active');
   }
 }
-
 updateAccessUI();
 
 let currentAudio = null;
-
 let history = [
   { role: 'model', parts: [{ text: 'Haiii, saya MJ, asisten pribadi virtual. Ada yang bisa saya bantu?' }] }
 ];
 
 keyBtn.onclick = () => {
-  const pin = prompt("Masukkan PIN Verifikasi Tuan Ibnu (Kosongkan jika ingin masuk sebagai Tamu):", userPIN);
+  const pin = prompt("Masukkan PIN Verifikasi Tuan Ibnu (Kosongkan jika Mode Tamu):", userPIN);
   if (pin !== null) {
     const cleanPin = pin.trim();
     if (cleanPin === VALID_PIN) {
       userPIN = cleanPin;
       localStorage.setItem('MJ_PIN', userPIN);
-      alert("Verifikasi Berhasil! MJ mengenali Tuan Ibnu.");
-    } else if (cleanPin === "") {
-      userPIN = "";
-      localStorage.removeItem('MJ_PIN');
-      alert("Masuk sebagai Mode Tamu.");
+      alert("Verifikasi Berhasil! Mode Tuan Ibnu.");
     } else {
       userPIN = "";
       localStorage.removeItem('MJ_PIN');
-      alert("PIN Salah! Anda masuk sebagai Mode Tamu.");
+      alert("Masuk sebagai Mode Tamu.");
     }
     updateAccessUI();
   }
 };
 
-// FUNGSI UBAH BACKGROUND EKSPRESI DENGAN TRANSISI HALUS
+// FUNGSI GANTI BACKGROUND GAMBAR
 function changeExpression(expressionTag) {
-  const tag = (expressionTag || 'biasa').toLowerCase();
+  const tag = (expressionTag || 'biasa').toLowerCase().trim();
   const newImgUrl = sprites[tag] || sprites.biasa;
   
   bgLayer.style.opacity = '0.3';
@@ -332,39 +315,24 @@ function addDialogue(text, isUser = false, audioBase64 = null) {
     const playBtn = document.createElement('button');
     playBtn.className = 'audio-play-btn';
     playBtn.innerText = '🔊';
-    playBtn.title = 'Putar Suara';
-    playBtn.onclick = () => playAudioResponse(audioBase64, text);
+    playBtn.onclick = () => playAudioResponse(audioBase64);
     div.appendChild(playBtn);
   }
 
   chat.appendChild(div);
-  
-  setTimeout(() => {
-    chat.scrollTop = chat.scrollHeight;
-  }, 50);
-  
+  setTimeout(() => { chat.scrollTop = chat.scrollHeight; }, 50);
   return div;
 }
 
-function playAudioResponse(audioBase64, textFallback) {
-  if (currentAudio) {
-    currentAudio.pause();
-    currentAudio = null;
-  }
-  if ('speechSynthesis' in window) {
-    speechSynthesis.cancel();
-  }
+function playAudioResponse(audioBase64) {
+  if (currentAudio) currentAudio.pause();
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
 
   if (audioBase64) {
     try {
       currentAudio = new Audio("data:audio/mp3;base64," + audioBase64);
-      currentAudio.play().catch(e => {
-        console.warn("Autoplay terhalang browser...", e);
-      });
-      return;
-    } catch (e) {
-      console.error("Gagal memutar ElevenLabs:", e);
-    }
+      currentAudio.play();
+    } catch (e) { console.error("Audio error:", e); }
   }
 }
 
@@ -373,7 +341,6 @@ async function run(q) {
   
   addDialogue(q, true);
   $('cmd').value = '';
-  
   history.push({ role: 'user', parts: [{ text: q }] });
 
   const loading = addDialogue('...');
@@ -384,13 +351,7 @@ async function run(q) {
     const res = await fetch(API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        contents: history, 
-        message: q,
-        passcode: userPIN,
-        pin: userPIN,
-        pass: userPIN
-      })
+      body: JSON.stringify({ contents: history, message: q, passcode: userPIN })
     });
     
     const data = await res.json();
@@ -398,26 +359,27 @@ async function run(q) {
 
     if (!res.ok) throw new Error(data.error || 'Gagal tersambung');
 
-    let reply = data.answer || "[biasa] Maaf, tidak ada respon.";
+    let rawReply = data.answer || "Maaf, tidak ada respon.";
     
-    // PERBAIKAN REGEX PEMBERSIH TAG (Mendukung spasi atau variasi format tag di awal kalimat)
+    // --- KHUSUS PEMBERSIH TAG SAKTI ---
     let expression = 'biasa';
-    const match = reply.match(/\[(biasa\vert{}senyum\vert{}kaget\vert{}mikir\vert{}malu\vert{}marah\vert{}sedih)\]/i);
+    
+    // 1. Cari ekspresinya dulu
+    const match = rawReply.match(/\[(biasa\vert{}senyum\vert{}kaget\vert{}mikir\vert{}malu\vert{}marah\vert{}sedih)\]/i);
     if (match) {
       expression = match[1].toLowerCase();
     }
-    
-    // Hapus seluruh tag emosi dari teks yang akan ditampilkan di kotak chat
-    let cleanReply = reply.replace(/\[(biasa\vert{}senyum\vert{}kaget\vert{}mikir\vert{}malu\vert{}marah\vert{}sedih)\]/gi, '').trim();
-    
-    // Ubah latar belakang layar sesuai emosi AI
+
+    // 2. HAPUS SEMUA TAG [ekspresi] DARI TEKS BALASAN
+    let cleanReply = rawReply.replace(/\[(biasa\vert{}senyum\vert{}kaget\vert{}mikir\vert{}malu\vert{}marah\vert{}sedih)\]/gi, '').trim();
+
+    // 3. Eksekusi Ubah Gambar Background
     changeExpression(expression);
 
-    // Tampilkan pesan bersih tanpa tag
+    // 4. Tampilkan Teks yang SUDAH BERSIH di Chat Box
     addDialogue(cleanReply, false, data.audio);
     
-    history.push({ role: 'model', parts: [{ text: reply }] });
-
+    history.push({ role: 'model', parts: [{ text: rawReply }] });
     status.innerText = 'Online';
 
   } catch (err) {
@@ -433,21 +395,16 @@ async function run(q) {
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 micBtn.onclick = () => {
-  if (!SpeechRecognition) {
-    alert('Browser kamu tidak mendukung perekaman suara langsung.');
-    return;
-  }
+  if (!SpeechRecognition) return alert('Browser tidak mendukung voice mic.');
 
   const recognition = new SpeechRecognition();
   recognition.lang = 'id-ID';
-  recognition.interimResults = false;
-
+  
   try {
     recognition.start();
     micBtn.classList.add('recording');
     status.innerText = 'Mendengarkan...';
   } catch (e) {
-    recognition.stop();
     micBtn.classList.remove('recording');
     status.innerText = 'Online';
   }
@@ -459,22 +416,18 @@ micBtn.onclick = () => {
     run(transcript);
   };
 
-  recognition.onerror = (e) => {
+  recognition.onerror = () => {
     micBtn.classList.remove('recording');
     status.innerText = 'Online';
-    alert('Gagal mendeteksi suara / izin mikrofon belum diberikan.');
   };
 
   recognition.onend = () => {
     micBtn.classList.remove('recording');
-    if (status.innerText === 'Mendengarkan...') {
-      status.innerText = 'Online';
-    }
+    if (status.innerText === 'Mendengarkan...') status.innerText = 'Online';
   };
 };
 
 sendBtn.onclick = () => run($('cmd').value);$('cmd').onkeydown = e => { if (e.key === 'Enter') sendBtn.click(); };
 </script>
-
 </body>
 </html>
