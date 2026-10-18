@@ -60,23 +60,23 @@ main {
   gap: 8px;
 }
 
-/* WADAH KARAKTER / SPRITE DINAMIS */
+/* WADAH KARAKTER / SPRITE DINAMIS (DIPERBAIKI AGAR TIDAK MENUTUPI TEKS) */
 .vn-character-container {
   width: 100%;
-  height: 220px;
+  height: 180px;
   display: flex;
   justify-content: center;
   align-items: flex-end;
   position: relative;
   overflow: hidden;
-  margin-bottom: -10px;
+  margin-bottom: 8px;
   pointer-events: none;
-  z-index: 2;
+  z-index: 1;
 }
 
 .vn-character-sprite {
   max-height: 100%;
-  max-width: 90%;
+  max-width: 80%;
   object-fit: contain;
   filter: drop-shadow(0px 4px 15px rgba(0, 0, 0, 0.8));
   transition: opacity 0.3s ease, transform 0.3s ease;
@@ -89,8 +89,8 @@ main {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  gap: 14px;
-  padding: 14px 2px;
+  gap: 12px;
+  padding: 8px 2px;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
   z-index: 5;
@@ -256,13 +256,15 @@ const keyBtn = $('key-btn');
 const spriteImg = $('mj-sprite');
 const API = 'https://api.mj-ai.my.id/';
 
-// DAFTAR GAMBAR SPRITE EKSPRESI MJ (Bisa Tuan Ganti Link-nya Sesuai Keinginan)
+// DAFTAR GAMBAR SPRITE EKSPRESI MJ (Bisa diganti link-nya sesuai keinginan)
 const sprites = {
   biasa: "https://i.ibb.co.com/gbPmMmcK/file-00000000d8c08207ac4c93cd9137f78e.png",
   senyum: "https://i.ibb.co.com/gbPmMmcK/file-00000000d8c08207ac4c93cd9137f78e.png",
   kaget: "https://i.ibb.co.com/gbPmMmcK/file-00000000d8c08207ac4c93cd9137f78e.png",
   mikir: "https://i.ibb.co.com/gbPmMmcK/file-00000000d8c08207ac4c93cd9137f78e.png",
-  malu: "https://i.ibb.co.com/gbPmMmcK/file-00000000d8c08207ac4c93cd9137f78e.png"
+  malu: "https://i.ibb.co.com/gbPmMmcK/file-00000000d8c08207ac4c93cd9137f78e.png",
+  marah: "https://i.ibb.co.com/gbPmMmcK/file-00000000d8c08207ac4c93cd9137f78e.png",
+  sedih: "https://i.ibb.co.com/gbPmMmcK/file-00000000d8c08207ac4c93cd9137f78e.png"
 };
 
 // PIN VALID TUAN IBNU
@@ -401,12 +403,12 @@ async function run(q) {
 
     let reply = data.answer || "Maaf, tidak ada respon.";
     
-    // DETEKSI EKSPRESI DARI TAG TEKS AI
-    const match = reply.match(/^\[(biasa|senyum|kaget|mikir|malu)\]/i);
+    // DETEKSI EKSPRESI DARI TAG TEKS AI (Mendukung ekspresi lengkap)
+    const match = reply.match(/^\[(biasa|senyum|kaget|mikir|malu|marah|sedih)\]/i);
     let expression = 'biasa';
     if (match) {
       expression = match[1].toLowerCase();
-      reply = reply.replace(/^\[(biasa|senyum|kaget|mikir|malu)\]\s*/i, ''); // Hapus tag dari tampilan obrolan
+      reply = reply.replace(/^\[(biasa|senyum|kaget|mikir|malu|marah|sedih)\]\s*/i, ''); 
     }
     
     // Ubah ekspresi avatar karakter MJ
