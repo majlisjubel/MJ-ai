@@ -7,13 +7,14 @@ const keyBtn = $('key-btn');
 const mjSprite = $('mj-sprite');
 const API = 'https://api.mj-ai.my.id/';
 
-// PIN VALID TUAN IBNU
+// PIN VALID FRONTEND & BACKEND
 const VALID_PIN = "hadanuri114";
+const BACKEND_PIN = "10052003"; 
 
 let userPIN = localStorage.getItem('MJ_PIN') || "";
 
 function updateAccessUI() {
-  if (userPIN === VALID_PIN) {
+  if (userPIN === VALID_PIN || userPIN === BACKEND_PIN) {
     keyBtn.classList.add('active');
   } else {
     userPIN = "";
@@ -90,7 +91,7 @@ keyBtn.onclick = () => {
   const pin = prompt("Masukkan PIN Verifikasi Tuan Ibnu (Kosongkan jika ingin masuk sebagai Tamu):", userPIN);
   if (pin !== null) {
     const cleanPin = pin.trim();
-    if (cleanPin === VALID_PIN) {
+    if (cleanPin === VALID_PIN || cleanPin === BACKEND_PIN) {
       userPIN = cleanPin;
       localStorage.setItem('MJ_PIN', userPIN);
       alert("Verifikasi Berhasil! MJ mengenali Tuan Ibnu.");
@@ -165,15 +166,18 @@ async function run(q) {
   sendBtn.disabled = true;
 
   try {
+    // Teruskan PIN valid yang cocok dengan backend API
+    const passToSend = (userPIN === VALID_PIN || userPIN === BACKEND_PIN) ? BACKEND_PIN : "";
+
     const res = await fetch(API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
         contents: history, 
         message: q,
-        passcode: userPIN,
-        pin: userPIN,
-        pass: userPIN
+        passcode: passToSend,
+        pin: passToSend,
+        pass: passToSend
       })
     });
     
@@ -245,4 +249,3 @@ micBtn.onclick = () => {
 
 sendBtn.onclick = () => run($('cmd').value);
 $('cmd').onkeydown = e => { if (e.key === 'Enter') sendBtn.click(); };
-  
