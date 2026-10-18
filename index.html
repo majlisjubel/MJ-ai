@@ -10,7 +10,8 @@
 html, body {
   height: 100%;
   background-color: #050203;
-  background-image: linear-gradient(rgba(5, 2, 3, 0.4), rgba(5, 2, 3, 0.8)), url('https://i.ibb.co/gbPmMmcK/file-00000000d8c08207ac4c93cd9137f78e.png');
+  /* Background Kafe */
+  background-image: linear-gradient(rgba(5, 2, 3, 0.4), rgba(5, 2, 3, 0.75)), url('./1792329882709.png');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
@@ -31,7 +32,6 @@ main {
   position: relative;
 }
 
-/* Status Bar ala VN */
 .vn-top-bar {
   display: flex;
   gap: 10px;
@@ -39,13 +39,13 @@ main {
   justify-content: space-between;
   width: 100%;
   font-size: 11px;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
   padding: 6px 12px;
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.15);
   flex-shrink: 0;
-  z-index: 10;
+  z-index: 20;
 }
 .vn-badge {
   background: rgba(181, 23, 47, 0.85);
@@ -53,34 +53,54 @@ main {
   border-radius: 10px;
   font-weight: bold;
 }
+.vn-status-group { display: flex; align-items: center; gap: 8px; }
 
-.vn-status-group {
+/* Visual Novel Stage & Sprite Bernapas */
+.vn-stage {
+  flex: 1;
   display: flex;
-  align-items: center;
-  gap: 8px;
+  justify-content: center;
+  align-items: flex-end;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: -15px;
 }
 
-/* Area Chat / Dialog */
+.mj-sprite {
+  max-height: 82vh;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.7));
+  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+  animation: breathing 4s ease-in-out infinite alternate;
+}
+
+@keyframes breathing {
+  0% { transform: translateY(0px) scale(1); }
+  100% { transform: translateY(-8px) scale(1.015); }
+}
+
 #chat-container {
-  flex: 1;
+  max-height: 180px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  gap: 14px;
-  padding: 14px 2px;
+  gap: 10px;
+  padding: 8px 2px;
   scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
+  z-index: 10;
 }
 
 .vn-dialogue {
-  background: rgba(10, 3, 5, 0.55);
-  backdrop-filter: blur(4px);
-  border-top: 1px solid rgba(255, 77, 102, 0.3);
-  border-bottom: 1px solid rgba(255, 77, 102, 0.3);
-  padding: 12px 18px;
-  font-size: 14.5px;
-  line-height: 1.7;
+  background: rgba(10, 3, 5, 0.75);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid rgba(255, 77, 102, 0.4);
+  border-bottom: 1px solid rgba(255, 77, 102, 0.4);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 14px;
+  line-height: 1.6;
   color: #ffffff;
   text-align: center;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
@@ -90,8 +110,8 @@ main {
 }
 
 .vn-dialogue.user-action {
-  background: rgba(181, 23, 47, 0.45);
-  border-color: rgba(255, 51, 75, 0.6);
+  background: rgba(181, 23, 47, 0.55);
+  border-color: rgba(255, 51, 75, 0.7);
   color: #ffccd5;
   font-style: italic;
   text-align: right;
@@ -100,7 +120,6 @@ main {
   border-bottom: none;
 }
 
-/* Tombol Putar Ulang Suara */
 .audio-play-btn {
   display: inline-block;
   margin-left: 8px;
@@ -120,9 +139,8 @@ main {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Panel Input */
 .vn-input-panel {
-  background: rgba(12, 4, 6, 0.85);
+  background: rgba(12, 4, 6, 0.88);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(181, 23, 47, 0.4);
   border-radius: 16px;
@@ -132,7 +150,8 @@ main {
   gap: 8px;
   box-shadow: 0 4px 25px rgba(0, 0, 0, 0.7);
   flex-shrink: 0;
-  z-index: 10;
+  z-index: 20;
+  margin-top: 6px;
 }
 
 .vn-input-panel input {
@@ -144,9 +163,7 @@ main {
   outline: none;
   padding: 8px;
 }
-.vn-input-panel input::placeholder {
-  color: rgba(255, 255, 255, 0.4);
-}
+.vn-input-panel input::placeholder { color: rgba(255, 255, 255, 0.4); }
 
 .vn-send-btn {
   background: #b5172f;
@@ -172,47 +189,36 @@ main {
   padding: 4px;
   transition: transform 0.2s, color 0.2s;
 }
+.vn-icon-btn.active { color: #ff4d66; }
+.vn-icon-btn.recording { color: #ff4d66; transform: scale(1.2); animation: pulse 1s infinite alternate; }
 
-.vn-icon-btn.active {
-  color: #ff4d66;
-}
-
-.vn-icon-btn.recording {
-  color: #ff4d66;
-  transform: scale(1.2);
-  animation: pulse 1s infinite alternate;
-}
-
-@keyframes pulse {
-  from { opacity: 0.6; }
-  to { opacity: 1; }
-}
+@keyframes pulse { from { opacity: 0.6; } to { opacity: 1; } }
 </style>
 </head>
 <body>
 
 <main>
-  <!-- Bar Atas -->
   <div class="vn-top-bar">
-    <div>
-      👑 <span class="vn-badge">MJ AI</span>
-    </div>
+    <div>👑 <span class="vn-badge">MJ AI</span></div>
     <div class="vn-status-group">
-      <button class="vn-icon-btn" id="key-btn" title="Verifikasi Identitas Tuan">🔑</button>
+      <button class="vn-icon-btn" id="key-btn" title="Verifikasi">🔑</button>
       <span>💬 <span id="status">Online</span></span>
     </div>
   </div>
 
-  <!-- Area Narasi & Chat -->
+  <div class="vn-stage">
+    <!-- Sprite awal menggunakan file netral -->
+    <img id="mj-sprite" class="mj-sprite" src="./file_0000000088648211b2abc737ac.png" alt="MJ Character">
+  </div>
+
   <div id="chat-container">
     <div class="vn-dialogue">
       "Haiii, saya MJ, asisten pribadi virtual. Ada yang bisa saya bantu?"
     </div>
   </div>
 
-  <!-- Panel Input Bawah -->
   <div class="vn-input-panel">
-    <button class="vn-icon-btn" id="mic" title="Bicara lewat Suara">🎙️</button>
+    <button class="vn-icon-btn" id="mic" title="Bicara">🎙️</button>
     <input id="cmd" placeholder="Masukkan dialog atau tindakan..." autocomplete="off">
     <button class="vn-send-btn" id="send">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
@@ -227,103 +233,75 @@ const status = $('status');
 const sendBtn = $('send');
 const micBtn = $('mic');
 const keyBtn = $('key-btn');
+const mjSprite = $('mj-sprite');
 const API = 'https://api.mj-ai.my.id/';
 
-// PIN VALID TUAN IBNU
-const VALID_PIN = "10052003";
+// Mapping ekspresi berdasarkan nama file yang baru lo upload
+const EXPRESSIONS = {
+  netral: './file_0000000088648211b2abc737ac.png',
+  senang: './file_00000000a8c82118bf468aa37.png',
+  sedih: './file_0000000084788211ac3f3af778.png',
+  marah: './file_00000000c2788211b812b3b97f.png',
+  kaget: './file_0000000088f48211adc8ead5d7.png',
+  blushing: './file_00000000d8c08207ac4c93cd91.png',
+  bingung: './1792299320411.png'
+};
 
-let userPIN = localStorage.getItem('MJ_PIN') || "";
-
-function updateAccessUI() {
-  if (userPIN === VALID_PIN) {
-    keyBtn.classList.add('active');
-  } else {
-    userPIN = "";
-    localStorage.removeItem('MJ_PIN');
-    keyBtn.classList.remove('active');
+function changeExpression(expressionName) {
+  if (EXPRESSIONS[expressionName]) {
+    mjSprite.style.opacity = '0.3';
+    setTimeout(() => {
+      mjSprite.src = EXPRESSIONS[expressionName];
+      mjSprite.style.opacity = '1';
+    }, 150);
   }
 }
 
+function autoDetectExpression(text) {
+  const lower = text.toLowerCase();
+  if (lower.includes('haha') || lower.includes('senang') || lower.includes('suka') || lower.includes('😊')) changeExpression('senang');
+  else if (lower.includes('maaf') || lower.includes('sedih') || lower.includes('😭')) changeExpression('sedih');
+  else if (lower.includes('marah') || lower.includes('kesal') || lower.includes('😠')) changeExpression('marah');
+  else if (lower.includes('wah') || lower.includes('kaget') || lower.includes('😲')) changeExpression('kaget');
+  else if (lower.includes('malu') || lower.includes('tuan') || lower.includes('😳')) changeExpression('blushing');
+  else if (lower.includes('bingung') || lower.includes('🤔')) changeExpression('bingung');
+  else changeExpression('netral');
+}
+
+const VALID_PIN = "10052003";
+let userPIN = localStorage.getItem('MJ_PIN') || "";
+
+function updateAccessUI() {
+  if (userPIN === VALID_PIN) keyBtn.classList.add('active');
+  else { userPIN = ""; localStorage.removeItem('MJ_PIN'); keyBtn.classList.remove('active'); }
+}
 updateAccessUI();
 
-let currentAudio = null;
-
-let history = [
-  { role: 'model', parts: [{ text: 'Haiii, saya MJ, asisten pribadi virtual. Ada yang bisa saya bantu?' }] }
-];
+let history = [{ role: 'model', parts: [{ text: 'Haiii, saya MJ, asisten pribadi virtual. Ada yang bisa saya bantu?' }] }];
 
 keyBtn.onclick = () => {
-  const pin = prompt("Masukkan PIN Verifikasi Tuan Ibnu (Kosongkan jika ingin masuk sebagai Tamu):", userPIN);
+  const pin = prompt("Masukkan PIN Verifikasi Tuan Ibnu:", userPIN);
   if (pin !== null) {
     const cleanPin = pin.trim();
-    if (cleanPin === VALID_PIN) {
-      userPIN = cleanPin;
-      localStorage.setItem('MJ_PIN', userPIN);
-      alert("Verifikasi Berhasil! MJ mengenali Tuan Ibnu.");
-    } else if (cleanPin === "") {
-      userPIN = "";
-      localStorage.removeItem('MJ_PIN');
-      alert("Masuk sebagai Mode Tamu.");
-    } else {
-      userPIN = "";
-      localStorage.removeItem('MJ_PIN');
-      alert("PIN Salah! Anda masuk sebagai Mode Tamu.");
-    }
+    if (cleanPin === VALID_PIN) { userPIN = cleanPin; localStorage.setItem('MJ_PIN', userPIN); alert("Verifikasi Berhasil!"); }
+    else { userPIN = ""; localStorage.removeItem('MJ_PIN'); alert("Mode Tamu."); }
     updateAccessUI();
   }
 };
 
-function addDialogue(text, isUser = false, audioBase64 = null) {
+function addDialogue(text, isUser = false) {
   const div = document.createElement('div');
   div.className = isUser ? 'vn-dialogue user-action' : 'vn-dialogue';
   div.innerText = text;
-
-  if (audioBase64 && !isUser) {
-    const playBtn = document.createElement('button');
-    playBtn.className = 'audio-play-btn';
-    playBtn.innerText = '🔊';
-    playBtn.title = 'Putar Suara';
-    playBtn.onclick = () => playAudioResponse(audioBase64, text);
-    div.appendChild(playBtn);
-  }
-
   chat.appendChild(div);
-  
-  setTimeout(() => {
-    chat.scrollTop = chat.scrollHeight;
-  }, 50);
-  
+  setTimeout(() => { chat.scrollTop = chat.scrollHeight; }, 50);
   return div;
-}
-
-function playAudioResponse(audioBase64, textFallback) {
-  if (currentAudio) {
-    currentAudio.pause();
-    currentAudio = null;
-  }
-  if ('speechSynthesis' in window) {
-    speechSynthesis.cancel();
-  }
-
-  if (audioBase64) {
-    try {
-      currentAudio = new Audio("data:audio/mp3;base64," + audioBase64);
-      currentAudio.play().catch(e => {
-        console.warn("Autoplay terhalang browser...", e);
-      });
-      return;
-    } catch (e) {
-      console.error("Gagal memutar ElevenLabs:", e);
-    }
-  }
 }
 
 async function run(q) {
   if (!q.trim()) return;
-  
   addDialogue(q, true);
   $('cmd').value = '';
-  
   history.push({ role: 'user', parts: [{ text: q }] });
 
   const loading = addDialogue('...');
@@ -334,27 +312,17 @@ async function run(q) {
     const res = await fetch(API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        contents: history, 
-        message: q,
-        passcode: userPIN,
-        pin: userPIN,
-        pass: userPIN
-      })
+      body: JSON.stringify({ contents: history, message: q, passcode: userPIN, pin: userPIN, pass: userPIN })
     });
-    
     const data = await res.json();
     loading.remove();
+    if (!res.ok) throw new Error(data.error || 'Gagal');
 
-    if (!res.ok) throw new Error(data.error || 'Gagal tersambung');
-
-    const reply = data.answer || "Maaf, tidak ada respon.";
-    
-    addDialogue(reply, false, data.audio);
+    const reply = data.answer || "Respon kosong.";
+    addDialogue(reply, false);
+    autoDetectExpression(reply);
     history.push({ role: 'model', parts: [{ text: reply }] });
-
     status.innerText = 'Online';
-
   } catch (err) {
     loading.remove();
     addDialogue('Ralat: ' + err.message);
@@ -365,52 +333,8 @@ async function run(q) {
   }
 }
 
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-micBtn.onclick = () => {
-  if (!SpeechRecognition) {
-    alert('Browser kamu tidak mendukung perekaman suara langsung.');
-    return;
-  }
-
-  const recognition = new SpeechRecognition();
-  recognition.lang = 'id-ID';
-  recognition.interimResults = false;
-
-  try {
-    recognition.start();
-    micBtn.classList.add('recording');
-    status.innerText = 'Mendengarkan...';
-  } catch (e) {
-    recognition.stop();
-    micBtn.classList.remove('recording');
-    status.innerText = 'Online';
-  }
-
-  recognition.onresult = (e) => {
-    const transcript = e.results[0][0].transcript;
-    $('cmd').value = transcript;
-    micBtn.classList.remove('recording');
-    run(transcript);
-  };
-
-  recognition.onerror = (e) => {
-    micBtn.classList.remove('recording');
-    status.innerText = 'Online';
-    alert('Gagal mendeteksi suara / izin mikrofon belum diberikan.');
-  };
-
-  recognition.onend = () => {
-    micBtn.classList.remove('recording');
-    if (status.innerText === 'Mendengarkan...') {
-      status.innerText = 'Online';
-    }
-  };
-};
-
 sendBtn.onclick = () => run($('cmd').value);
 $('cmd').onkeydown = e => { if (e.key === 'Enter') sendBtn.click(); };
 </script>
-
 </body>
 </html>
