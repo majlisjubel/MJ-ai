@@ -1,449 +1,140 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#050203">
-<title>MJ AI - Visual Novel Mode</title>
-<style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html, body {
-  height: 100%;
-  background-color: #050203;
-  background-image: linear-gradient(rgba(5, 2, 3, 0.4), rgba(5, 2, 3, 0.8)), url('https://i.ibb.co.com/gbPmMmcK/file-00000000d8c08207ac4c93cd9137f78e.png');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  color: #ffffff;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  overflow: hidden;
-}
-
-main {
-  width: 100%;
-  max-width: 480px;
-  height: 100%;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 12px;
-  position: relative;
-}
-
-/* Status Bar ala VN */
-.vn-top-bar {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  font-size: 11px;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(6px);
-  padding: 6px 12px;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  flex-shrink: 0;
-  z-index: 10;
-}
-.vn-badge {
-  background: rgba(181, 23, 47, 0.85);
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-weight: bold;
-}
-
-.vn-status-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* Area Chat / Dialog */
-#chat-container {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  gap: 14px;
-  padding: 14px 2px;
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
-}
-
-.vn-dialogue {
-  background: rgba(10, 3, 5, 0.55);
-  backdrop-filter: blur(4px);
-  border-top: 1px solid rgba(255, 77, 102, 0.3);
-  border-bottom: 1px solid rgba(255, 77, 102, 0.3);
-  padding: 12px 18px;
-  font-size: 14.5px;
-  line-height: 1.7;
-  color: #ffffff;
-  text-align: center;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
-  animation: fadeIn 0.3s ease-in-out;
-  word-wrap: break-word;
-  position: relative;
-}
-
-.vn-dialogue.user-action {
-  background: rgba(181, 23, 47, 0.45);
-  border-color: rgba(255, 51, 75, 0.6);
-  color: #ffccd5;
-  font-style: italic;
-  text-align: right;
-  border-radius: 10px;
-  border-top: none;
-  border-bottom: none;
-}
-
-/* Tombol Putar Ulang Suara */
-.audio-play-btn {
-  display: inline-block;
-  margin-left: 8px;
-  background: rgba(181, 23, 47, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: #fff;
-  border-radius: 50%;
-  width: 26px;
-  height: 26px;
-  font-size: 12px;
-  cursor: pointer;
-  vertical-align: middle;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Panel Input */
-.vn-input-panel {
-  background: rgba(12, 4, 6, 0.85);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(181, 23, 47, 0.4);
-  border-radius: 16px;
-  padding: 8px 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.7);
-  flex-shrink: 0;
-  z-index: 10;
-}
-
-.vn-input-panel input {
-  flex: 1;
-  background: transparent;
-  border: none;
-  color: #fff;
-  font-size: 14px;
-  outline: none;
-  padding: 8px;
-}
-.vn-input-panel input::placeholder {
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.vn-send-btn {
-  background: #b5172f;
-  border: none;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  color: white;
-  cursor: pointer;
-  box-shadow: 0 2px 10px rgba(181, 23, 47, 0.5);
-  flex-shrink: 0;
-}
-.vn-send-btn:disabled { opacity: 0.4; }
-
-.vn-icon-btn {
-  background: transparent;
-  border: none;
-  color: #d1a3a8;
-  font-size: 18px;
-  cursor: pointer;
-  padding: 4px;
-  transition: transform 0.2s, color 0.2s, opacity 0.2s;
-}
-
-.vn-icon-btn.active {
-  color: #ff4d66;
-}
-
-/* Tampilan Mic Terkunci/Disabled untuk Tamu */
-.vn-icon-btn.locked {
-  opacity: 0.35;
-}
-
-.vn-icon-btn.recording {
-  color: #ff4d66;
-  transform: scale(1.2);
-  animation: pulse 1s infinite alternate;
-}
-
-@keyframes pulse {
-  from { opacity: 0.6; }
-  to { opacity: 1; }
-}
-</style>
-</head>
-<body>
-
-<main>
-  <!-- Bar Atas -->
-  <div class="vn-top-bar">
-    <div>
-      👑 <span class="vn-badge">MJ AI</span>
-    </div>
-    <div class="vn-status-group">
-      <button class="vn-icon-btn" id="key-btn" title="Verifikasi Identitas Tuan">🔑</button>
-      <span>💬 <span id="status">Online</span></span>
-    </div>
-  </div>
-
-  <!-- Area Narasi & Chat -->
-  <div id="chat-container">
-    <div class="vn-dialogue">
-      "Haiii, saya MJ, asisten pribadi virtual. Ada yang bisa saya bantu?"
-    </div>
-  </div>
-
-  <!-- Panel Input Bawah -->
-  <div class="vn-input-panel">
-    <button class="vn-icon-btn" id="mic" title="Bicara lewat Suara">🎙️</button>
-    <input id="cmd" placeholder="Masukkan dialog atau tindakan..." autocomplete="off">
-    <button class="vn-send-btn" id="send">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-    </button>
-  </div>
-</main>
-
-<script>
-const $ = id => document.getElementById(id);
-const chat = $('chat-container');
-const status = $('status');
-const sendBtn = $('send');
-const micBtn = $('mic');
-const keyBtn = $('key-btn');
-const API = 'https://api.mj-ai.my.id/';
-
-// PIN VALID TUAN IBNU
-const VALID_PIN = "10052003";
-
-// Mengambil PIN terdaftar dari browser
-let userPIN = localStorage.getItem('MJ_PIN') || "";
-
-// FUNGSI UPDATE TAMPILAN SESUAI IDENTITAS
-function updateAccessUI() {
-  if (userPIN === VALID_PIN) {
-    keyBtn.classList.add('active');
-    micBtn.classList.remove('locked');
-    micBtn.title = "Bicara lewat Suara (Khusus Tuan Ibnu)";
-  } else {
-    userPIN = "";
-    localStorage.removeItem('MJ_PIN');
-    keyBtn.classList.remove('active');
-    micBtn.classList.add('locked');
-    micBtn.title = "Akses Suara Terkunci (Khusus Tuan Ibnu)";
-  }
-}
-
-// Cek UI awal saat dimuat
-updateAccessUI();
-
-let currentAudio = null;
-
-let history = [
-  { role: 'model', parts: [{ text: 'Haiii, saya MJ, asisten pribadi virtual. Ada yang bisa saya bantu?' }] }
-];
-
-// Tombol verifikasi PIN
-keyBtn.onclick = () => {
-  const pin = prompt("Masukkan PIN Verifikasi Tuan Ibnu (Kosongkan jika ingin masuk sebagai Tamu):", userPIN);
-  if (pin !== null) {
-    const cleanPin = pin.trim();
-    if (cleanPin === VALID_PIN) {
-      userPIN = cleanPin;
-      localStorage.setItem('MJ_PIN', userPIN);
-      alert("Verifikasi Berhasil! MJ mengenali Tuan Ibnu.");
-    } else if (cleanPin === "") {
-      userPIN = "";
-      localStorage.removeItem('MJ_PIN');
-      alert("Masuk sebagai Mode Tamu.");
-    } else {
-      userPIN = "";
-      localStorage.removeItem('MJ_PIN');
-      alert("PIN Salah! Anda masuk sebagai Mode Tamu.");
-    }
-    updateAccessUI();
-  }
-};
-
-function addDialogue(text, isUser = false, audioBase64 = null) {
-  const div = document.createElement('div');
-  div.className = isUser ? 'vn-dialogue user-action' : 'vn-dialogue';
-  div.innerText = text;
-
-  // Hanya tampilkan tombol 🔊 jika ada audio ElevenLabs
-  if (audioBase64 && !isUser) {
-    const playBtn = document.createElement('button');
-    playBtn.className = 'audio-play-btn';
-    playBtn.innerText = '🔊';
-    playBtn.title = 'Putar Suara';
-    playBtn.onclick = () => playAudioResponse(audioBase64, text);
-    div.appendChild(playBtn);
-  }
-
-  chat.appendChild(div);
-  
-  setTimeout(() => {
-    chat.scrollTop = chat.scrollHeight;
-  }, 50);
-  
-  return div;
-}
-
-function playAudioResponse(audioBase64, textFallback) {
-  if (currentAudio) {
-    currentAudio.pause();
-    currentAudio = null;
-  }
-  if ('speechSynthesis' in window) {
-    speechSynthesis.cancel();
-  }
-
-  if (audioBase64) {
-    try {
-      currentAudio = new Audio("data:audio/mp3;base64," + audioBase64);
-      currentAudio.play().catch(e => {
-        console.warn("Autoplay terhalang browser, mencoba fallback suara...", e);
-        fallbackSpeech(textFallback);
+export default {
+  async fetch(request, env, ctx) {
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type",
+        },
       });
-      return;
-    } catch (e) {
-      console.error("Gagal memutar ElevenLabs:", e);
+    }
+
+    if (request.method !== "POST") {
+      return new Response("Method not allowed", { status: 405 });
+    }
+
+    try {
+      const body = await request.json();
+      const rawHistory = body.contents || [];
+      const message = body.message || "";
+      
+      const secretPasscode = String(body.passcode || body.pin || body.pass || "").trim(); 
+      const MASTER_PIN = "10052003";
+
+      const groqApiKey = env.GROQ_API_KEY; 
+      const elevenApiKey = "sk_e492282bc91d4e1b43a029ce5ff466f83fb2b4f7e443bfe2"; 
+      const voiceId = "SOYHLrjzK2X1ezoPC6cr"; 
+
+      if (!groqApiKey) {
+        return new Response(JSON.stringify({ answer: "Error: GROQ_API_KEY belum dipasang." }), {
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+        });
+      }
+
+      // Verifikasi Identitas
+      const isMaster = secretPasscode === MASTER_PIN;
+
+      let identityInstruction = "";
+      if (isMaster) {
+        identityInstruction = "SANGAT PENTING: Lawan bicaramu TERVERIFIKASI SAH sebagai penciptamu, Tuan Ibnu. Panggil dia HANYA dengan 'Tuan' atau 'Tuan Ibnu'. DILARANG KERAS memanggilnya 'Kak' atau 'Anda'!";
+      } else {
+        identityInstruction = "Lawan bicaramu adalah pengguna umum/tamu. DILARANG KERAS memanggilnya 'Tuan' atau 'Ibnu'! Panggil dia dengan 'Kak' atau 'Anda'.";
+      }
+
+      let messages = [
+        {
+          role: "system",
+          content: `Kamu adalah MJ, asisten pribadi virtual bergenre Visual Novel yang sangat cerdas, hangat, dan solutif.\n\nSTATUS IDENTITAS LAWAN BICARA:\n${identityInstruction}\n\nATURAN PERILAKU & TTS:\n1. DILARANG KERAS membuka balasan dengan sapaan berulang di setiap pesan. Langsung ke inti jawaban!\n2. Jawab dengan gaya percakapan santai, ramah, namun SANGAT RINGKAS DAN PADAT (Maksimal 1 sampai 2 kalimat saja) untuk menghemat kuota TTS.\n3. DILARANG KERAS menggunakan simbol Markdown seperti bintang (*), pagar (#), backtick (\`), atau tabel.`
+        }
+      ];
+
+      for (const item of rawHistory) {
+        const role = item.role === 'model' ? 'assistant' : 'user';
+        const text = item.parts?.[0]?.text || "";
+        if (text) messages.push({ role: role, content: text });
+      }
+
+      if (message) {
+        messages.push({ role: "user", content: message });
+      }
+
+      // Request ke Groq AI
+      const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${groqApiKey}`
+        },
+        body: JSON.stringify({
+          model: "openai/gpt-oss-120b",
+          messages: messages,
+          temperature: 0.5
+        })
+      });
+
+      const groqData = await groqResponse.json();
+      let replyText = groqData.choices?.[0]?.message?.content || "Maaf, MJ tidak bisa memproses respon saat ini.";
+
+      replyText = replyText
+        .replace(/[\*\#\`\_\~\>]/g, '')
+        .replace(/[\-]{2,}/g, '')
+        .replace(/\|/g, ', ')
+        .trim();
+
+      // FITUR SUARA ELEVENLABS HANYA UNTUK TUAN IBNU (isMaster === true)
+      let audioBase64 = null;
+
+      if (isMaster) {
+        try {
+          const elevenResponse = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+            method: "POST",
+            headers: {
+              "Accept": "audio/mpeg",
+              "Content-Type": "application/json",
+              "xi-api-key": elevenApiKey
+            },
+            body: JSON.stringify({
+              text: replyText,
+              model_id: "eleven_flash_v2_5",
+              voice_settings: {
+                stability: 0.5,
+                similarity_boost: 0.75
+              }
+            })
+          });
+
+          if (elevenResponse.ok) {
+            const audioBuffer = await elevenResponse.arrayBuffer();
+            const uint8Array = new Uint8Array(audioBuffer);
+            let binary = '';
+            for (let i = 0; i < uint8Array.byteLength; i++) {
+              binary += String.fromCharCode(uint8Array[i]);
+            }
+            audioBase64 = btoa(binary);
+          } else {
+            const errText = await elevenResponse.text();
+            console.error("ElevenLabs Gagal (Detail):", errText);
+          }
+        } catch (e) {
+          console.error("Catch Error ElevenLabs:", e.message);
+        }
+      }
+
+      return new Response(JSON.stringify({ 
+        answer: replyText, 
+        audio: audioBase64 
+      }), {
+        headers: { 
+          "Content-Type": "application/json", 
+          "Access-Control-Allow-Origin": "*" 
+        }
+      });
+
+    } catch (err) {
+      return new Response(JSON.stringify({ answer: "Terjadi kesalahan: " + err.message }), {
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+      });
     }
   }
-
-  fallbackSpeech(textFallback);
-}
-
-function fallbackSpeech(text) {
-  if ('speechSynthesis' in window) {
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'id-ID';
-    speechSynthesis.speak(u);
-  }
-}
-
-async function run(q) {
-  if (!q.trim()) return;
-  
-  addDialogue(q, true);
-  $('cmd').value = '';
-  
-  history.push({ role: 'user', parts: [{ text: q }] });
-
-  const loading = addDialogue('...');
-  status.innerText = 'Memproses...';
-  sendBtn.disabled = true;
-
-  try {
-    const res = await fetch(API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        contents: history, 
-        message: q,
-        passcode: userPIN,
-        pin: userPIN,
-        pass: userPIN
-      })
-    });
-    
-    const data = await res.json();
-    loading.remove();
-
-    if (!res.ok) throw new Error(data.error || 'Gagal tersambung');
-
-    const reply = data.answer || "Maaf, tidak ada respon.";
-    
-    addDialogue(reply, false, data.audio);
-    
-    history.push({ role: 'model', parts: [{ text: reply }] });
-
-    status.innerText = 'Online';
-
-  } catch (err) {
-    loading.remove();
-    addDialogue('Ralat: ' + err.message);
-    status.innerText = 'Error';
-    history.pop();
-  } finally {
-    sendBtn.disabled = false;
-  }
-}
-
-/* FITUR VOICE INPUT TERKUNCI KHUSUS TUAN IBNU */
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-micBtn.onclick = () => {
-  // Hanya ijinkan jika PIN terverifikasi sah sebagai Tuan Ibnu
-  if (userPIN !== VALID_PIN) {
-    alert("🔒 Akses Terkunci!\nFitur percakapan suara langsung ini hanya diperuntukkan bagi Tuan Ibnu.");
-    return;
-  }
-
-  if (!SpeechRecognition) {
-    alert('Browser kamu tidak mendukung perekaman suara langsung.');
-    return;
-  }
-
-  const recognition = new SpeechRecognition();
-  recognition.lang = 'id-ID';
-  recognition.interimResults = false;
-
-  try {
-    recognition.start();
-    micBtn.classList.add('recording');
-    status.innerText = 'Mendengarkan...';
-  } catch (e) {
-    recognition.stop();
-    micBtn.classList.remove('recording');
-    status.innerText = 'Online';
-  }
-
-  recognition.onresult = (e) => {
-    const transcript = e.results[0][0].transcript;
-    $('cmd').value = transcript;
-    micBtn.classList.remove('recording');
-    run(transcript);
-  };
-
-  recognition.onerror = (e) => {
-    micBtn.classList.remove('recording');
-    status.innerText = 'Online';
-    alert('Gagal mendeteksi suara / izin mikrofon belum diberikan.');
-  };
-
-  recognition.onend = () => {
-    micBtn.classList.remove('recording');
-    if (status.innerText === 'Mendengarkan...') {
-      status.innerText = 'Online';
-    }
-  };
 };
-
-sendBtn.onclick = () => run($('cmd').value);
-$('cmd').onkeydown = e => { if (e.key === 'Enter') sendBtn.click(); };
-</script>
-
-</body>
-</html>
