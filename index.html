@@ -15,28 +15,37 @@ html, body {
   overflow: hidden;
 }
 
-/* BACKGROUND FULL SCREEN DINAMIS YANG BENAR */
-.vn-bg-layer {
+/* WADAH SPRITE KARAKTER DI TENGAH LAYAR */
+.vn-sprite-container {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  transition: background-image 0.4s ease-in-out, opacity 0.3s ease-in-out;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   z-index: 1;
+  overflow: hidden;
 }
 
-/* OVERLAY GELAP AGAR TEKS TERBACA */
+/* ELEMEN GAMBAR KARAKTER YANG PASTI BERGANTI */
+#character-sprite {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: opacity 0.2s ease-in-out;
+}
+
+/* OVERLAY GELAP AGAR TEKS CHAT TERBACA JELAS */
 .vn-overlay {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(rgba(5, 2, 3, 0.4), rgba(5, 2, 3, 0.8));
+  background: linear-gradient(to bottom, rgba(5, 2, 3, 0.2) 20%, rgba(5, 2, 3, 0.85) 75%);
   z-index: 2;
   pointer-events: none;
 }
@@ -97,24 +106,24 @@ main {
 }
 
 .vn-dialogue {
-  background: rgba(10, 3, 5, 0.55);
-  backdrop-filter: blur(4px);
-  border-top: 1px solid rgba(255, 77, 102, 0.3);
-  border-bottom: 1px solid rgba(255, 77, 102, 0.3);
+  background: rgba(10, 3, 5, 0.7);
+  backdrop-filter: blur(6px);
+  border-top: 1px solid rgba(255, 77, 102, 0.4);
+  border-bottom: 1px solid rgba(255, 77, 102, 0.4);
   padding: 12px 18px;
   font-size: 14.5px;
   line-height: 1.7;
   color: #ffffff;
-  text-align: center;
+  text-align: left;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
   animation: fadeIn 0.3s ease-in-out;
   word-wrap: break-word;
-  position: relative;
+  border-radius: 10px;
 }
 
 .vn-dialogue.user-action {
-  background: rgba(181, 23, 47, 0.45);
-  border-color: rgba(255, 51, 75, 0.6);
+  background: rgba(181, 23, 47, 0.6);
+  border-color: rgba(255, 51, 75, 0.8);
   color: #ffccd5;
   font-style: italic;
   text-align: right;
@@ -123,7 +132,6 @@ main {
   border-bottom: none;
 }
 
-/* Tombol Putar Ulang Suara */
 .audio-play-btn {
   display: inline-block;
   margin-left: 8px;
@@ -145,15 +153,15 @@ main {
 
 /* Panel Input */
 .vn-input-panel {
-  background: rgba(12, 4, 6, 0.85);
+  background: rgba(12, 4, 6, 0.9);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(181, 23, 47, 0.4);
+  border: 1px solid rgba(181, 23, 47, 0.5);
   border-radius: 16px;
   padding: 8px 12px;
   display: flex;
   align-items: center;
   gap: 8px;
-  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.8);
   flex-shrink: 0;
   z-index: 10;
 }
@@ -196,15 +204,8 @@ main {
   transition: transform 0.2s, color 0.2s;
 }
 
-.vn-icon-btn.active {
-  color: #ff4d66;
-}
-
-.vn-icon-btn.recording {
-  color: #ff4d66;
-  transform: scale(1.2);
-  animation: pulse 1s infinite alternate;
-}
+.vn-icon-btn.active { color: #ff4d66; }
+.vn-icon-btn.recording { color: #ff4d66; transform: scale(1.2); animation: pulse 1s infinite alternate; }
 
 @keyframes pulse {
   from { opacity: 0.6; }
@@ -214,23 +215,23 @@ main {
 </head>
 <body>
 
-  <!-- LAYER BACKGROUND DINAMIS & 7 LINK IMGBB -->
-  <div id="bg-layer" class="vn-bg-layer" style="background-image: url('https://i.ibb.co.com/gbPmMmcK/file-00000000d8c08207ac4c93cd9137f78e.png');"></div>
+  <!-- ELEMEN GAMBAR UTAMA (DIJAMIN 100% BERGANTI) -->
+  <div class="vn-sprite-container">
+    <img id="character-sprite" src="https://i.ibb.co.com/gbPmMmcK/file-00000000d8c08207ac4c93cd9137f78e.png" alt="MJ Sprite">
+  </div>
   <div class="vn-overlay"></div>
 
 <main>
   <!-- Bar Atas -->
   <div class="vn-top-bar">
-    <div>
-      👑 <span class="vn-badge">MJ AI</span>
-    </div>
+    <div>👑 <span class="vn-badge">MJ AI</span></div>
     <div class="vn-status-group">
-      <button class="vn-icon-btn" id="key-btn" title="Verifikasi Identitas Tuan">🔑</button>
+      <button class="vn-icon-btn" id="key-btn" title="Verifikasi">🔑</button>
       <span>💬 <span id="status">Online</span></span>
     </div>
   </div>
 
-  <!-- Area Narasi & Chat -->
+  <!-- Area Chat -->
   <div id="chat-container">
     <div class="vn-dialogue">
       "Haiii, saya MJ, asisten pribadi virtual. Ada yang bisa saya bantu?"
@@ -239,7 +240,7 @@ main {
 
   <!-- Panel Input Bawah -->
   <div class="vn-input-panel">
-    <button class="vn-icon-btn" id="mic" title="Bicara lewat Suara">🎙️</button>
+    <button class="vn-icon-btn" id="mic" title="Mic">🎙️</button>
     <input id="cmd" placeholder="Masukkan dialog atau tindakan..." autocomplete="off">
     <button class="vn-send-btn" id="send">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
@@ -254,10 +255,10 @@ const status = $('status');
 const sendBtn = $('send');
 const micBtn = $('mic');
 const keyBtn = $('key-btn');
-const bgLayer = $('bg-layer');
+const spriteImg = $('character-sprite');
 const API = 'https://api.mj-ai.my.id/';
 
-// 7 LINK FOTO EKSPRESI DARI TUAN (SUDAH DIPERIKSA BERBEDA)
+// 7 LINK FOTO EKSPRESI DARI TUAN
 const sprites = {
   biasa: "https://i.ibb.co.com/gbPmMmcK/file-00000000d8c08207ac4c93cd9137f78e.png",
   senyum: "https://i.ibb.co.com/kFk326N/file-0000000088648211b2abc737acf9224e.png",
@@ -268,60 +269,47 @@ const sprites = {
   sedih: "https://i.ibb.co.com/4g06zDZ6/1792299320411.png"
 };
 
-// PIN VALID TUAN IBNU
 const VALID_PIN = "10052003";
-
 let userPIN = localStorage.getItem('MJ_PIN') || "";
 
 function updateAccessUI() {
-  if (userPIN === VALID_PIN) {
-    keyBtn.classList.add('active');
-  } else {
-    userPIN = "";
-    localStorage.removeItem('MJ_PIN');
-    keyBtn.classList.remove('active');
-  }
+  if (userPIN === VALID_PIN) keyBtn.classList.add('active');
+  else { userPIN = ""; localStorage.removeItem('MJ_PIN'); keyBtn.classList.remove('active'); }
 }
-
 updateAccessUI();
 
 let currentAudio = null;
-
 let history = [
   { role: 'model', parts: [{ text: 'Haiii, saya MJ, asisten pribadi virtual. Ada yang bisa saya bantu?' }] }
 ];
 
 keyBtn.onclick = () => {
-  const pin = prompt("Masukkan PIN Verifikasi Tuan Ibnu (Kosongkan jika ingin masuk sebagai Tamu):", userPIN);
+  const pin = prompt("Masukkan PIN Verifikasi Tuan Ibnu (Kosongkan jika Tamu):", userPIN);
   if (pin !== null) {
     const cleanPin = pin.trim();
     if (cleanPin === VALID_PIN) {
       userPIN = cleanPin;
       localStorage.setItem('MJ_PIN', userPIN);
       alert("Verifikasi Berhasil! MJ mengenali Tuan Ibnu.");
-    } else if (cleanPin === "") {
-      userPIN = "";
-      localStorage.removeItem('MJ_PIN');
-      alert("Masuk sebagai Mode Tamu.");
     } else {
       userPIN = "";
       localStorage.removeItem('MJ_PIN');
-      alert("PIN Salah! Anda masuk sebagai Mode Tamu.");
+      alert("Masuk sebagai Mode Tamu.");
     }
     updateAccessUI();
   }
 };
 
-// FUNGSI GANTI BACKGROUND FULL SCREEN YANG DIPERBAIKI
+// FUNGSI GANTI GAMBAR SPRITE SECARA LANGSUNG (100% TEMBUS)
 function changeExpression(expressionTag) {
   const tag = (expressionTag || 'biasa').toLowerCase().trim();
   const newImgUrl = sprites[tag] || sprites.biasa;
   
-  bgLayer.style.opacity = '0.3';
+  spriteImg.style.opacity = '0.2';
   setTimeout(() => {
-    bgLayer.style.backgroundImage = `url('${newImgUrl}')`;
-    bgLayer.style.opacity = '1';
-  }, 200);
+    spriteImg.src = newImgUrl;
+    spriteImg.style.opacity = '1';
+  }, 150);
 }
 
 function addDialogue(text, isUser = false, audioBase64 = null) {
@@ -333,39 +321,23 @@ function addDialogue(text, isUser = false, audioBase64 = null) {
     const playBtn = document.createElement('button');
     playBtn.className = 'audio-play-btn';
     playBtn.innerText = '🔊';
-    playBtn.title = 'Putar Suara';
-    playBtn.onclick = () => playAudioResponse(audioBase64, text);
+    playBtn.onclick = () => playAudioResponse(audioBase64);
     div.appendChild(playBtn);
   }
 
   chat.appendChild(div);
-  
-  setTimeout(() => {
-    chat.scrollTop = chat.scrollHeight;
-  }, 50);
-  
+  setTimeout(() => { chat.scrollTop = chat.scrollHeight; }, 50);
   return div;
 }
 
-function playAudioResponse(audioBase64, textFallback) {
-  if (currentAudio) {
-    currentAudio.pause();
-    currentAudio = null;
-  }
-  if ('speechSynthesis' in window) {
-    speechSynthesis.cancel();
-  }
-
+function playAudioResponse(audioBase64) {
+  if (currentAudio) currentAudio.pause();
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
   if (audioBase64) {
     try {
       currentAudio = new Audio("data:audio/mp3;base64," + audioBase64);
-      currentAudio.play().catch(e => {
-        console.warn("Autoplay terhalang browser...", e);
-      });
-      return;
-    } catch (e) {
-      console.error("Gagal memutar ElevenLabs:", e);
-    }
+      currentAudio.play();
+    } catch (e) { console.error("Audio error:", e); }
   }
 }
 
@@ -374,7 +346,6 @@ async function run(q) {
   
   addDialogue(q, true);
   $('cmd').value = '';
-  
   history.push({ role: 'user', parts: [{ text: q }] });
 
   const loading = addDialogue('...');
@@ -401,25 +372,24 @@ async function run(q) {
 
     let rawReply = data.answer || "Maaf, tidak ada respon.";
     
-    // --- AMBIL EKSPRESI & BERSIHKAN SEMUA TAG DARI CHAT ---
+    // --- AMBIL EKSPRESI & GANTI GAMBAR SPRITE ---
     let expression = 'biasa';
-    const match = rawReply.match(/\[(biasa\vert{}senyum\vert{}kaget\vert{}mikir\vert{}malu\vert{}marah\vert{}sedih)\]/i);
+    const match = rawReply.match(/\[(biasa|senyum|kaget|mikir|malu|marah|sedih)\]/i);
     if (match) {
       expression = match[1].toLowerCase();
     }
 
-    // SAPU BERSIH TAG DI AWAL KALIMAT AGAR TIDAK MUNCUL DI CHAT
+    // SAPU BERSIH TAG DARI CHAT
     let cleanReply = rawReply.replace(/^(\s*\[.*?\])+/g, '').trim();
     if (!cleanReply) cleanReply = rawReply;
 
-    // Ganti background layar sesuai ekspresi AI
+    // EKSEKUSI GANTI GAMBAR
     changeExpression(expression);
 
-    // Tampilkan pesan bersih & tombol suara
+    // Tampilkan pesan bersih
     addDialogue(cleanReply, false, data.audio);
     
     history.push({ role: 'model', parts: [{ text: rawReply }] });
-
     status.innerText = 'Online';
 
   } catch (err) {
@@ -433,50 +403,30 @@ async function run(q) {
 }
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
 micBtn.onclick = () => {
-  if (!SpeechRecognition) {
-    alert('Browser kamu tidak mendukung perekaman suara langsung.');
-    return;
-  }
-
+  if (!SpeechRecognition) return alert('Browser tidak mendukung mic.');
   const recognition = new SpeechRecognition();
   recognition.lang = 'id-ID';
-  recognition.interimResults = false;
-
   try {
     recognition.start();
     micBtn.classList.add('recording');
     status.innerText = 'Mendengarkan...';
   } catch (e) {
-    recognition.stop();
     micBtn.classList.remove('recording');
     status.innerText = 'Online';
   }
-
   recognition.onresult = (e) => {
     const transcript = e.results[0][0].transcript;
     $('cmd').value = transcript;
     micBtn.classList.remove('recording');
     run(transcript);
   };
-
-  recognition.onerror = (e) => {
-    micBtn.classList.remove('recording');
-    status.innerText = 'Online';
-    alert('Gagal mendeteksi suara / izin mikrofon belum diberikan.');
-  };
-
-  recognition.onend = () => {
-    micBtn.classList.remove('recording');
-    if (status.innerText === 'Mendengarkan...') {
-      status.innerText = 'Online';
-    }
-  };
+  recognition.onerror = () => { micBtn.classList.remove('recording'); status.innerText = 'Online'; };
+  recognition.onend = () => { micBtn.classList.remove('recording'); status.innerText = 'Online'; };
 };
 
-sendBtn.onclick = () => run($('cmd').value);$('cmd').onkeydown = e => { if (e.key === 'Enter') sendBtn.click(); };
+sendBtn.onclick = () => run($('cmd').value);
+$('cmd').onkeydown = e => { if (e.key === 'Enter') sendBtn.click(); };
 </script>
-
 </body>
 </html>
