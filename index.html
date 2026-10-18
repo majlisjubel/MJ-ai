@@ -120,20 +120,6 @@ main {
   border-bottom: none;
 }
 
-.audio-play-btn {
-  display: inline-block;
-  margin-left: 8px;
-  background: rgba(181, 23, 47, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: #fff;
-  border-radius: 50%;
-  width: 26px;
-  height: 26px;
-  font-size: 12px;
-  cursor: pointer;
-  vertical-align: middle;
-}
-
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
@@ -190,9 +176,6 @@ main {
   transition: transform 0.2s, color 0.2s;
 }
 .vn-icon-btn.active { color: #ff4d66; }
-.vn-icon-btn.recording { color: #ff4d66; transform: scale(1.2); animation: pulse 1s infinite alternate; }
-
-@keyframes pulse { from { opacity: 0.6; } to { opacity: 1; } }
 </style>
 </head>
 <body>
@@ -207,8 +190,8 @@ main {
   </div>
 
   <div class="vn-stage">
-    <!-- Sprite awal menggunakan file netral -->
-    <img id="mj-sprite" class="mj-sprite" src="./file_0000000088648211b2abc737ac.png" alt="MJ Character">
+    <!-- Sprite awal netral -->
+    <img id="mj-sprite" class="mj-sprite" src="./netral.png" alt="MJ Character">
   </div>
 
   <div id="chat-container">
@@ -231,20 +214,19 @@ const $ = id => document.getElementById(id);
 const chat = $('chat-container');
 const status = $('status');
 const sendBtn = $('send');
-const micBtn = $('mic');
 const keyBtn = $('key-btn');
 const mjSprite = $('mj-sprite');
 const API = 'https://api.mj-ai.my.id/';
 
-// Mapping ekspresi berdasarkan nama file yang baru lo upload
+// Mapping ekspresi sesuai file di repository lo
 const EXPRESSIONS = {
-  netral: './file_0000000088648211b2abc737ac.png',
-  senang: './file_00000000a8c82118bf468aa37.png',
-  sedih: './file_0000000084788211ac3f3af778.png',
-  marah: './file_00000000c2788211b812b3b97f.png',
-  kaget: './file_0000000088f48211adc8ead5d7.png',
-  blushing: './file_00000000d8c08207ac4c93cd91.png',
-  bingung: './1792299320411.png'
+  netral: './netral.png',
+  senang: './senang.png',
+  sedih: './1792299320411.png',
+  marah: './marah.png',
+  kaget: './kaget.png',
+  blushing: './blushing.png',
+  bingung: './berfikir.png'
 };
 
 function changeExpression(expressionName) {
@@ -264,7 +246,7 @@ function autoDetectExpression(text) {
   else if (lower.includes('marah') || lower.includes('kesal') || lower.includes('😠')) changeExpression('marah');
   else if (lower.includes('wah') || lower.includes('kaget') || lower.includes('😲')) changeExpression('kaget');
   else if (lower.includes('malu') || lower.includes('tuan') || lower.includes('😳')) changeExpression('blushing');
-  else if (lower.includes('bingung') || lower.includes('🤔')) changeExpression('bingung');
+  else if (lower.includes('bingung') || lower.includes('pikir') || lower.includes('🤔')) changeExpression('bingung');
   else changeExpression('netral');
 }
 
