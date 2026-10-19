@@ -7,7 +7,6 @@ const keyBtn = $('key-btn');
 const mjSprite = $('mj-sprite');
 const API = 'https://api.mj-ai.my.id/';
 
-// Ambil PIN Verifikasi dari Storage
 let userPIN = localStorage.getItem('MJ_PIN') || "";
 
 function updateAccessUI() {
@@ -24,12 +23,10 @@ updateAccessUI();
 
 let currentAudio = null;
 
-// Riwayat percakapan UNLIMITED khusus session aktif saja (Reset otomatis pas refresh)
 let history = [
   { role: 'model', parts: [{ text: '[senang] Haiii, saya MJ, asisten pribadi virtual. Ada yang bisa saya bantu?' }] }
 ];
 
-// Mapping File Ekspresi Sesuai Nama File di Repo GitHub
 const EXPRESSIONS = {
   netral: './netral.png',
   senang: './senang.png',
@@ -53,22 +50,22 @@ function changeExpression(expressionName) {
 function autoDetectExpression(text) {
   const lower = text.toLowerCase();
   
-  if (lower.includes('[blushing]') || lower.includes('(blush)') || lower.includes('blush') || lower.includes('[malu]') || lower.includes('😳') || lower.includes('😊') || lower.includes('muka merah')) {
+  if (lower.includes('[blushing]') || lower.includes('(blush)') || lower.includes('blush') || lower.includes('[malu]') || lower.includes('😳') || lower.includes('😊')) {
     changeExpression('blushing');
   } 
-  else if (lower.includes('[sedih]') || lower.includes('😔') || lower.includes('🥺') || lower.includes('😭') || lower.includes('💔') || lower.includes('kecewa') || lower.includes('maaf')) {
+  else if (lower.includes('[sedih]') || lower.includes('😔') || lower.includes('🥺') || lower.includes('😭') || lower.includes('💔') || lower.includes('maaf')) {
     changeExpression('sedih');
   } 
-  else if (lower.includes('[marah]') || lower.includes('😠') || lower.includes('😡') || lower.includes('kesal') || lower.includes('benci')) {
+  else if (lower.includes('[marah]') || lower.includes('😠') || lower.includes('😡') || lower.includes('kesal')) {
     changeExpression('marah');
   } 
-  else if (lower.includes('[kaget]') || lower.includes('😲') || lower.includes('😱') || lower.includes('terkejut') || lower.includes('wah')) {
+  else if (lower.includes('[kaget]') || lower.includes('😲') || lower.includes('😱') || lower.includes('terkejut')) {
     changeExpression('kaget');
   } 
-  else if (lower.includes('[berfikir]') || lower.includes('[bingung]') || lower.includes('🤔') || lower.includes('renungkan') || lower.includes('mikir')) {
+  else if (lower.includes('[berfikir]') || lower.includes('[bingung]') || lower.includes('🤔') || lower.includes('mikir')) {
     changeExpression('berfikir');
   } 
-  else if (lower.includes('[senang]') || lower.includes('😁') || lower.includes('😄') || lower.includes('😃') || lower.includes('suka') || lower.includes('haha')) {
+  else if (lower.includes('[senang]') || lower.includes('😁') || lower.includes('😄') || lower.includes('haha')) {
     changeExpression('senang');
   } 
   else {
@@ -93,27 +90,49 @@ keyBtn.onclick = () => {
   }
 };
 
-function addDialogue(text, isUser = false, audioBase64 = null) {
+// EFEK TYPEWRITER UNTUK TEKS DIALOG
+function addDialogue(text, isUser = false, audioBase64 = null, enableTypewriter = true) {
   const div = document.createElement('div');
   div.className = isUser ? 'vn-dialogue user-action' : 'vn-dialogue';
-  div.innerText = text;
-
-  if (audioBase64 && !isUser) {
-    const playBtn = document.createElement('button');
-    playBtn.className = 'audio-play-btn';
-    playBtn.innerText = '🔊';
-    playBtn.title = 'Putar Suara';
-    playBtn.onclick = () => playAudioResponse(audioBase64, text);
-    div.appendChild(playBtn);
-  }
 
   chat.appendChild(div);
-  
-  setTimeout(() => {
+
+  // Jika teks dari User atau Typewriter dimatikan, tampilkan langsung
+  if (isUser || !enableTypewriter) {
+    div.innerText = text;
+    if (audioBase64 && !isUser) appendAudioButton(div, audioBase64, text);
     chat.scrollTop = chat.scrollHeight;
-  }, 50);
+    return div;
+  }
+
+  // Jika balasan MJ, jalankan Efek Typewriter (mengetik perlahan)
+  let index = 0;
+  div.innerText = "";
+
+  const speed = 25; // Kecepatan ketik (ms per karakter)
   
+  function typeChar() {
+    if (index < text.length) {
+      div.innerText += text.charAt(index);
+      index++;
+      chat.scrollTop = chat.scrollHeight;
+      setTimeout(typeChar, speed);
+    } else {
+      if (audioBase64) appendAudioButton(div, audioBase64, text);
+    }
+  }
+
+  typeChar();
   return div;
+}
+
+function appendAudioButton(container, audioBase64, text) {
+  const playBtn = document.createElement('button');
+  playBtn.className = 'audio-play-btn';
+  playBtn.innerText = '🔊';
+  playBtn.title = 'Putar Suara';
+  playBtn.onclick = () => playAudioResponse(audioBase64, text);
+  container.appendChild(playBtn);
 }
 
 function playAudioResponse(audioBase64, textFallback) {
@@ -144,10 +163,9 @@ async function run(q) {
   addDialogue(q, true);
   $('cmd').value = '';
   
-  // Simpan ke array memori UNLIMITED (Tanpa batas potong)
   history.push({ role: 'user', parts: [{ text: q }] });
 
-  const loading = addDialogue('...');
+  const loading = addDialogue('...', false, null, false);
   status.innerText = 'Memproses...';
   sendBtn.disabled = true;
 
@@ -171,17 +189,17 @@ async function run(q) {
 
     const reply = data.answer || "Maaf, tidak ada respon.";
     
-    addDialogue(reply, false, data.audio);
+    // Tampilkan balasan MJ dengan efek Typewriter
+    addDialogue(reply, false, data.audio, true);
     autoDetectExpression(reply);
     
-    // Simpan balasan AI ke memori UNLIMITED
     history.push({ role: 'model', parts: [{ text: reply }] });
 
     status.innerText = 'Online';
 
   } catch (err) {
     loading.remove();
-    addDialogue('Ralat: ' + err.message);
+    addDialogue('Ralat: ' + err.message, false, null, false);
     status.innerText = 'Error';
     history.pop();
   } finally {
