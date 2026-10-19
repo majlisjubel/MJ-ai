@@ -1,1 +1,80 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#08080a">
+  <title>Murojaah AI - MJ Qur'an</title>
+  <link rel="stylesheet" href="./style.css?v=1">
+</head>
+<body>
 
+  <div class="murojaah-wrapper">
+    <!-- Header Back + Info Surah -->
+    <header class="murojaah-header">
+      <a href="../" class="btn-back">←</a>
+      <div class="surah-info">
+        <h2>Al-Fatihah</h2>
+        <span class="surah-meta">Ayat 1 - 7 • Makkiyah</span>
+      </div>
+      <button id="btnToggleHide" class="btn-icon" title="Sembunyikan/Tampilkan Teks">
+        👁️
+      </button>
+    </header>
+
+    <!-- Display Area Ayat -->
+    <main class="murojaah-content">
+      <div class="bismillah-text">بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</div>
+      
+      <!-- Container Teks Arab (Bisa di-toggle mode 'hidden-mode') -->
+      <div id="quranContainer" class="quran-container">
+        <div class="verse-item" data-verse="1">
+          <span class="verse-arabic">ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَٰلَمِينَ</span>
+          <span class="verse-number">(١)</span>
+        </div>
+        <div class="verse-item" data-verse="2">
+          <span class="verse-arabic">ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</span>
+          <span class="verse-number">(٢)</span>
+        </div>
+        <div class="verse-item" data-verse="3">
+          <span class="verse-arabic">مَٰلِكِ يَوْمِ ٱلدِّينِ</span>
+          <span class="verse-number">(٣)</span>
+        </div>
+        <div class="verse-item" data-verse="4">
+          <span class="verse-arabic">إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ</span>
+          <span class="verse-number">(٤)</span>
+        </div>
+        <div class="verse-item" data-verse="5">
+          <span class="verse-arabic">ٱهْدِنَا ٱلصِّرَٰطَ ٱلْمُسْتَقِيمَ</span>
+          <span class="verse-number">(٥)</span>
+        </div>
+        <div class="verse-item" data-verse="6">
+          <span class="verse-arabic">صِرَٰطَ ٱلَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ ٱلْمَغْضُوبِ عَلَيْهِمْ وَلَا ٱلضَّآلِّينَ</span>
+          <span class="verse-number">(٦)</span>
+        </div>
+      </div>
+
+      <!-- Live Transcript Feedback -->
+      <div id="speechFeedback" class="speech-feedback">
+        <span class="status-indicator">● Siap mendengarkan</span>
+        <p id="liveText" class="live-text">Tekan tombol mikrofon di bawah lalu mulailah membaca...</p>
+      </div>
+    </main>
+
+    <!-- Control Dock Bawah -->
+    <footer class="murojaah-dock">
+      <button class="dock-btn btn-secondary" title="Pilih Surah">📖</button>
+      
+      <!-- Tombol Utama Mic / Voice Tracking -->
+      <button id="btnMic" class="dock-btn btn-mic" title="Mulai Murojaah">
+        <div class="mic-icon">🎙️</div>
+      </button>
+
+      <button class="dock-btn btn-secondary" title="Riwayat Kesalahan">📊</button>
+    </footer>
+  </div>
+
+  <script src="./script.js?v=1"></script>
+</body>
+  </html>
+                                  
