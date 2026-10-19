@@ -97,7 +97,7 @@ header {
   box-shadow: 0 0 6px #22c55e;
 }
 
-/* CHARACTER SPRITE AREA */
+/* CHARACTER SPRITE AREA (DIPERBAIKI AGAR TIDAK KEPZOOM) */
 .sprite-container {
   position: absolute;
   top: 0;
@@ -108,11 +108,12 @@ header {
   display: flex;
   justify-content: center;
   align-items: flex-end;
+  overflow: hidden;
 }
 
 .sprite-container img {
-  max-width: 110%;
-  height: 92%;
+  width: 100%;
+  height: 82%;
   object-fit: contain;
   object-position: bottom center;
   transition: opacity 0.2s ease, transform 0.3s ease;
@@ -121,8 +122,8 @@ header {
 /* CHAT CONTAINER (BABLAS TANPA BLOK PENGHALANG) */
 .chat-container {
   position: absolute;
-  top: 65px; /* Tepat di bawah Header/Logo MJ */
-  bottom: 85px; /* Di atas Input field */
+  top: 65px; 
+  bottom: 85px; 
   left: 0;
   right: 0;
   z-index: 5;
@@ -132,12 +133,11 @@ header {
   flex-direction: column;
   gap: 16px;
   scroll-behavior: smooth;
-  /* Shadow gradasi tipis dari atas-bawah biar teks terbacajelas tanpa menutup karakter */
   background: linear-gradient(
     to bottom,
-    rgba(0,0,0,0.2) 0%,
-    rgba(0,0,0,0.4) 50%,
-    rgba(0,0,0,0.6) 100%
+    rgba(0,0,0,0.15) 0%,
+    rgba(0,0,0,0.35) 50%,
+    rgba(0,0,0,0.55) 100%
   );
 }
 
@@ -168,7 +168,7 @@ header {
   color: #ffffff;
 }
 
-/* Teks aksi / balasan User (Miring / Transparan Elegan) */
+/* Teks aksi / balasan User */
 .vn-dialogue.user-action {
   align-self: flex-end;
   font-style: italic;
