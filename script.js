@@ -25,7 +25,7 @@ updateAccessUI();
 let currentAudio = null;
 
 let history = [
-  { role: 'model', parts: [{ text: 'Haiii, saya MJ, asisten pribadi virtual. Ada yang bisa saya bantu?' }] }
+  { role: 'model', parts: [{ text: '[senang] Haiii, saya MJ, asisten pribadi virtual. Ada yang bisa saya bantu?' }] }
 ];
 
 // Mapping File Ekspresi Sesuai Nama File di Repo GitHub
@@ -52,31 +52,32 @@ function changeExpression(expressionName) {
 function autoDetectExpression(text) {
   const lower = text.toLowerCase();
   
-  if (lower.includes('[marah]') || lower.includes('😠') || lower.includes('😡')) {
-    changeExpression('marah');
-  } else if (lower.includes('[sedih]') || lower.includes('😭') || lower.includes('💔')) {
-    changeExpression('sedih');
-  } else if (lower.includes('[blushing]') || lower.includes('[malu]') || lower.includes('😳')) {
+  // 1. BLUSHING / MALU
+  if (lower.includes('[blushing]') || lower.includes('(blush)') || lower.includes('blush') || lower.includes('[malu]') || lower.includes('😳') || lower.includes('😊') || lower.includes('muka merah')) {
     changeExpression('blushing');
-  } else if (lower.includes('[kaget]') || lower.includes('😲') || lower.includes('😱')) {
-    changeExpression('kaget');
-  } else if (lower.includes('[berfikir]') || lower.includes('[bingung]') || lower.includes('🤔')) {
-    changeExpression('berfikir');
-  } else if (lower.includes('[senang]') || lower.includes('😊') || lower.includes('😁') || lower.includes('😄')) {
-    changeExpression('senang');
-  } else if (lower.includes('marah') || lower.includes('kesal') || lower.includes('benci')) {
-    changeExpression('marah');
-  } else if (lower.includes('sedih') || lower.includes('kecewa') || lower.includes('maaf')) {
+  } 
+  // 2. SEDIH
+  else if (lower.includes('[sedih]') || lower.includes('😔') || lower.includes('🥺') || lower.includes('😭') || lower.includes('💔') || lower.includes('kecewa') || lower.includes('maaf')) {
     changeExpression('sedih');
-  } else if (lower.includes('senang') || lower.includes('suka') || lower.includes('haha') || lower.includes('senyum')) {
-    changeExpression('senang');
-  } else if (lower.includes('kaget') || lower.includes('terkejut') || lower.includes('wah')) {
+  } 
+  // 3. MARAH
+  else if (lower.includes('[marah]') || lower.includes('😠') || lower.includes('😡') || lower.includes('kesal') || lower.includes('benci')) {
+    changeExpression('marah');
+  } 
+  // 4. KAGET
+  else if (lower.includes('[kaget]') || lower.includes('😲') || lower.includes('😱') || lower.includes('terkejut') || lower.includes('wah')) {
     changeExpression('kaget');
-  } else if (lower.includes('malu') || lower.includes('blush')) {
-    changeExpression('blushing');
-  } else if (lower.includes('berfikir') || lower.includes('pikir') || lower.includes('bingung') || lower.includes('renungkan')) {
+  } 
+  // 5. BERFIKIR
+  else if (lower.includes('[berfikir]') || lower.includes('[bingung]') || lower.includes('🤔') || lower.includes('renungkan') || lower.includes('mikir')) {
     changeExpression('berfikir');
-  } else {
+  } 
+  // 6. SENANG
+  else if (lower.includes('[senang]') || lower.includes('😁') || lower.includes('😄') || lower.includes('😃') || lower.includes('suka') || lower.includes('haha')) {
+    changeExpression('senang');
+  } 
+  // 7. DEFAULT / NETRAL
+  else {
     changeExpression('netral');
   }
 }
@@ -156,7 +157,6 @@ async function run(q) {
   sendBtn.disabled = true;
 
   try {
-    // Kirim userPIN langsung ke backend secara dinamis
     const res = await fetch(API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
