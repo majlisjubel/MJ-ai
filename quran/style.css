@@ -64,6 +64,40 @@ html, body {
   cursor: pointer;
 }
 
+/* Modul Menu Navigasi (Pills di Atas) */
+.feature-nav-bar {
+  display: flex;
+  gap: 6px;
+  padding: 10px 12px;
+  background: #141418;
+  overflow-x: auto;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  white-space: nowrap;
+}
+
+.feature-nav-bar::-webkit-scrollbar {
+  display: none; /* Sembunyikan scrollbar */
+}
+
+.nav-pill {
+  background: #1c1c22;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #a1a1a6;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nav-pill.active {
+  background: #33ec8a;
+  color: #000;
+  border-color: #33ec8a;
+  font-weight: bold;
+}
+
 /* Tab Content Visibility */
 .tab-content {
   display: none;
@@ -198,38 +232,4 @@ html, body {
   border-radius: 10px;
   font-weight: bold;
   cursor: pointer;
-}
-
-/* Bottom Nav Bar */
-.bottom-nav {
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  background: #18181c;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 8px 0;
-}
-
-.nav-item {
-  background: none;
-  border: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  color: #7c7c80;
-  cursor: pointer;
-  flex: 1;
-}
-
-.nav-icon {
-  font-size: 18px;
-}
-
-.nav-label {
-  font-size: 11px;
-}
-
-.nav-item.active {
-  color: #33ec8a;
 }
