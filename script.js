@@ -7,7 +7,7 @@ const keyBtn = $('key-btn');
 const mjSprite = $('mj-sprite');
 const API = 'https://api.mj-ai.my.id/';
 
-// Ambil PIN yang tersimpan di browser sebelumnya
+// Ambil PIN Verifikasi dari Storage
 let userPIN = localStorage.getItem('MJ_PIN') || "";
 
 function updateAccessUI() {
@@ -24,6 +24,7 @@ updateAccessUI();
 
 let currentAudio = null;
 
+// Riwayat percakapan UNLIMITED khusus session aktif saja (Reset otomatis pas refresh)
 let history = [
   { role: 'model', parts: [{ text: '[senang] Haiii, saya MJ, asisten pribadi virtual. Ada yang bisa saya bantu?' }] }
 ];
@@ -52,31 +53,24 @@ function changeExpression(expressionName) {
 function autoDetectExpression(text) {
   const lower = text.toLowerCase();
   
-  // 1. BLUSHING / MALU
   if (lower.includes('[blushing]') || lower.includes('(blush)') || lower.includes('blush') || lower.includes('[malu]') || lower.includes('😳') || lower.includes('😊') || lower.includes('muka merah')) {
     changeExpression('blushing');
   } 
-  // 2. SEDIH
   else if (lower.includes('[sedih]') || lower.includes('😔') || lower.includes('🥺') || lower.includes('😭') || lower.includes('💔') || lower.includes('kecewa') || lower.includes('maaf')) {
     changeExpression('sedih');
   } 
-  // 3. MARAH
   else if (lower.includes('[marah]') || lower.includes('😠') || lower.includes('😡') || lower.includes('kesal') || lower.includes('benci')) {
     changeExpression('marah');
   } 
-  // 4. KAGET
   else if (lower.includes('[kaget]') || lower.includes('😲') || lower.includes('😱') || lower.includes('terkejut') || lower.includes('wah')) {
     changeExpression('kaget');
   } 
-  // 5. BERFIKIR
   else if (lower.includes('[berfikir]') || lower.includes('[bingung]') || lower.includes('🤔') || lower.includes('renungkan') || lower.includes('mikir')) {
     changeExpression('berfikir');
   } 
-  // 6. SENANG
   else if (lower.includes('[senang]') || lower.includes('😁') || lower.includes('😄') || lower.includes('😃') || lower.includes('suka') || lower.includes('haha')) {
     changeExpression('senang');
   } 
-  // 7. DEFAULT / NETRAL
   else {
     changeExpression('netral');
   }
@@ -150,6 +144,7 @@ async function run(q) {
   addDialogue(q, true);
   $('cmd').value = '';
   
+  // Simpan ke array memori UNLIMITED (Tanpa batas potong)
   history.push({ role: 'user', parts: [{ text: q }] });
 
   const loading = addDialogue('...');
@@ -178,6 +173,8 @@ async function run(q) {
     
     addDialogue(reply, false, data.audio);
     autoDetectExpression(reply);
+    
+    // Simpan balasan AI ke memori UNLIMITED
     history.push({ role: 'model', parts: [{ text: reply }] });
 
     status.innerText = 'Online';
