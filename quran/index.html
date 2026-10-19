@@ -3,66 +3,67 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#0b0b0d">
+  <meta name="theme-color" content="#08080a">
   <title>MJ AI - Al-Qur'an Hub</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./style.css?v=4">
+  <!-- Force CSS Reload via v=5 -->
+  <link rel="stylesheet" href="./style.css?v=5">
 </head>
 <body>
 
-  <main class="quran-hub-container">
-    <!-- Header Simpel -->
+  <div class="hub-wrapper">
+    <!-- Header Back -->
     <header class="hub-header">
-      <a href="../" class="btn-back">← Kembali ke MJ AI</a>
+      <a href="../" class="btn-back">
+        <span class="arrow">←</span> Kembali ke MJ AI
+      </a>
     </header>
 
-    <!-- Slogan / Teks Sambutan -->
+    <!-- Slogan Header -->
     <section class="hub-hero">
+      <div class="badge-tag">✨ MJ Qur'an Ecosystem</div>
       <h1>Lebih Dekat dengan Al-Qur'an Bersama MJ</h1>
-      <p>Pilih mode aktivitas Al-Qur'an yang ingin kamu jalankan hari ini.</p>
+      <p>Pilih mode aktivitas Al-Qur'an kamu hari ini</p>
     </section>
 
-    <!-- 4 Menu Pilihan Utama (Grid Cards) -->
-    <div class="hub-menu-grid">
-      <!-- Menu 1: Murojaah -->
-      <a href="./murojaah/" class="hub-card">
+    <!-- Menu Grid 2x2 / Vertical Cards -->
+    <nav class="hub-menu">
+      <a href="./murojaah/" class="menu-card card-murojaah">
         <div class="card-icon">🎙️</div>
-        <div class="card-info">
+        <div class="card-body">
           <h3>Murojaah AI</h3>
-          <p>Koreksi bacaan & pelacakan suara ala Tarteel</p>
+          <p>Koreksi bacaan & voice tracking ala Tarteel</p>
         </div>
+        <div class="card-arrow">›</div>
       </a>
 
-      <!-- Menu 2: Baca -->
-      <a href="./baca/" class="hub-card">
+      <a href="./baca/" class="menu-card">
         <div class="card-icon">📖</div>
-        <div class="card-info">
+        <div class="card-body">
           <h3>Baca Al-Qur'an</h3>
-          <p>Mushaf digital, teks Arab jelas, & terjemahan</p>
+          <p>Mushaf digital & terjemahan interaktif</p>
         </div>
+        <div class="card-arrow">›</div>
       </a>
 
-      <!-- Menu 3: Listening -->
-      <a href="./listening/" class="hub-card">
+      <a href="./listening/" class="menu-card">
         <div class="card-icon">🎧</div>
-        <div class="card-info">
+        <div class="card-body">
           <h3>Listening</h3>
-          <p>Dengarkan lantunan murattal para masayikh</p>
+          <p>Lantunan murattal para masayikh pilihan</p>
         </div>
+        <div class="card-arrow">›</div>
       </a>
 
-      <!-- Menu 4: Tes Hafalan -->
-      <a href="./hafalan/" class="hub-card">
+      <a href="./hafalan/" class="menu-card">
         <div class="card-icon">🧠</div>
-        <div class="card-info">
+        <div class="card-body">
           <h3>Tes Hafalan</h3>
-          <p>Uji retensi, kuis, & sambung ayat interaktif</p>
+          <p>Uji retensi, kuis & sambung ayat</p>
         </div>
+        <div class="card-arrow">›</div>
       </a>
-    </div>
-  </main>
+    </nav>
+  </div>
 
 </body>
 </html>
