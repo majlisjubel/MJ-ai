@@ -7,13 +7,11 @@ const keyBtn = $('key-btn');
 const mjSprite = $('mj-sprite');
 const API = 'https://api.mj-ai.my.id/';
 
-// PIN VALID TUAN IBNU (Frontend & Backend Murni)
-const VALID_PIN = "hadanuri114";
-
+// Ambil PIN yang tersimpan di browser sebelumnya
 let userPIN = localStorage.getItem('MJ_PIN') || "";
 
 function updateAccessUI() {
-  if (userPIN === VALID_PIN) {
+  if (userPIN && userPIN.trim() !== "") {
     keyBtn.classList.add('active');
   } else {
     userPIN = "";
@@ -54,7 +52,6 @@ function changeExpression(expressionName) {
 function autoDetectExpression(text) {
   const lower = text.toLowerCase();
   
-  // 1. Prioritas Utama: Tag Emosi / Emoji
   if (lower.includes('[marah]') || lower.includes('😠') || lower.includes('😡')) {
     changeExpression('marah');
   } else if (lower.includes('[sedih]') || lower.includes('😭') || lower.includes('💔')) {
@@ -67,9 +64,7 @@ function autoDetectExpression(text) {
     changeExpression('berfikir');
   } else if (lower.includes('[senang]') || lower.includes('😊') || lower.includes('😁') || lower.includes('😄')) {
     changeExpression('senang');
-  } 
-  // 2. Deteksi Kata Kunci Kalimat
-  else if (lower.includes('marah') || lower.includes('kesal') || lower.includes('benci')) {
+  } else if (lower.includes('marah') || lower.includes('kesal') || lower.includes('benci')) {
     changeExpression('marah');
   } else if (lower.includes('sedih') || lower.includes('kecewa') || lower.includes('maaf')) {
     changeExpression('sedih');
@@ -87,21 +82,17 @@ function autoDetectExpression(text) {
 }
 
 keyBtn.onclick = () => {
-  const pin = prompt("Masukkan PIN Verifikasi Tuan Ibnu (Kosongkan jika ingin masuk sebagai Tamu):", userPIN);
+  const pin = prompt("Masukkan PIN Verifikasi (Kosongkan jika ingin masuk sebagai Tamu):", userPIN);
   if (pin !== null) {
     const cleanPin = pin.trim();
-    if (cleanPin === VALID_PIN) {
+    if (cleanPin !== "") {
       userPIN = cleanPin;
       localStorage.setItem('MJ_PIN', userPIN);
-      alert("Verifikasi Berhasil! MJ mengenali Tuan Ibnu.");
-    } else if (cleanPin === "") {
-      userPIN = "";
-      localStorage.removeItem('MJ_PIN');
-      alert("Masuk sebagai Mode Tamu.");
+      alert("PIN tersimpan! Sistem siap mengenali identitasmu.");
     } else {
       userPIN = "";
       localStorage.removeItem('MJ_PIN');
-      alert("PIN Salah! Anda masuk sebagai Mode Tamu.");
+      alert("Masuk sebagai Mode Tamu.");
     }
     updateAccessUI();
   }
@@ -165,7 +156,7 @@ async function run(q) {
   sendBtn.disabled = true;
 
   try {
-    // langsung kirim userPIN ("hadanuri114") ke server
+    // Kirim userPIN langsung ke backend secara dinamis
     const res = await fetch(API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
