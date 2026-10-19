@@ -1,1 +1,83 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#050203">
+  <title>MJ AI - Koreksi Bacaan Al-Qur'an</title>
+  <!-- Google Fonts khusus font Arab (Amiri / Scheherazade) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css?v=1">
+</head>
+<body>
+
+  <main class="quran-main">
+    <!-- Header & Navigasi Atas -->
+    <header class="quran-header">
+      <a href="../" class="btn-back">← Kembali ke MJ</a>
+      <div class="quran-title">
+        <span class="quran-badge">📖 Al-Qur'an AI</span>
+      </div>
+    </header>
+
+    <!-- Bar Pemilih Surah & Ayat -->
+    <section class="quran-selector-card">
+      <div class="select-group">
+        <label for="surah-select">Surah</label>
+        <select id="surah-select">
+          <option value="1">1. Al-Fatihah</option>
+          <option value="112">112. Al-Ikhlas</option>
+          <option value="113">113. Al-Falaq</option>
+          <option value="114">114. An-Nas</option>
+        </select>
+      </div>
+      <div class="select-group short">
+        <label for="ayah-select">Ayat</label>
+        <select id="ayah-select">
+          <option value="1">1</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- Tampilan Teks Ayat Arab & Terjemahan -->
+    <section class="quran-display-card">
+      <div class="arabic-container">
+        <p id="arabic-text" class="arabic-text">
+          بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+        </p>
+      </div>
+      <p id="translation-text" class="translation-text">
+        Dengan nama Allah Yang Maha Pengasih, Maha Penyayang.
+      </p>
+    </section>
+
+    <!-- Hasil Koreksi / Analisis Tajwid -->
+    <section id="feedback-card" class="feedback-card">
+      <div class="feedback-header">
+        <span class="feedback-icon">✨</span>
+        <h4>Hasil Analisis Bacaan</h4>
+      </div>
+      <p id="feedback-content" class="feedback-content">
+        Tekan tombol mikrofon di bawah lalu bacalah ayat di atas untuk memulai analisis tajwid dan makhraj.
+      </p>
+    </section>
+
+    <!-- Panel Kontrol Audio & Rekam Bawah -->
+    <section class="quran-control-panel">
+      <button id="qori-play-btn" class="ctrl-btn secondary" title="Dengar Contoh Qori">
+        🔊 Contoh Qori
+      </button>
+      
+      <button id="record-btn" class="ctrl-btn primary-rec">
+        <span class="mic-icon">🎙️</span>
+        <span id="rec-label">Tekan & Baca</span>
+      </button>
+    </section>
+  </main>
+
+  <script src="./script.js?v=1"></script>
+</body>
+            </html>
 
