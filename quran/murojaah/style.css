@@ -1,1 +1,256 @@
+/* Reset Basic */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
 
+html, body {
+  width: 100%;
+  height: 100%;
+  background-color: #08080a !important;
+  color: #f0f0f5 !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+.murojaah-wrapper {
+  width: 100%;
+  max-width: 440px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 16px 18px 100px;
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient(circle at top, rgba(51, 236, 138, 0.06) 0%, transparent 60%);
+  position: relative;
+}
+
+/* Header Navbar */
+.murojaah-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.btn-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  color: #33ec8a !important;
+  text-decoration: none !important;
+  font-size: 16px;
+  font-weight: bold;
+  background: rgba(51, 236, 138, 0.08);
+  border-radius: 50%;
+  border: 1px solid rgba(51, 236, 138, 0.2);
+  transition: all 0.2s ease;
+}
+
+.btn-back:active {
+  transform: scale(0.92);
+}
+
+.surah-info {
+  text-align: center;
+}
+
+.surah-info h2 {
+  font-size: 17px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.surah-meta {
+  font-size: 11px;
+  color: #8e8e93;
+}
+
+.btn-icon {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-icon:active {
+  transform: scale(0.92);
+  background: rgba(51, 236, 138, 0.2);
+}
+
+/* Area Mushaf Teks Arab */
+.murojaah-content {
+  flex: 1;
+  padding: 24px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.bismillah-text {
+  font-size: 22px;
+  color: #33ec8a;
+  text-align: center;
+  margin-bottom: 24px;
+  font-family: 'Amiri', 'Traditional Arabic', serif;
+  line-height: 1.8;
+}
+
+.quran-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  transition: opacity 0.3s ease;
+}
+
+.verse-item {
+  direction: rtl;
+  text-align: right;
+  line-height: 2.2;
+  font-size: 24px;
+  font-family: 'Amiri', 'Traditional Arabic', serif;
+  color: #f0f0f5;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 12px 16px;
+  border-radius: 14px;
+  border-right: 3px solid rgba(51, 236, 138, 0.4);
+  transition: all 0.3s ease;
+}
+
+.verse-number {
+  color: #33ec8a;
+  font-size: 18px;
+  margin-right: 8px;
+}
+
+/* MODE DIHILANGKAN SAMSEK (HAFALAN) */
+.quran-container.text-hidden .verse-arabic {
+  visibility: hidden;
+  opacity: 0;
+}
+
+/* KATA YANG SUDAH BERHASIL DIBACA/MATCHING (TARTEEL EFFECT) */
+.verse-item .matched {
+  color: #33ec8a !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  font-weight: bold;
+}
+
+/* Speech Feedback Bar */
+.speech-feedback {
+  margin-top: 30px;
+  width: 100%;
+  background: rgba(18, 18, 22, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 14px;
+  text-align: center;
+  backdrop-filter: blur(10px);
+}
+
+.status-indicator {
+  font-size: 11px;
+  font-weight: 600;
+  color: #33ec8a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.live-text {
+  font-size: 13px;
+  color: #8e8e93;
+  margin-top: 6px;
+  font-style: italic;
+}
+
+/* Control Dock Floating Bawah */
+.murojaah-dock {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 36px);
+  max-width: 404px;
+  background: rgba(18, 18, 22, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 10px 20px;
+  border-radius: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+}
+
+.dock-btn {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 20px;
+  cursor: pointer;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.btn-secondary:active {
+  transform: scale(0.9);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Tombol Mic Glow Utama */
+.btn-mic {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #33ec8a 0%, #1da85e 100%);
+  box-shadow: 0 0 20px rgba(51, 236, 138, 0.4);
+  margin-top: -15px; /* Menonjol ke atas */
+}
+
+.btn-mic .mic-icon {
+  font-size: 26px;
+}
+
+.btn-mic:active {
+  transform: scale(0.92);
+  box-shadow: 0 0 30px rgba(51, 236, 138, 0.7);
+}
+
+/* Animasi Pulse saat rekam */
+.btn-mic.recording {
+  animation: pulseMic 1.5s infinite;
+  background: linear-gradient(135deg, #ff453a 0%, #c0261d 100%);
+  box-shadow: 0 0 20px rgba(255, 69, 58, 0.5);
+}
+
+@keyframes pulseMic {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+  }
+  
