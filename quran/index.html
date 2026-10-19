@@ -3,81 +3,114 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#050203">
-  <title>MJ AI - Koreksi Bacaan Al-Qur'an</title>
-  <!-- Google Fonts khusus font Arab (Amiri / Scheherazade) -->
+  <meta name="theme-color" content="#0d0d0d">
+  <title>MJ AI - Al-Qur'an & Murojaah</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./style.css?v=1">
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css?v=2">
 </head>
 <body>
 
-  <main class="quran-main">
-    <!-- Header & Navigasi Atas -->
-    <header class="quran-header">
-      <a href="../" class="btn-back">← Kembali ke MJ</a>
-      <div class="quran-title">
-        <span class="quran-badge">📖 Al-Qur'an AI</span>
+  <main class="quran-app">
+    <!-- Header Atas (Top Bar) -->
+    <header class="top-nav">
+      <a href="../" class="btn-back">← MJ AI</a>
+      <div class="surah-info-header">
+        <span id="header-title">An-Nisa</span>
+        <small id="header-subtitle">Halaman 101 | Juz 5</small>
       </div>
+      <button class="icon-btn" id="settings-btn" title="Pengaturan">⚙️</button>
     </header>
 
-    <!-- Bar Pemilih Surah & Ayat -->
-    <section class="quran-selector-card">
-      <div class="select-group">
-        <label for="surah-select">Surah</label>
+    <!-- TAB 1: MUROJAAH (Mode Tarteel AI) -->
+    <section id="tab-murojaah" class="tab-content active">
+      <div class="tarteel-container">
+        <div class="murojaah-display" id="murojaah-display">
+          <!-- Ayat akan dimuat secara dinamis atau disensor untuk murojaah -->
+          <div class="ayah-item hidden-text" id="murojaah-ayah-140">
+            <span class="ayah-num">﴿١٤٠﴾</span>
+            <p class="arabic-murojaah">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</p>
+          </div>
+        </div>
+        <div class="murojaah-controls">
+          <button class="tool-btn" id="toggle-hide-btn" title="Sembunyikan/Tampilkan Ayat">👁️</button>
+          <button class="rec-floating-btn" id="tarteel-rec-btn" title="Mulai Murojaah">
+            🎙️
+          </button>
+          <button class="tool-btn" id="mistake-log-btn" title="Catatan Kesalahan">📋</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: BACA (Mushaf Mode) -->
+    <section id="tab-baca" class="tab-content">
+      <div class="selector-bar">
         <select id="surah-select">
           <option value="1">1. Al-Fatihah</option>
+          <option value="4">4. An-Nisa</option>
           <option value="112">112. Al-Ikhlas</option>
-          <option value="113">113. Al-Falaq</option>
-          <option value="114">114. An-Nas</option>
         </select>
-      </div>
-      <div class="select-group short">
-        <label for="ayah-select">Ayat</label>
         <select id="ayah-select">
-          <option value="1">1</option>
+          <option value="1">Ayat 1</option>
         </select>
       </div>
-    </section>
-
-    <!-- Tampilan Teks Ayat Arab & Terjemahan -->
-    <section class="quran-display-card">
-      <div class="arabic-container">
-        <p id="arabic-text" class="arabic-text">
-          بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
-        </p>
+      <div class="quran-reader">
+        <div class="arabic-box">
+          <p id="arabic-text" class="arabic-text">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</p>
+        </div>
+        <p id="translation-text" class="translation-text">Dengan nama Allah Yang Maha Pengasih, Maha Penyayang.</p>
       </div>
-      <p id="translation-text" class="translation-text">
-        Dengan nama Allah Yang Maha Pengasih, Maha Penyayang.
-      </p>
     </section>
 
-    <!-- Hasil Koreksi / Analisis Tajwid -->
-    <section id="feedback-card" class="feedback-card">
-      <div class="feedback-header">
-        <span class="feedback-icon">✨</span>
-        <h4>Hasil Analisis Bacaan</h4>
+    <!-- TAB 3: LISTENING (Qari / Masayikh) -->
+    <section id="tab-listening" class="tab-content">
+      <div class="qari-card">
+        <h3>🎧 Dengarkan Masayikh</h3>
+        <select id="qari-select" class="qari-dropdown">
+          <option value="mishary">Mishary Rashid Alafasy</option>
+          <option value="sudais">Abdul Rahman Al-Sudais</option>
+          <option value="ghemadi">Saad Al-Ghamdi</option>
+        </select>
+        <div class="audio-player-box">
+          <button id="play-audio-btn" class="play-btn">▶️ Putar Murottal</button>
+        </div>
       </div>
-      <p id="feedback-content" class="feedback-content">
-        Tekan tombol mikrofon di bawah lalu bacalah ayat di atas untuk memulai analisis tajwid dan makhraj.
-      </p>
     </section>
 
-    <!-- Panel Kontrol Audio & Rekam Bawah -->
-    <section class="quran-control-panel">
-      <button id="qori-play-btn" class="ctrl-btn secondary" title="Dengar Contoh Qori">
-        🔊 Contoh Qori
-      </button>
-      
-      <button id="record-btn" class="ctrl-btn primary-rec">
-        <span class="mic-icon">🎙️</span>
-        <span id="rec-label">Tekan & Baca</span>
-      </button>
+    <!-- TAB 4: TES HAFALAN (Quiz / Sambung Ayat) -->
+    <section id="tab-tes" class="tab-content">
+      <div class="quiz-card">
+        <h3>🧠 Uji Retensi Hafalan</h3>
+        <p>Lanjutkan potongan ayat di bawah ini:</p>
+        <div class="quiz-prompt">
+          <p class="arabic-text">قُلْ هُوَ اللَّهُ ...</p>
+        </div>
+        <button id="answer-rec-btn" class="ctrl-btn primary-rec">🎙️ Jawab Lewat Suara</button>
+      </div>
     </section>
+
+    <!-- NAVIGASI BAWAH (Bottom Bar) -->
+    <nav class="bottom-nav">
+      <button class="nav-item active" data-tab="tab-murojaah">
+        <span class="nav-icon">🎙️</span>
+        <span class="nav-label">Murojaah</span>
+      </button>
+      <button class="nav-item" data-tab="tab-baca">
+        <span class="nav-icon">📖</span>
+        <span class="nav-label">Baca</span>
+      </button>
+      <button class="nav-item" data-tab="tab-listening">
+        <span class="nav-icon">🎧</span>
+        <span class="nav-label">Listening</span>
+      </button>
+      <button class="nav-item" data-tab="tab-tes">
+        <span class="nav-icon">🧠</span>
+        <span class="nav-label">Tes Hafalan</span>
+      </button>
+    </nav>
   </main>
 
-  <script src="./script.js?v=1"></script>
+  <script src="./script.js?v=2"></script>
 </body>
-            </html>
-
+</html>
