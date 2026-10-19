@@ -88,17 +88,17 @@ main {
   100% { transform: scale(1.02); }
 }
 
-/* KOTAK CHAT / CONTAINER DIALOG DI BAWAH (BISA DI-SCROLL SEMPURNA) */
+/* KOTAK CHAT / CONTAINER DIALOG DI BAWAH (BISA DI-SCROLL KE ATAS BEBAS) */
 #chat-container {
   position: absolute;
   bottom: 75px;
   left: 12px;
   right: 12px;
-  height: 35vh; /* Mengunci tinggi area dialog agar scroll aktif */
+  height: 35vh; 
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end; /* Pesan baru menumpuk rapi dari bawah */
+  justify-content: flex-start; /* Diubah ke flex-start agar bebas digeser ke atas */
   gap: 8px;
   padding: 4px;
   scroll-behavior: smooth;
