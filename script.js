@@ -7,6 +7,7 @@ const keyBtn = $('key-btn');
 const mjSprite = $('mj-sprite');
 const API = 'https://api.mj-ai.my.id/';
 
+// Ambil PIN Verifikasi dari Storage
 let userPIN = localStorage.getItem('MJ_PIN') || "";
 
 function updateAccessUI() {
@@ -23,10 +24,12 @@ updateAccessUI();
 
 let currentAudio = null;
 
+// Riwayat percakapan UNLIMITED khusus session aktif saja (Reset otomatis pas refresh)
 let history = [
   { role: 'model', parts: [{ text: '[senang] Haiii, saya MJ, asisten pribadi virtual. Ada yang bisa saya bantu?' }] }
 ];
 
+// Mapping File Ekspresi Sesuai Nama File di Repo GitHub
 const EXPRESSIONS = {
   netral: './netral.png',
   senang: './senang.png',
@@ -50,22 +53,22 @@ function changeExpression(expressionName) {
 function autoDetectExpression(text) {
   const lower = text.toLowerCase();
   
-  if (lower.includes('[blushing]') || lower.includes('(blush)') || lower.includes('blush') || lower.includes('[malu]') || lower.includes('😳') || lower.includes('😊')) {
+  if (lower.includes('[blushing]') || lower.includes('(blush)') || lower.includes('blush') || lower.includes('[malu]') || lower.includes('😳') || lower.includes('😊') || lower.includes('muka merah')) {
     changeExpression('blushing');
   } 
-  else if (lower.includes('[sedih]') || lower.includes('😔') || lower.includes('🥺') || lower.includes('😭') || lower.includes('💔') || lower.includes('maaf')) {
+  else if (lower.includes('[sedih]') || lower.includes('😔') || lower.includes('🥺') || lower.includes('😭') || lower.includes('💔') || lower.includes('kecewa') || lower.includes('maaf')) {
     changeExpression('sedih');
   } 
-  else if (lower.includes('[marah]') || lower.includes('😠') || lower.includes('😡') || lower.includes('kesal')) {
+  else if (lower.includes('[marah]') || lower.includes('😠') || lower.includes('😡') || lower.includes('kesal') || lower.includes('benci')) {
     changeExpression('marah');
   } 
-  else if (lower.includes('[kaget]') || lower.includes('😲') || lower.includes('😱') || lower.includes('terkejut')) {
+  else if (lower.includes('[kaget]') || lower.includes('😲') || lower.includes('😱') || lower.includes('terkejut') || lower.includes('wah')) {
     changeExpression('kaget');
   } 
-  else if (lower.includes('[berfikir]') || lower.includes('[bingung]') || lower.includes('🤔') || lower.includes('mikir')) {
+  else if (lower.includes('[berfikir]') || lower.includes('[bingung]') || lower.includes('🤔') || lower.includes('renungkan') || lower.includes('mikir')) {
     changeExpression('berfikir');
   } 
-  else if (lower.includes('[senang]') || lower.includes('😁') || lower.includes('😄') || lower.includes('haha')) {
+  else if (lower.includes('[senang]') || lower.includes('😁') || lower.includes('😄') || lower.includes('😃') || lower.includes('suka') || lower.includes('haha')) {
     changeExpression('senang');
   } 
   else {
@@ -90,14 +93,14 @@ keyBtn.onclick = () => {
   }
 };
 
-// EFEK TYPEWRITER UNTUK TEKS DIALOG
+// FUNGSI DIALOG DENGAN EFEK TYPEWRITER (BERTARAP ALA VISUAL NOVEL)
 function addDialogue(text, isUser = false, audioBase64 = null, enableTypewriter = true) {
   const div = document.createElement('div');
   div.className = isUser ? 'vn-dialogue user-action' : 'vn-dialogue';
 
   chat.appendChild(div);
 
-  // Jika teks dari User atau Typewriter dimatikan, tampilkan langsung
+  // Jika pesan dari User atau status loading '...', tampilkan langsung tanpa typewriter
   if (isUser || !enableTypewriter) {
     div.innerText = text;
     if (audioBase64 && !isUser) appendAudioButton(div, audioBase64, text);
@@ -105,12 +108,11 @@ function addDialogue(text, isUser = false, audioBase64 = null, enableTypewriter 
     return div;
   }
 
-  // Jika balasan MJ, jalankan Efek Typewriter (mengetik perlahan)
+  // Efek Ketik Karakter demi Karakter (Typewriter Effect)
   let index = 0;
   div.innerText = "";
+  const speed = 22; // Kecepatan ketik milidetik per huruf
 
-  const speed = 25; // Kecepatan ketik (ms per karakter)
-  
   function typeChar() {
     if (index < text.length) {
       div.innerText += text.charAt(index);
@@ -163,8 +165,10 @@ async function run(q) {
   addDialogue(q, true);
   $('cmd').value = '';
   
+  // Simpan ke array memori UNLIMITED (Tanpa batas potong)
   history.push({ role: 'user', parts: [{ text: q }] });
 
+  // Loading text statis (tanpa typewriter)
   const loading = addDialogue('...', false, null, false);
   status.innerText = 'Memproses...';
   sendBtn.disabled = true;
@@ -189,10 +193,11 @@ async function run(q) {
 
     const reply = data.answer || "Maaf, tidak ada respon.";
     
-    // Tampilkan balasan MJ dengan efek Typewriter
+    // Tampilkan balasan AI menggunakan Efek Typewriter
     addDialogue(reply, false, data.audio, true);
     autoDetectExpression(reply);
     
+    // Simpan balasan AI ke memori UNLIMITED
     history.push({ role: 'model', parts: [{ text: reply }] });
 
     status.innerText = 'Online';
