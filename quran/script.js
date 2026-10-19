@@ -1,16 +1,16 @@
-// Tab Switching Logic
-const navItems = document.querySelectorAll('.nav-item');
+// Tab Switching Logic (Pills Navigasi Atas)
+const navPills = document.querySelectorAll('.nav-pill');
 const tabContents = document.querySelectorAll('.tab-content');
 
-navItems.forEach(item => {
-  item.addEventListener('click', () => {
-    // Nonaktifkan semua tab & button
-    navItems.forEach(nav => nav.classList.remove('active'));
+navPills.forEach(pill => {
+  pill.addEventListener('click', () => {
+    // Nonaktifkan semua pill & tab
+    navPills.forEach(p => p.classList.remove('active'));
     tabContents.forEach(tab => tab.classList.remove('active'));
 
-    // Aktifkan tab yang dipilih
-    item.classList.add('active');
-    const targetTab = item.getAttribute('data-tab');
+    // Aktifkan pill & tab yang diklik
+    pill.classList.add('active');
+    const targetTab = pill.getAttribute('data-tab');
     document.getElementById(targetTab).classList.add('active');
   });
 });
@@ -19,6 +19,8 @@ navItems.forEach(item => {
 const toggleHideBtn = document.getElementById('toggle-hide-btn');
 const murojaahAyah = document.getElementById('murojaah-ayah-140');
 
-toggleHideBtn.addEventListener('click', () => {
-  murojaahAyah.classList.toggle('hidden-text');
-});
+if (toggleHideBtn && murojaahAyah) {
+  toggleHideBtn.addEventListener('click', () => {
+    murojaahAyah.classList.toggle('hidden-text');
+  });
+}
