@@ -112,30 +112,33 @@ main {
   border-radius: 4px;
 }
 
+/* Kotak Dialog Utama (Semi-Transparan Kaca, Ekspresi Muka MJ Terlihat Jelas) */
 .vn-dialogue {
-  background: rgba(10, 3, 5, 0.45);
-  backdrop-filter: blur(6px);
-  border-top: 1px solid rgba(255, 77, 102, 0.25);
-  border-bottom: 1px solid rgba(255, 77, 102, 0.25);
+  background: rgba(10, 3, 5, 0.35); /* Dibuat transparan halus */
+  backdrop-filter: blur(5px);        /* Blur tipis agar estetis */
+  border: 1px solid rgba(255, 77, 102, 0.3);
+  border-left: 3px solid #ff334b;
   border-radius: 10px;
   padding: 10px 14px;
   font-size: 13.5px;
   line-height: 1.5;
   color: #ffffff;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  /* Shadow tebal agar tulisan tetap kontras walau transparan */
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 0 8px rgba(0, 0, 0, 0.8);
+  font-weight: 500;
   animation: fadeIn 0.3s ease-in-out;
   word-wrap: break-word;
 }
 
+/* Kotak Dialog User (Pesan Pengguna) */
 .vn-dialogue.user-action {
-  background: rgba(181, 23, 47, 0.35);
-  border-color: rgba(255, 51, 75, 0.4);
+  background: rgba(181, 23, 47, 0.3);
+  border: 1px solid rgba(255, 51, 75, 0.4);
+  border-right: 3px solid #ff4d66;
   color: #ffccd5;
   font-style: italic;
   text-align: right;
   border-radius: 8px;
-  border-top: none;
-  border-bottom: none;
 }
 
 /* Tombol Putar Ulang Suara */
