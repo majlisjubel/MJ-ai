@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./style.css?v=2">
+  <link rel="stylesheet" href="./style.css?v=3">
 </head>
 <body>
 
@@ -23,11 +23,18 @@
       <button class="icon-btn" id="settings-btn" title="Pengaturan">⚙️</button>
     </header>
 
+    <!-- Navigasi Menu Fitur (Pills di Atas biar gampang diklik) -->
+    <nav class="feature-nav-bar">
+      <button class="nav-pill active" data-tab="tab-murojaah">🎙️ Murojaah</button>
+      <button class="nav-pill" data-tab="tab-baca">📖 Baca</button>
+      <button class="nav-pill" data-tab="tab-listening">🎧 Listening</button>
+      <button class="nav-pill" data-tab="tab-tes">🧠 Tes Hafalan</button>
+    </nav>
+
     <!-- TAB 1: MUROJAAH (Mode Tarteel AI) -->
     <section id="tab-murojaah" class="tab-content active">
       <div class="tarteel-container">
         <div class="murojaah-display" id="murojaah-display">
-          <!-- Ayat akan dimuat secara dinamis atau disensor untuk murojaah -->
           <div class="ayah-item hidden-text" id="murojaah-ayah-140">
             <span class="ayah-num">﴿١٤٠﴾</span>
             <p class="arabic-murojaah">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</p>
@@ -35,9 +42,7 @@
         </div>
         <div class="murojaah-controls">
           <button class="tool-btn" id="toggle-hide-btn" title="Sembunyikan/Tampilkan Ayat">👁️</button>
-          <button class="rec-floating-btn" id="tarteel-rec-btn" title="Mulai Murojaah">
-            🎙️
-          </button>
+          <button class="rec-floating-btn" id="tarteel-rec-btn" title="Mulai Murojaah">🎙️</button>
           <button class="tool-btn" id="mistake-log-btn" title="Catatan Kesalahan">📋</button>
         </div>
       </div>
@@ -86,31 +91,11 @@
         <div class="quiz-prompt">
           <p class="arabic-text">قُلْ هُوَ اللَّهُ ...</p>
         </div>
-        <button id="answer-rec-btn" class="ctrl-btn primary-rec">🎙️ Jawab Lewat Suara</button>
+        <button id="answer-rec-btn" class="ctrl-btn">🎙️ Jawab Lewat Suara</button>
       </div>
     </section>
-
-    <!-- NAVIGASI BAWAH (Bottom Bar) -->
-    <nav class="bottom-nav">
-      <button class="nav-item active" data-tab="tab-murojaah">
-        <span class="nav-icon">🎙️</span>
-        <span class="nav-label">Murojaah</span>
-      </button>
-      <button class="nav-item" data-tab="tab-baca">
-        <span class="nav-icon">📖</span>
-        <span class="nav-label">Baca</span>
-      </button>
-      <button class="nav-item" data-tab="tab-listening">
-        <span class="nav-icon">🎧</span>
-        <span class="nav-label">Listening</span>
-      </button>
-      <button class="nav-item" data-tab="tab-tes">
-        <span class="nav-icon">🧠</span>
-        <span class="nav-label">Tes Hafalan</span>
-      </button>
-    </nav>
   </main>
 
-  <script src="./script.js?v=2"></script>
+  <script src="./script.js?v=3"></script>
 </body>
 </html>
