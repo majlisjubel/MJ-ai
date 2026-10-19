@@ -24,7 +24,7 @@ updateAccessUI();
 
 let currentAudio = null;
 
-// Riwayat percakapan UNLIMITED khusus session aktif saja (Reset otomatis pas refresh)
+// Riwayat percakapan UNLIMITED khusus session aktif saja
 let history = [
   { role: 'model', parts: [{ text: '[senang] Haiii, saya MJ, asisten pribadi virtual. Ada yang bisa saya bantu?' }] }
 ];
@@ -93,14 +93,14 @@ keyBtn.onclick = () => {
   }
 };
 
-// FUNGSI DIALOG DENGAN EFEK TYPEWRITER (BERTARAP ALA VISUAL NOVEL)
+// FUNGSI DIALOG DENGAN EFEK TYPEWRITER AMAN SPASI
 function addDialogue(text, isUser = false, audioBase64 = null, enableTypewriter = true) {
   const div = document.createElement('div');
   div.className = isUser ? 'vn-dialogue user-action' : 'vn-dialogue';
 
   chat.appendChild(div);
 
-  // Jika pesan dari User atau status loading '...', tampilkan langsung tanpa typewriter
+  // Jika pesan dari User atau loading '...', tampilkan langsung tanpa efek ketik
   if (isUser || !enableTypewriter) {
     div.innerText = text;
     if (audioBase64 && !isUser) appendAudioButton(div, audioBase64, text);
@@ -108,19 +108,26 @@ function addDialogue(text, isUser = false, audioBase64 = null, enableTypewriter 
     return div;
   }
 
-  // Efek Ketik Karakter demi Karakter (Typewriter Effect)
+  // Efek Typewriter Karakter demi Karakter dengan Penanganan Spasi Aman
   let index = 0;
-  div.innerText = "";
-  const speed = 22; // Kecepatan ketik milidetik per huruf
+  div.innerHTML = "";
+  const speed = 20; // Kecepatan ketik (ms)
 
   function typeChar() {
     if (index < text.length) {
-      div.innerText += text.charAt(index);
+      let char = text.charAt(index);
+      if (char === ' ') {
+        div.innerHTML += '&nbsp;';
+      } else {
+        div.innerHTML += char;
+      }
       index++;
       chat.scrollTop = chat.scrollHeight;
       setTimeout(typeChar, speed);
     } else {
+      div.innerText = text;
       if (audioBase64) appendAudioButton(div, audioBase64, text);
+      chat.scrollTop = chat.scrollHeight;
     }
   }
 
@@ -165,10 +172,8 @@ async function run(q) {
   addDialogue(q, true);
   $('cmd').value = '';
   
-  // Simpan ke array memori UNLIMITED (Tanpa batas potong)
   history.push({ role: 'user', parts: [{ text: q }] });
 
-  // Loading text statis (tanpa typewriter)
   const loading = addDialogue('...', false, null, false);
   status.innerText = 'Memproses...';
   sendBtn.disabled = true;
@@ -193,11 +198,9 @@ async function run(q) {
 
     const reply = data.answer || "Maaf, tidak ada respon.";
     
-    // Tampilkan balasan AI menggunakan Efek Typewriter
     addDialogue(reply, false, data.audio, true);
     autoDetectExpression(reply);
     
-    // Simpan balasan AI ke memori UNLIMITED
     history.push({ role: 'model', parts: [{ text: reply }] });
 
     status.innerText = 'Online';
