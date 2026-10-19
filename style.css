@@ -97,7 +97,7 @@ header {
   box-shadow: 0 0 6px #22c55e;
 }
 
-/* CHARACTER SPRITE AREA (DIPERBAIKI AGAR TIDAK KEPZOOM) */
+/* CHARACTER SPRITE AREA (DIUBAH JADI BACKGROUND SUPAYA PROPORSIONAL) */
 .sprite-container {
   position: absolute;
   top: 0;
@@ -105,18 +105,16 @@ header {
   width: 100%;
   height: 100%;
   z-index: 1;
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  overflow: hidden;
+  background-image: var(--bg-sprite, url('./netral.png'));
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: bottom center;
+  transition: background-image 0.2s ease-in-out;
 }
 
+/* Sembunyikan tag img lama karena kita pakai background-image */
 .sprite-container img {
-  width: 100%;
-  height: 82%;
-  object-fit: contain;
-  object-position: bottom center;
-  transition: opacity 0.2s ease, transform 0.3s ease;
+  display: none;
 }
 
 /* CHAT CONTAINER (BABLAS TANPA BLOK PENGHALANG) */
@@ -162,13 +160,11 @@ header {
   word-break: break-word;
 }
 
-/* Teks balasan MJ / AI */
 .vn-dialogue:not(.user-action) {
   align-self: flex-start;
   color: #ffffff;
 }
 
-/* Teks aksi / balasan User */
 .vn-dialogue.user-action {
   align-self: flex-end;
   font-style: italic;
