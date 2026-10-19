@@ -11,250 +11,225 @@ const API = 'https://api.mj-ai.my.id/';
 let userPIN = localStorage.getItem('MJ_PIN') || "";
 
 function updateAccessUI() {
-  if (userPIN && userPIN.trim() !== "") {
-    keyBtn.classList.add('active');
-  } else {
-    userPIN = "";
-    localStorage.removeItem('MJ_PIN');
-    keyBtn.classList.remove('active');
-  }
+  if (userPIN && userPIN.trim() !== "") {
+    keyBtn.classList.add('active');
+  } else {
+    userPIN = "";
+    localStorage.removeItem('MJ_PIN');
+    keyBtn.classList.remove('active');
+  }
 }
 
 updateAccessUI();
 
 let currentAudio = null;
 
-// Riwayat percakapan UNLIMITED khusus session aktif saja
+// Riwayat percakapan UNLIMITED khusus session aktif saja (Reset otomatis pas refresh)
 let history = [
-  { role: 'model', parts: [{ text: '[senang] Haiii, saya MJ, asisten pribadi virtual. Ada yang bisa saya bantu?' }] }
+  { role: 'model', parts: [{ text: '[senang] Haiii, saya MJ, asisten pribadi virtual. Ada yang bisa saya bantu?' }] }
 ];
 
 // Mapping File Ekspresi Sesuai Nama File di Repo GitHub
 const EXPRESSIONS = {
-  netral: './netral.png',
-  senang: './senang.png',
-  sedih: './1792299320411.png',
-  marah: './marah.png',
-  kaget: './kaget.png',
-  blushing: './blushing.png',
-  berfikir: './berfikir.png'
+  netral: './netral.png',
+  senang: './senang.png',
+  sedih: './1792299320411.png',
+  marah: './marah.png',
+  kaget: './kaget.png',
+  blushing: './blushing.png',
+  berfikir: './berfikir.png'
 };
 
 function changeExpression(expressionName) {
-  if (EXPRESSIONS[expressionName]) {
-    mjSprite.style.opacity = '0.3';
-    setTimeout(() => {
-      mjSprite.src = EXPRESSIONS[expressionName];
-      mjSprite.style.opacity = '1';
-    }, 150);
-  }
+  if (EXPRESSIONS[expressionName]) {
+    mjSprite.style.opacity = '0.3';
+    setTimeout(() => {
+      mjSprite.src = EXPRESSIONS[expressionName];
+      mjSprite.style.opacity = '1';
+    }, 150);
+  }
 }
 
 function autoDetectExpression(text) {
-  const lower = text.toLowerCase();
-  
-  if (lower.includes('[blushing]') || lower.includes('(blush)') || lower.includes('blush') || lower.includes('[malu]') || lower.includes('😳') || lower.includes('😊') || lower.includes('muka merah')) {
-    changeExpression('blushing');
-  } 
-  else if (lower.includes('[sedih]') || lower.includes('😔') || lower.includes('🥺') || lower.includes('😭') || lower.includes('💔') || lower.includes('kecewa') || lower.includes('maaf')) {
-    changeExpression('sedih');
-  } 
-  else if (lower.includes('[marah]') || lower.includes('😠') || lower.includes('😡') || lower.includes('kesal') || lower.includes('benci')) {
-    changeExpression('marah');
-  } 
-  else if (lower.includes('[kaget]') || lower.includes('😲') || lower.includes('😱') || lower.includes('terkejut') || lower.includes('wah')) {
-    changeExpression('kaget');
-  } 
-  else if (lower.includes('[berfikir]') || lower.includes('[bingung]') || lower.includes('🤔') || lower.includes('renungkan') || lower.includes('mikir')) {
-    changeExpression('berfikir');
-  } 
-  else if (lower.includes('[senang]') || lower.includes('😁') || lower.includes('😄') || lower.includes('😃') || lower.includes('suka') || lower.includes('haha')) {
-    changeExpression('senang');
-  } 
-  else {
-    changeExpression('netral');
-  }
+  const lower = text.toLowerCase();
+  
+  if (lower.includes('[blushing]') || lower.includes('(blush)') || lower.includes('blush') || lower.includes('[malu]') || lower.includes('😳') || lower.includes('😊') || lower.includes('muka merah')) {
+    changeExpression('blushing');
+  } 
+  else if (lower.includes('[sedih]') || lower.includes('😔') || lower.includes('🥺') || lower.includes('😭') || lower.includes('💔') || lower.includes('kecewa') || lower.includes('maaf')) {
+    changeExpression('sedih');
+  } 
+  else if (lower.includes('[marah]') || lower.includes('😠') || lower.includes('😡') || lower.includes('kesal') || lower.includes('benci')) {
+    changeExpression('marah');
+  } 
+  else if (lower.includes('[kaget]') || lower.includes('😲') || lower.includes('😱') || lower.includes('terkejut') || lower.includes('wah')) {
+    changeExpression('kaget');
+  } 
+  else if (lower.includes('[berfikir]') || lower.includes('[bingung]') || lower.includes('🤔') || lower.includes('renungkan') || lower.includes('mikir')) {
+    changeExpression('berfikir');
+  } 
+  else if (lower.includes('[senang]') || lower.includes('😁') || lower.includes('😄') || lower.includes('😃') || lower.includes('suka') || lower.includes('haha')) {
+    changeExpression('senang');
+  } 
+  else {
+    changeExpression('netral');
+  }
 }
 
 keyBtn.onclick = () => {
-  const pin = prompt("Masukkan PIN Verifikasi (Kosongkan jika ingin masuk sebagai Tamu):", userPIN);
-  if (pin !== null) {
-    const cleanPin = pin.trim();
-    if (cleanPin !== "") {
-      userPIN = cleanPin;
-      localStorage.setItem('MJ_PIN', userPIN);
-      alert("PIN tersimpan! Sistem siap mengenali identitasmu.");
-    } else {
-      userPIN = "";
-      localStorage.removeItem('MJ_PIN');
-      alert("Masuk sebagai Mode Tamu.");
-    }
-    updateAccessUI();
-  }
+  const pin = prompt("Masukkan PIN Verifikasi (Kosongkan jika ingin masuk sebagai Tamu):", userPIN);
+  if (pin !== null) {
+    const cleanPin = pin.trim();
+    if (cleanPin !== "") {
+      userPIN = cleanPin;
+      localStorage.setItem('MJ_PIN', userPIN);
+      alert("PIN tersimpan! Sistem siap mengenali identitasmu.");
+    } else {
+      userPIN = "";
+      localStorage.removeItem('MJ_PIN');
+      alert("Masuk sebagai Mode Tamu.");
+    }
+    updateAccessUI();
+  }
 };
 
-// FUNGSI DIALOG DENGAN TYPEWRITER & AUTO-SCROLL AMAN
-function addDialogue(text, isUser = false, audioBase64 = null, enableTypewriter = true) {
-  const div = document.createElement('div');
-  div.className = isUser ? 'vn-dialogue user-action' : 'vn-dialogue';
+function addDialogue(text, isUser = false, audioBase64 = null) {
+  const div = document.createElement('div');
+  div.className = isUser ? 'vn-dialogue user-action' : 'vn-dialogue';
+  div.innerText = text;
 
-  chat.appendChild(div);
-  chat.scrollTop = chat.scrollHeight;
+  if (audioBase64 && !isUser) {
+    const playBtn = document.createElement('button');
+    playBtn.className = 'audio-play-btn';
+    playBtn.innerText = '🔊';
+    playBtn.title = 'Putar Suara';
+    playBtn.onclick = () => playAudioResponse(audioBase64, text);
+    div.appendChild(playBtn);
+  }
 
-  if (isUser || !enableTypewriter) {
-    div.innerText = text;
-    if (audioBase64 && !isUser) appendAudioButton(div, audioBase64, text);
-    chat.scrollTop = chat.scrollHeight;
-    return div;
-  }
-
-  let index = 0;
-  div.innerHTML = "";
-  const speed = 20;
-
-  function typeChar() {
-    if (index < text.length) {
-      let char = text.charAt(index);
-      if (char === ' ') {
-        div.innerHTML += '&nbsp;';
-      } else {
-        div.innerHTML += char;
-      }
-      index++;
-      chat.scrollTop = chat.scrollHeight;
-      setTimeout(typeChar, speed);
-    } else {
-      div.innerText = text;
-      if (audioBase64) appendAudioButton(div, audioBase64, text);
-      chat.scrollTop = chat.scrollHeight;
-    }
-  }
-
-  typeChar();
-  return div;
-}
-
-function appendAudioButton(container, audioBase64, text) {
-  const playBtn = document.createElement('button');
-  playBtn.className = 'audio-play-btn';
-  playBtn.innerText = '🔊';
-  playBtn.title = 'Putar Suara';
-  playBtn.onclick = () => playAudioResponse(audioBase64, text);
-  container.appendChild(playBtn);
+  chat.appendChild(div);
+  
+  setTimeout(() => {
+    chat.scrollTop = chat.scrollHeight;
+  }, 50);
+  
+  return div;
 }
 
 function playAudioResponse(audioBase64, textFallback) {
-  if (currentAudio) {
-    currentAudio.pause();
-    currentAudio = null;
-  }
-  if ('speechSynthesis' in window) {
-    speechSynthesis.cancel();
-  }
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
+  if ('speechSynthesis' in window) {
+    speechSynthesis.cancel();
+  }
 
-  if (audioBase64) {
-    try {
-      currentAudio = new Audio("data:audio/mp3;base64," + audioBase64);
-      currentAudio.play().catch(e => {
-        console.warn("Autoplay terhalang browser...", e);
-      });
-      return;
-    } catch (e) {
-      console.error("Gagal memutar ElevenLabs:", e);
-    }
-  }
+  if (audioBase64) {
+    try {
+      currentAudio = new Audio("data:audio/mp3;base64," + audioBase64);
+      currentAudio.play().catch(e => {
+        console.warn("Autoplay terhalang browser...", e);
+      });
+      return;
+    } catch (e) {
+      console.error("Gagal memutar ElevenLabs:", e);
+    }
+  }
 }
 
 async function run(q) {
-  if (!q.trim()) return;
-  
-  addDialogue(q, true);
-  $('cmd').value = '';
-  
-  history.push({ role: 'user', parts: [{ text: q }] });
+  if (!q.trim()) return;
+  
+  addDialogue(q, true);
+  $('cmd').value = '';
+  
+  // Simpan ke array memori UNLIMITED (Tanpa batas potong)
+  history.push({ role: 'user', parts: [{ text: q }] });
 
-  const loading = addDialogue('...', false, null, false);
-  status.innerText = 'Memproses...';
-  sendBtn.disabled = true;
+  const loading = addDialogue('...');
+  status.innerText = 'Memproses...';
+  sendBtn.disabled = true;
 
-  try {
-    const res = await fetch(API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        contents: history, 
-        message: q,
-        passcode: userPIN,
-        pin: userPIN,
-        pass: userPIN
-      })
-    });
-    
-    const data = await res.json();
-    loading.remove();
+  try {
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        contents: history, 
+        message: q,
+        passcode: userPIN,
+        pin: userPIN,
+        pass: userPIN
+      })
+    });
+    
+    const data = await res.json();
+    loading.remove();
 
-    if (!res.ok) throw new Error(data.error || 'Gagal tersambung');
+    if (!res.ok) throw new Error(data.error || 'Gagal tersambung');
 
-    const reply = data.answer || "Maaf, tidak ada respon.";
-    
-    addDialogue(reply, false, data.audio, true);
-    autoDetectExpression(reply);
-    
-    history.push({ role: 'model', parts: [{ text: reply }] });
+    const reply = data.answer || "Maaf, tidak ada respon.";
+    
+    addDialogue(reply, false, data.audio);
+    autoDetectExpression(reply);
+    
+    // Simpan balasan AI ke memori UNLIMITED
+    history.push({ role: 'model', parts: [{ text: reply }] });
 
-    status.innerText = 'Online';
+    status.innerText = 'Online';
 
-  } catch (err) {
-    loading.remove();
-    addDialogue('Ralat: ' + err.message, false, null, false);
-    status.innerText = 'Error';
-    history.pop();
-  } finally {
-    sendBtn.disabled = false;
-  }
+  } catch (err) {
+    loading.remove();
+    addDialogue('Ralat: ' + err.message);
+    status.innerText = 'Error';
+    history.pop();
+  } finally {
+    sendBtn.disabled = false;
+  }
 }
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 micBtn.onclick = () => {
-  if (!SpeechRecognition) {
-    alert('Browser kamu tidak mendukung perekaman suara langsung.');
-    return;
-  }
+  if (!SpeechRecognition) {
+    alert('Browser kamu tidak mendukung perekaman suara langsung.');
+    return;
+  }
 
-  const recognition = new SpeechRecognition();
-  recognition.lang = 'id-ID';
-  recognition.interimResults = false;
+  const recognition = new SpeechRecognition();
+  recognition.lang = 'id-ID';
+  recognition.interimResults = false;
 
-  try {
-    recognition.start();
-    micBtn.classList.add('recording');
-    status.innerText = 'Mendengarkan...';
-  } catch (e) {
-    recognition.stop();
-    micBtn.classList.remove('recording');
-    status.innerText = 'Online';
-  }
+  try {
+    recognition.start();
+    micBtn.classList.add('recording');
+    status.innerText = 'Mendengarkan...';
+  } catch (e) {
+    recognition.stop();
+    micBtn.classList.remove('recording');
+    status.innerText = 'Online';
+  }
 
-  recognition.onresult = (e) => {
-    const transcript = e.results[0][0].transcript;
-    $('cmd').value = transcript;
-    micBtn.classList.remove('recording');
-    run(transcript);
-  };
+  recognition.onresult = (e) => {
+    const transcript = e.results[0][0].transcript;
+    $('cmd').value = transcript;
+    micBtn.classList.remove('recording');
+    run(transcript);
+  };
 
-  recognition.onerror = (e) => {
-    micBtn.classList.remove('recording');
-    status.innerText = 'Online';
-    alert('Gagal mendeteksi suara / izin mikrofon belum diberikan.');
-  };
+  recognition.onerror = (e) => {
+    micBtn.classList.remove('recording');
+    status.innerText = 'Online';
+    alert('Gagal mendeteksi suara / izin mikrofon belum diberikan.');
+  };
 
-  recognition.onend = () => {
-    micBtn.classList.remove('recording');
-    if (status.innerText === 'Mendengarkan...') {
-      status.innerText = 'Online';
-    }
-  };
+  recognition.onend = () => {
+    micBtn.classList.remove('recording');
+    if (status.innerText === 'Mendengarkan...') {
+      status.innerText = 'Online';
+    }
+  };
 };
 
 sendBtn.onclick = () => run($('cmd').value);
