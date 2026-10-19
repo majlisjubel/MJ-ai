@@ -93,14 +93,14 @@ keyBtn.onclick = () => {
   }
 };
 
-// FUNGSI DIALOG DENGAN EFEK TYPEWRITER AMAN SPASI
+// FUNGSI DIALOG DENGAN TYPEWRITER & AUTO-SCROLL AMAN
 function addDialogue(text, isUser = false, audioBase64 = null, enableTypewriter = true) {
   const div = document.createElement('div');
   div.className = isUser ? 'vn-dialogue user-action' : 'vn-dialogue';
 
   chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
 
-  // Jika pesan dari User atau loading '...', tampilkan langsung tanpa efek ketik
   if (isUser || !enableTypewriter) {
     div.innerText = text;
     if (audioBase64 && !isUser) appendAudioButton(div, audioBase64, text);
@@ -108,10 +108,9 @@ function addDialogue(text, isUser = false, audioBase64 = null, enableTypewriter 
     return div;
   }
 
-  // Efek Typewriter Karakter demi Karakter dengan Penanganan Spasi Aman
   let index = 0;
   div.innerHTML = "";
-  const speed = 20; // Kecepatan ketik (ms)
+  const speed = 20;
 
   function typeChar() {
     if (index < text.length) {
