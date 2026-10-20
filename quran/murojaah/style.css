@@ -1,136 +1,230 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const mushafPage = document.getElementById('mushafPage');
-  const surahName = document.getElementById('surahName');
-  const surahMeta = document.getElementById('surahMeta');
-  const pageNumber = document.getElementById('pageNumber');
-  const btnToggleHide = document.getElementById('btnToggleHide');
-  const btnMic = document.getElementById('btnMic');
-  const transcriptStatus = document.getElementById('transcriptStatus');
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const surahId = urlParams.get('surah') || 4; // Default Surah 4 (An-Nisa)
+body {
+  background-color: #121212;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding-bottom: 110px; /* Padding bawah ekstra biar konten gak ketutup dock */
+}
 
-  // 1. Fetch & Render Data Surah
-  async function loadSurah(id) {
-    transcriptStatus.textContent = `Memuat Surah ${id}...`;
-    const cachedData = localStorage.getItem(`quran_v4_surah_${id}`);
-    
-    if (cachedData) {
-      renderMushaf(JSON.parse(cachedData));
-      return;
-    }
+/* Top Navigation Bar */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background-color: #1a1a1a;
+  border-bottom: 1px solid #282828;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
 
-    try {
-      const res = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${id}`);
-      const json = await res.json();
+.icon-btn {
+  background: none;
+  border: none;
+  color: #d1d5db;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+}
 
-      const chapterRes = await fetch(`https://api.quran.com/api/v4/chapters/${id}`);
-      const chapterJson = await chapterRes.json();
+.surah-info-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #242424;
+  padding: 4px 14px;
+  border-radius: 8px;
+}
 
-      if (json.verses && chapterJson.chapter) {
-        const payload = {
-          info: chapterJson.chapter,
-          verses: json.verses
-        };
-        localStorage.setItem(`quran_v4_surah_${id}`, JSON.stringify(payload));
-        renderMushaf(payload);
-      }
-    } catch (err) {
-      console.error("Gagal memuat data Quran:", err);
-      transcriptStatus.textContent = "Gagal memuat data. Cek koneksi internet Anda.";
-    }
-  }
+.surah-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ffffff;
+}
 
-  function renderMushaf(data) {
-    surahName.textContent = data.info.name_simple;
-    const pageVal = data.info.pages ? data.info.pages[0] : 101;
-    
-    surahMeta.textContent = `Halaman ${pageVal} | Juz 5 | ${data.info.revelation_place.toUpperCase()}`;
-    pageNumber.textContent = pageVal;
+.bookmark-btn {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  display: flex;
+}
 
-    let htmlContent = '';
-    
-    data.verses.forEach((verse, idx) => {
-      const verseNum = idx + 1;
-      const arabicNum = convertToArabicNumbers(verseNum);
-      
-      htmlContent += `<span class="verse-word">${verse.text_uthmani}</span> `;
-      htmlContent += `<span class="verse-num-symbol">﴿${arabicNum}﴾</span> `;
-    });
+.surah-sub-info {
+  font-size: 0.72rem;
+  color: #9ca3af;
+  margin-top: 1px;
+}
 
-    mushafPage.innerHTML = htmlContent;
-    transcriptStatus.textContent = "Tekan mikrofon untuk mulai Murojaah AI...";
-  }
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
-  function convertToArabicNumbers(num) {
-    const arabicDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
-    return num.toString().split('').map(d => arabicDigits[d]).join('');
-  }
+/* Mushaf Page Container */
+.mushaf-container {
+  padding: 24px 18px 10px 18px;
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 
-  // 2. Toggle Hide Teks (Mode Hafalan)
-  btnToggleHide.addEventListener('click', () => {
-    mushafPage.classList.toggle('text-hidden');
-  });
+.mushaf-text {
+  direction: rtl;
+  font-family: 'Amiri', 'Traditional Arabic', serif;
+  font-size: 1.65rem;
+  line-height: 2.7rem;
+  text-align: justify;
+  text-align-last: center;
+  color: #ececec;
+  width: 100%;
+}
 
-  // 3. Integrasi Web Speech API (Voice Recognition)
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  let recognition = null;
-  let isListening = false;
+/* Inline Verse Number Frame */
+.verse-num-symbol {
+  font-family: 'Amiri', serif;
+  display: inline-block;
+  margin: 0 4px;
+  color: #9ca3af;
+  font-size: 1.25rem;
+}
 
-  if (SpeechRecognition) {
-    recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'ar-SA'; // Set pengenalan ke Bahasa Arab
+/* Mode Hafalan / Hidden Text */
+.mushaf-text.text-hidden .verse-word {
+  visibility: hidden;
+}
 
-    recognition.onstart = () => {
-      isListening = true;
-      btnMic.classList.add('recording');
-      transcriptStatus.textContent = "🎙️ Mendengarkan bacaan Anda...";
-    };
+/* Page Divider & Number */
+.page-footer {
+  width: 100%;
+  margin-top: 35px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 
-    recognition.onresult = (event) => {
-      let currentTranscript = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        currentTranscript += event.results[i][0].transcript;
-      }
-      transcriptStatus.textContent = `🔊 " ${currentTranscript} "`;
-    };
+.page-divider {
+  width: 100%;
+  height: 1px;
+  background-color: #2a2a2a;
+  margin-bottom: 12px;
+}
 
-    recognition.onerror = (event) => {
-      console.error("Speech Recognition Error:", event.error);
-      transcriptStatus.textContent = "Izin mic ditolak atau audio tidak terdeteksi.";
-      stopListening();
-    };
+.page-number {
+  font-size: 0.88rem;
+  color: #9ca3af;
+  font-weight: 500;
+}
 
-    recognition.onend = () => {
-      if (isListening) {
-        recognition.start(); // Auto-restart biar terus mendengarkan
-      }
-    };
-  } else {
-    transcriptStatus.textContent = "Browser Anda tidak mendukung Web Speech API.";
-  }
+/* Live Transcript Status Bar */
+.transcript-status {
+  position: fixed;
+  bottom: 84px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(24, 24, 27, 0.92);
+  backdrop-filter: blur(8px);
+  color: #a1a1aa;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  border: 1px solid #3f3f46;
+  z-index: 90;
+  max-width: 90%;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-  function stopListening() {
-    isListening = false;
-    btnMic.classList.remove('recording');
-    if (recognition) recognition.stop();
-    transcriptStatus.textContent = "Murojaah dihentikan. Klik mic untuk mulai lagi.";
-  }
+/* Bottom Controller Dock */
+.bottom-dock {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 480px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 100;
+  padding: 0 4px;
+}
 
-  btnMic.addEventListener('click', () => {
-    if (!recognition) {
-      alert("Browser Anda tidak mendukung fitur mikrofon!");
-      return;
-    }
+.pill-btn-danger {
+  background-color: #2a2a2c;
+  color: #e5e7eb;
+  border: 1px solid #3f3f46;
+  padding: 10px 18px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+}
 
-    if (isListening) {
-      stopListening();
-    } else {
-      recognition.start();
-    }
-  });
+.dock-center-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 
-  loadSurah(surahId);
-});
+.dock-circle-btn {
+  background-color: #2a2a2c;
+  color: #d1d5db;
+  border: 1px solid #3f3f46;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* Floating Green Mic Button */
+.mic-glow-btn {
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  border: none;
+  color: #ffffff;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(46, 204, 113, 0.45);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.mic-glow-btn.recording {
+  animation: pulse 1.5s infinite;
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  box-shadow: 0 0 20px rgba(231, 76, 60, 0.6);
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
