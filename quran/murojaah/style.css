@@ -5,13 +5,16 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
+html, body {
+  height: 100%;
+  overflow: hidden; /* Mencegah scroll pada seluruh halaman utama */
+}
+
 body {
   background-color: #121212;
   color: #ffffff;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  padding-bottom: 110px; /* Padding bawah ekstra biar konten gak ketutup dock */
 }
 
 /* Top Navigation Bar */
@@ -19,11 +22,10 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 16px;
+  padding: 8px 16px;
   background-color: #1a1a1a;
   border-bottom: 1px solid #282828;
-  position: sticky;
-  top: 0;
+  flex-shrink: 0;
   z-index: 10;
 }
 
@@ -52,7 +54,7 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: #ffffff;
 }
@@ -66,7 +68,7 @@ body {
 }
 
 .surah-sub-info {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: #9ca3af;
   margin-top: 1px;
 }
@@ -77,22 +79,25 @@ body {
   gap: 8px;
 }
 
-/* Mushaf Page Container */
+/* Mushaf Page Container - Disesuaikan agar pas 1 Layar HP */
 .mushaf-container {
-  padding: 24px 18px 10px 18px;
+  flex: 1;
+  padding: 12px 16px 140px 16px; /* Space bawah cukup untuk floating dock & status */
   max-width: 600px;
   margin: 0 auto;
   width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  justify-content: space-between;
+  overflow-y: auto; /* Scroll internal halus jika ayat sangat banyak */
+  -webkit-overflow-scrolling: touch;
 }
 
 .mushaf-text {
   direction: rtl;
   font-family: 'Amiri', 'Traditional Arabic', serif;
-  font-size: 1.65rem;
-  line-height: 2.7rem;
+  font-size: 1.25rem; /* Ukuran font lebih pas agar tidak terlalu melimpah */
+  line-height: 2.1rem; /* Spasi antar baris dioptimalkan */
   text-align: justify;
   text-align-last: center;
   color: #ececec;
@@ -103,9 +108,9 @@ body {
 .verse-num-symbol {
   font-family: 'Amiri', serif;
   display: inline-block;
-  margin: 0 4px;
+  margin: 0 3px;
   color: #9ca3af;
-  font-size: 1.25rem;
+  font-size: 1.05rem;
 }
 
 /* Mode Hafalan / Hidden Text */
@@ -116,21 +121,22 @@ body {
 /* Page Divider & Number */
 .page-footer {
   width: 100%;
-  margin-top: 35px;
+  margin-top: 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .page-divider {
   width: 100%;
   height: 1px;
   background-color: #2a2a2a;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .page-number {
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   color: #9ca3af;
   font-weight: 500;
 }
@@ -138,15 +144,15 @@ body {
 /* Live Transcript Status Bar */
 .transcript-status {
   position: fixed;
-  bottom: 84px;
+  bottom: 82px;
   left: 50%;
   transform: translateX(-50%);
   background: rgba(24, 24, 27, 0.92);
   backdrop-filter: blur(8px);
   color: #a1a1aa;
-  padding: 6px 16px;
+  padding: 5px 14px;
   border-radius: 20px;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   border: 1px solid #3f3f46;
   z-index: 90;
   max-width: 90%;
