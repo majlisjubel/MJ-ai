@@ -32,7 +32,6 @@ async function loadQuranPage(page) {
   try {
     mushafPage.innerHTML = `<div style="text-align:center; padding: 40px; color: #888;">Memuat data...</div>`;
     
-    // Tentukan Halaman Mana yang di-fetch berdasarkan mode
     let actualFetchPage = page;
     if (mushafMode === "AFR") {
       actualFetchPage = getBasePageForAfrika(page);
@@ -46,11 +45,9 @@ async function loadQuranPage(page) {
       return;
     }
 
-    // Render Teks Ayat
     let htmlContent = "";
     let firstVerse = data.verses[0];
 
-    // Update Header Surah Metadata
     const surahKey = firstVerse.verse_key.split(":")[0];
     fetchSurahInfo(surahKey, page, firstVerse.juz_number);
 
@@ -60,7 +57,6 @@ async function loadQuranPage(page) {
           htmlContent += `<span class="verse-word">${word.text_uthmani}</span> `;
         }
       });
-      // Nomor Ayat Arab
       const verseNum = verse.verse_key.split(":")[1];
       htmlContent += `<span class="verse-num-symbol">﴿${toArabicDigits(verseNum)}﴾</span> `;
     });
@@ -68,7 +64,6 @@ async function loadQuranPage(page) {
     mushafPage.innerHTML = htmlContent;
     pageNumber.innerText = page;
 
-    // Terapkan Class Layout Sesuai Mode
     if (mushafMode === "AFR") {
       mushafPage.className = "mushaf-text layout-18-lines";
     } else {
@@ -85,7 +80,7 @@ async function loadQuranPage(page) {
   }
 }
 
-// Fetch Metadata Surah (Nama & Tempat Turun)
+// Fetch Metadata Surah
 async function fetchSurahInfo(surahId, page, juz) {
   try {
     const res = await fetch(`https://api.quran.com/api/v4/chapters/${surahId}`);
@@ -114,7 +109,7 @@ btnMushafType.addEventListener("click", () => {
   loadQuranPage(currentPage);
 });
 
-// Handler Toggle Sembunyikan Teks (Mode Hafalan)
+// Handler Toggle Sembunyikan Teks
 btnToggleHide.addEventListener("click", () => {
   isTextHidden = !isTextHidden;
   if (isTextHidden) {
@@ -139,11 +134,13 @@ document.addEventListener("touchend", e => {
 
 function handleSwipe() {
   const swipeThreshold = 50;
-  if (touchStartX - touchEndX > swipeThreshold) {
-    // Swipe Kiri -> Halaman Selanjutnya
+  
+  // Geser Jari ke Kanan -> Buka Halaman Selanjutnya
+  if (touchEndX - touchStartX > swipeThreshold) {
     changePage(currentPage + 1, "next");
-  } else if (touchEndX - touchStartX > swipeThreshold) {
-    // Swipe Kanan -> Halaman Sebelumnya
+  } 
+  // Geser Jari ke Kiri -> Buka Halaman Sebelumnya
+  else if (touchStartX - touchEndX > swipeThreshold) {
     changePage(currentPage - 1, "prev");
   }
 }
@@ -154,7 +151,6 @@ function changePage(newPage, dir) {
 
   currentPage = newPage;
   
-  // Efek Animasi Flip
   mushafCard.classList.add(dir === "next" ? "flip-next" : "flip-prev");
   setTimeout(() => {
     loadQuranPage(currentPage);
