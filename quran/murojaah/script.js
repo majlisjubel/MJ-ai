@@ -37,7 +37,7 @@ function resetMurojaahPointer() {
   currentVerseIndex = 0;
 }
 
-// Fungsi Pembersih Harakat & Tanda Baca Arab Ketat
+// Fungsi Pembersih Harakat & Tanda Baca Arab
 function cleanArabicText(text) {
   if (!text) return "";
   return text
@@ -224,7 +224,7 @@ function changePage(newPage, dir) {
   }, 300);
 }
 
-// --- INISIALISASI SPEECH RECOGNITION (KONTINU & FILTER KETAT) ---
+// --- INISIALISASI SPEECH RECOGNITION (SEIMBANG & RESPONScalendar) ---
 function initSpeechRecognition() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
@@ -234,8 +234,8 @@ function initSpeechRecognition() {
 
   const rec = new SpeechRecognition();
   rec.lang = 'ar-SA';
-  rec.interimResults = true; // Mengambil hasil sementara secara realtime
-  rec.continuous = true;     // Mic tetap menyala terus
+  rec.interimResults = true; 
+  rec.continuous = true;     
   rec.maxAlternatives = 1;
 
   rec.onstart = () => {
@@ -244,22 +244,25 @@ function initSpeechRecognition() {
   };
 
   rec.onresult = (event) => {
+    let interimTranscript = "";
     let finalTranscript = "";
     
-    // Ambil HANYA ucapan final yang baru saja selesai diucapkan
     for (let i = event.resultIndex; i < event.results.length; ++i) {
       if (event.results[i].isFinal) {
         finalTranscript += event.results[i][0].transcript + " ";
+      } else {
+        interimTranscript += event.results[i][0].transcript;
       }
     }
 
-    if (!finalTranscript.trim()) return;
+    const activeText = finalTranscript.trim() || interimTranscript.trim();
+    if (!activeText) return;
 
-    const cleanSpeech = cleanArabicText(finalTranscript);
-    console.log("Suara Ditangkap (Final):", finalTranscript, "| Clean:", cleanSpeech);
+    const cleanSpeech = cleanArabicText(activeText);
+    console.log("Suara Ditangkap:", activeText, "| Clean:", cleanSpeech);
 
     if (transcriptStatus) {
-      transcriptStatus.innerText = "Suara: " + finalTranscript;
+      transcriptStatus.innerText = "Suara: " + activeText;
     }
 
     if (isTextHidden) {
@@ -283,23 +286,19 @@ function initSpeechRecognition() {
       const targetVerseClean = targetWordsArray.join(" ");
       const speechWordsArray = cleanSpeech.split(" ").filter(w => w.length > 0);
 
-      // --- FILTER KETAT DUA LAPIS ---
-      
-      // 1. Hitung berapa KATA SPESIFIK yang benar-benar ada di ucapan
+      // --- LOGIKA TOLERANSI SEIMBANG ---
       let exactWordMatches = 0;
       targetWordsArray.forEach(word => {
-        if (speechWordsArray.includes(word)) {
+        if (speechWordsArray.some(sWord => sWord.includes(word) || word.includes(sWord))) {
           exactWordMatches++;
         }
       });
 
-      // 2. Hitung Kemiripan Huruf (Levenshtein Distance)
       const letterSimilarity = getLetterSimilarity(cleanSpeech, targetVerseClean);
-
       const wordMatchRatio = targetWordsArray.length > 0 ? (exactWordMatches / targetWordsArray.length) : 0;
-      
-      // Syarat Benar: Minim 60% kata cocok DAN Kemiripan huruf minim 75%
-      const isMatched = (wordMatchRatio >= 0.6) && (letterSimilarity >= 0.75);
+
+      // Syarat Benar: Cukup minimal 35% kata cocok ATAU kemiripan huruf minimal 50%
+      const isMatched = (wordMatchRatio >= 0.35) || (letterSimilarity >= 0.50);
 
       console.log(`Target (Ayat ${currentVerseIndex + 1}): "${targetVerseClean}"`);
       console.log(`Word Match: ${(wordMatchRatio * 100).toFixed(0)}% | Letter Match: ${(letterSimilarity * 100).toFixed(0)}%`);
@@ -315,7 +314,7 @@ function initSpeechRecognition() {
           transcriptStatus.innerText = `Benar! Ayat ke-${currentVerseIndex} terbuka.`;
         }
       } else {
-        // BACAAN SALAH (BACA KASIDAH / SALAH AYAT)
+        // BACAAN SALAH (Hanya jika melenceng jauh)
         if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
 
         targetVerse.classList.add("verse-error");
@@ -324,7 +323,7 @@ function initSpeechRecognition() {
         }, 1500);
 
         if (transcriptStatus) {
-          transcriptStatus.innerText = `Salah! Cocok: ${(wordMatchRatio * 100).toFixed(0)}% (Butuh >= 60%)`;
+          transcriptStatus.innerText = `Belum tepat (Cocok: ${(wordMatchRatio * 100).toFixed(0)}%), ulangi!`;
         }
       }
     }
@@ -336,10 +335,8 @@ function initSpeechRecognition() {
     if (navigator.vibrate) navigator.vibrate(300);
   };
 
-  // KUNCI CONTINUOUS MIC: Auto-restart jika terhenti padahal tombol mic masih ON
   rec.onend = () => {
     if (isMicActive) {
-      console.log("Auto-restarting Mic...");
       try { rec.start(); } catch (e) {}
     } else {
       btnMic.classList.remove("recording");
