@@ -88,7 +88,7 @@ body {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  padding: 8px 12px 110px 12px;
+  padding: 8px 12px 115px 12px; /* Diberi ruang bawah agar tidak mepet dock */
 }
 
 /* Container Lembaran Buku */
@@ -118,16 +118,27 @@ body {
   opacity: 0.1;
 }
 
+/* Teks Utama Mushaf */
 .mushaf-text {
   direction: rtl;
   font-family: 'Amiri', 'Traditional Arabic', serif;
-  font-size: 1.05rem;
-  line-height: 1.85rem;
   text-align: justify;
   text-align-last: center;
   color: #ececec;
   width: 100%;
   word-spacing: 1px;
+}
+
+/* Mode Layout 15 Baris (Madinah Standard) */
+.mushaf-text.layout-15-lines {
+  font-size: 1.15rem;
+  line-height: 2.1rem;
+}
+
+/* Mode Layout 18 Baris (Afrika / Sudani) */
+.mushaf-text.layout-18-lines {
+  font-size: 1.02rem;
+  line-height: 1.72rem;
 }
 
 .verse-num-symbol {
@@ -142,9 +153,11 @@ body {
   visibility: hidden;
 }
 
+/* Page Footer & Number */
 .page-footer {
   width: 100%;
   margin-top: 6px;
+  margin-bottom: 6px; /* Jarak dari bawah */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -228,6 +241,12 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.dock-circle-btn:active {
+  background-color: #3f3f46;
+  border-color: #52525b;
 }
 
 .mic-glow-btn {
