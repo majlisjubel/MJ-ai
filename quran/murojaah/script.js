@@ -2,7 +2,7 @@
 let currentPage = 1;
 let mushafMode = "MDN"; // "MDN" = Madinah (15 baris), "AFR" = Afrika (18 baris)
 let isTextHidden = false;
-let currentWordIndex = 0; // Pointer pelacak urutan kata yang harus dibaca
+let currentVerseIndex = 0; // Pointer pelacak urutan AYAT yang harus dibaca
 
 // DOM Elements
 const mushafPage = document.getElementById("mushafPage");
@@ -15,6 +15,7 @@ const mushafBadge = document.getElementById("mushafBadge");
 const btnToggleHide = document.getElementById("btnToggleHide");
 const mushafCard = document.getElementById("mushafCard");
 const btnMic = document.getElementById("btnMic");
+const transcriptStatus = document.getElementById("transcriptStatus");
 
 // Format Angka Arab
 function toArabicDigits(num) {
@@ -29,9 +30,9 @@ function getBasePageForAfrika(afrPage) {
   return Math.floor(((afrPage - 1) / 479) * 603) + 1;
 }
 
-// Reset pointer urutan kata saat halaman baru dimuat
+// Reset pointer urutan ayat saat halaman baru dimuat
 function resetMurojaahPointer() {
-  currentWordIndex = 0;
+  currentVerseIndex = 0;
 }
 
 // Fungsi Pembersih Harakat & Tanda Baca Arab
@@ -42,13 +43,14 @@ function cleanArabicText(text) {
     .replace(/[ٱإأآء]/g, "ا") // Normalisasi Alif
     .replace(/ة/g, "ه")
     .replace(/[^\u0621-\u064A\s]/g, "") // Huruf Arab & spasi saja
+    .replace(/\s+/g, " ") // Rapikan spasi ganda
     .trim()
     .toLowerCase();
 }
 
 // Fetch Data Halaman Quran dari API
 async function loadQuranPage(page) {
-  resetMurojaahPointer(); // Reset urutan kata tiap ganti halaman
+  resetMurojaahPointer(); // Reset urutan ayat tiap ganti halaman
   try {
     mushafPage.innerHTML = `<div style="text-align:center; padding: 40px; color: #888;">Memuat halaman...</div>`;
     
@@ -137,8 +139,10 @@ btnToggleHide.addEventListener("click", () => {
   isTextHidden = !isTextHidden;
   if (isTextHidden) {
     mushafPage.classList.add("text-hidden");
+    if (transcriptStatus) transcriptStatus.innerText = "Mode sembunyi aktif. Silakan baca ayat pertama!";
   } else {
     mushafPage.classList.remove("text-hidden");
+    if (transcriptStatus) transcriptStatus.innerText = "Geser atau tap sisi layar untuk mengganti halaman...";
   }
 });
 
@@ -187,7 +191,7 @@ function changePage(newPage, dir) {
   }, 300);
 }
 
-// --- FITUR VOICE RECOGNITION (MIC) STRICT SEQUENTIAL MATCHING ---
+// --- FITUR VOICE RECOGNITION (MIC) VALIDASI PER KALIMAT / PER AYAT ---
 if (btnMic) {
   btnMic.addEventListener("click", (e) => {
     e.stopPropagation();
@@ -206,7 +210,8 @@ if (btnMic) {
 
     recognition.onstart = () => {
       console.log("Mic mendengarkan...");
-      btnMic.style.background = "#e74c3c";
+      btnMic.classList.add("recording");
+      if (transcriptStatus) transcriptStatus.innerText = "Mendengarkan bacaan Anda...";
     };
 
     recognition.onresult = (event) => {
@@ -214,40 +219,65 @@ if (btnMic) {
       const cleanSpeech = cleanArabicText(rawSpeech);
       console.log("Suara Ditangkap (Clean):", cleanSpeech);
 
-      if (isTextHidden) {
-        const wordElements = mushafPage.querySelectorAll('.verse-word');
-        if (wordElements.length === 0) return;
+      if (transcriptStatus) {
+        transcriptStatus.innerText = "Suara ditangkap: " + rawSpeech;
+      }
 
-        // Ambil elemen kata yang SEHARUSNYA dibaca sekarang
-        const targetElement = wordElements[currentWordIndex];
-        if (!targetElement) {
-          console.log("Semua kata di halaman ini sudah selesai dibaca!");
+      if (isTextHidden) {
+        const verseElements = mushafPage.querySelectorAll('.verse-block');
+        if (verseElements.length === 0) return;
+
+        // Ambil elemen ayat target yang sedang dibaca
+        const targetVerse = verseElements[currentVerseIndex];
+        if (!targetVerse) {
+          if (transcriptStatus) transcriptStatus.innerText = "Semua ayat di halaman ini sudah selesai dibaca!";
           return;
         }
 
-        const targetWordClean = cleanArabicText(targetElement.innerText);
+        // Ambil teks lengkap Uthmani dalam ayat target
+        const wordNodes = targetVerse.querySelectorAll('.verse-word');
+        let fullVerseText = "";
+        wordNodes.forEach(w => {
+          fullVerseText += w.innerText + " ";
+        });
 
-        // BACAAN BENAR: Suara mengandung kata target
-        if (cleanSpeech.includes(targetWordClean) && targetWordClean.length > 0) {
-          targetElement.style.visibility = "visible";
-          targetElement.style.color = "#2ecc71"; // Warna Hijau
-          currentWordIndex++; // Lanjut ke kata berikutnya!
+        const targetVerseClean = cleanArabicText(fullVerseText);
+
+        // Pencocokan fleksibel: suara mengandung bagian utama dari ayat target
+        // atau ayat target mengandung suara yang ditangkap
+        const isMatched = cleanSpeech.length > 0 && 
+          (targetVerseClean.includes(cleanSpeech) || cleanSpeech.includes(targetVerseClean));
+
+        if (isMatched) {
+          // BACAAN BENAR: Munculkan seluruh kalimat dalam ayat tersebut
+          targetVerse.classList.remove("verse-error");
+          targetVerse.classList.add("verse-revealed");
           
-          console.log(`BENAR! Kata ke-${currentWordIndex} terbuka.`);
-        } 
-        // BACAAN SALAH: Suara tidak sesuai kata target
-        else {
-          console.warn(`SALAH! Target: "${targetWordClean}", Suara: "${cleanSpeech}"`);
-          
-          // EFEK GETAR HP BAHWA BACAAN SALAH
+          currentVerseIndex++; // Pindah ke ayat berikutnya!
+
+          if (transcriptStatus) {
+            transcriptStatus.innerText = `Benar! Ayat ke-${currentVerseIndex} terbuka.`;
+          }
+        } else {
+          // BACAAN SALAH
+          console.warn(`SALAH! Target: "${targetVerseClean}", Suara: "${cleanSpeech}"`);
+
+          // 1. Getar HP
           if (navigator.vibrate) {
             navigator.vibrate([200, 100, 200]);
           }
-          
-          btnMic.style.background = "#ff0000";
+
+          // 2. Beri indikator merah dan animasi shake pada ayat yang sedang dibaca
+          targetVerse.classList.add("verse-error");
+
+          // Reset status error setelah 1.5 detik
           setTimeout(() => {
-            btnMic.style.background = "#e74c3c";
-          }, 400);
+            targetVerse.classList.remove("verse-error");
+          }, 1500);
+
+          if (transcriptStatus) {
+            transcriptStatus.innerText = "Bacaan belum sesuai, silakan coba lagi!";
+          }
         }
       } else {
         alert("Suara ditangkap: " + rawSpeech);
@@ -257,11 +287,12 @@ if (btnMic) {
     recognition.onerror = (event) => {
       console.error("Mic error:", event.error);
       if (navigator.vibrate) navigator.vibrate(300);
-      btnMic.style.background = "";
+      btnMic.classList.remove("recording");
+      if (transcriptStatus) transcriptStatus.innerText = "Gagal menangkap suara. Coba lagi.";
     };
 
     recognition.onend = () => {
-      btnMic.style.background = "";
+      btnMic.classList.remove("recording");
     };
 
     try {
