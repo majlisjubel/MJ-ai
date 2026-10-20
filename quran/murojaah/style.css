@@ -283,3 +283,10 @@ body {
   50% { transform: scale(1.06); }
   100% { transform: scale(1); }
 }
+
+.verse-block {
+  display: inline;
+}
+.mushaf-text.text-hidden .verse-word {
+  visibility: hidden;
+  }
