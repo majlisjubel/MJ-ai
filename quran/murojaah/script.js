@@ -9,12 +9,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const urlParams = new URLSearchParams(window.location.search);
   const surahId = urlParams.get('surah') || 1;
 
-  // 2. Fungsi Load Data Surah (Menggunakan API standar quran/equran dengan mekanisme Caching)
+  // 2. Fungsi Load Data Surah menggunakan Quran.com API v4
   async function loadSurahData(id) {
-    liveText.textContent = `Memuat data Surah ${id}...`;
+    liveText.textContent = `Memuat data Surah ${id} dari Quran.com...`;
     
-    // Cek apakah data sudah ada di localStorage biar offline-first & ngebut
-    const cachedData = localStorage.getItem(`murojaah_surah_${id}`);
+    // Cek cache lokal biar offline-first & instan
+    const cachedData = localStorage.getItem(`quran_com_surah_${id}`);
     if (cachedData) {
       const data = JSON.parse(cachedData);
       renderSurah(data);
@@ -22,22 +22,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      // Mengambil data dari API publik terpercaya (standar data bersih)
-      const response = await이고 `https://equran.id/api/v2/surah/${id}`;
-      // Fallback atau fetch langsung: kita pakai endpoint equran.id v2 yang stabil
-      const res = await fetch(`https://equran.id/api/v2/surah/${id}`);
+      // Endpoint publik Quran.com v4 untuk teks Uthmani dan terjemahan
+      const res = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${id}`);
       const json = await res.json();
 
-      if (json.code === 200) {
-        const surahData = json.data;
-        // Simpan ke localStorage untuk akses offline berikutnya
-        localStorage.setItem(`murojaah_surah_${id}`, JSON.stringify(surahData));
-        renderSurah(surahData);
+      // Kita fetch juga informasi detail surahnya (nama latin, jumlah ayat, dll)
+      const chapterRes = await fetch(`https://api.quran.com/api/v4/chapters/${id}`);
+      const chapterJson = await chapterRes.json();
+
+      if (json.verses && chapterJson.chapter) {
+        const surahPayload = {
+          namaLatin: chapterJson.chapter.name_simple,
+          namaComplex: chapterJson.chapter.name_arabic,
+          jumlahAyat: chapterJson.chapter.verses_count,
+          tempatTurun: chapterJson.chapter.revelation_place,
+          verses: json.verses
+        };
+
+        // Simpan ke localStorage
+        localStorage.setItem(`quran_com_surah_${id}`, JSON.stringify(surahPayload));
+        renderSurah(surahPayload);
       } else {
         liveText.textContent = 'Gagal memuat data surah.';
       }
     } catch (error) {
-      console.error('Error fetching surah:', error);
+      console.error('Error fetching quran.com API:', error);
       liveText.textContent = 'Terjadi kesalahan jaringan. Cek koneksi Anda.';
     }
   }
@@ -45,18 +54,19 @@ document.addEventListener('DOMContentLoaded', () => {
   // 3. Render Teks ke UI
   function renderSurah(data) {
     surahTitle.textContent = data.namaLatin;
-    surahMeta.textContent = `Ayat 1 - ${data.jumlahAyat} • ${data.tempatTurun}`;
+    surahMeta.textContent = `Ayat 1 - ${data.jumlahAyat} • ${data.tempatTurun.toUpperCase()}`;
     
-    quranContainer.innerHTML = ''; // Bersihkan kontainer
+    quranContainer.innerHTML = '';
 
-    data.ayat.forEach((item) => {
+    data.verses.forEach((verse, index) => {
       const verseItem = document.createElement('div');
       verseItem.className = 'verse-item';
-      verseItem.setAttribute('data-verse', item.nomorAyat);
+      verseItem.setAttribute('data-verse', index + 1);
 
+      // Menggunakan teks Uthmani asli dari quran.com
       verseItem.innerHTML = `
-        <span class="verse-arabic">${item.teksArab}</span>
-        <span class="verse-number">(${item.nomorAyat})</span>
+        <span class="verse-arabic">${verse.text_uthmani}</span>
+        <span class="verse-number">(${index + 1})</span>
       `;
       quranContainer.appendChild(verseItem);
     });
@@ -74,6 +84,5 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Eksekusi pemuatan data saat halaman dibuka
   loadSurahData(surahId);
 });
