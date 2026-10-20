@@ -164,30 +164,36 @@ body {
   transition: color 0.3s ease;
 }
 
-/* --- LOGIKA SEMBUNYI & BACA PER KALIMAT (PERBAIKAN PERFORMA JS) --- */
+/* --- LOGIKA SEMBUNYI & BACA BERTAHAP PER KATA --- */
 
-/* 1. Sembunyikan teks hanya dengan OPACITY (Tanpa visibility: hidden agar JS tetap bisa membaca isi DOM) */
+/* 1. Sembunyikan teks dengan opacity */
 .mushaf-text.text-hidden .verse-block .verse-word {
   opacity: 0 !important;
   transition: opacity 0.3s ease, color 0.3s ease;
-  pointer-events: none; /* Mencegah seleksi teks secara tidak sengaja */
+  pointer-events: none;
 }
 
-/* 2. BACAAN BENAR: Tampilkan seluruh kalimat dalam ayat tersebut secara serentak */
+/* 2. BACAAN BERTAHAP: Kata yang berhasil dibaca berubah jadi hijau */
+.mushaf-text.text-hidden .verse-block .verse-word.word-revealed {
+  opacity: 1 !important;
+  color: #2ecc71 !important;
+}
+
+/* 3. BACAAN SELESAI SATU AYAT: Tampilkan seluruh ayat hijau */
 .mushaf-text.text-hidden .verse-block.verse-revealed .verse-word {
   opacity: 1 !important;
-  color: #2ecc71 !important; /* Warna Hijau Cerah */
+  color: #2ecc71 !important;
   pointer-events: auto;
 }
 
-/* 3. BACAAN SALAH: Indikator kesalahan visual pada ayat target */
+/* 4. BACAAN SALAH: Indikator kesalahan visual pada ayat target */
 .mushaf-text.text-hidden .verse-block.verse-error {
-  background-color: rgba(231, 76, 60, 0.25) !important; /* Background Merah Transparan */
+  background-color: rgba(231, 76, 60, 0.25) !important;
   animation: shake 0.4s ease-in-out;
 }
 
 .mushaf-text.text-hidden .verse-block.verse-error .verse-num-symbol {
-  color: #e74c3c !important; /* Simbol nomor ayat menyala merah */
+  color: #e74c3c !important;
 }
 
 /* Animasi Shake (Goyang saat salah) */
