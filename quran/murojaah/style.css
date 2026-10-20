@@ -164,20 +164,20 @@ body {
   transition: color 0.3s ease;
 }
 
-/* --- LOGIKA SEMBUNYI & BACA PER KALIMAT --- */
+/* --- LOGIKA SEMBUNYI & BACA PER KALIMAT (PERBAIKAN PERFORMA JS) --- */
 
-/* 1. Sembunyikan semua kata saat mode sembunyi aktif */
+/* 1. Sembunyikan teks hanya dengan OPACITY (Tanpa visibility: hidden agar JS tetap bisa membaca isi DOM) */
 .mushaf-text.text-hidden .verse-block .verse-word {
-  opacity: 0;
-  visibility: hidden;
+  opacity: 0 !important;
   transition: opacity 0.3s ease, color 0.3s ease;
+  pointer-events: none; /* Mencegah seleksi teks secara tidak sengaja */
 }
 
 /* 2. BACAAN BENAR: Tampilkan seluruh kalimat dalam ayat tersebut secara serentak */
 .mushaf-text.text-hidden .verse-block.verse-revealed .verse-word {
   opacity: 1 !important;
-  visibility: visible !important;
-  color: #2ecc71 !important; /* Hijau */
+  color: #2ecc71 !important; /* Warna Hijau Cerah */
+  pointer-events: auto;
 }
 
 /* 3. BACAAN SALAH: Indikator kesalahan visual pada ayat target */
