@@ -80,7 +80,7 @@ body {
   gap: 6px;
 }
 
-/* Viewport 3D Perspektif */
+/* Viewport 3D Perspektif - Ruang Bawah Aman dari Dock */
 .mushaf-viewport {
   flex: 1;
   perspective: 1200px;
@@ -88,7 +88,7 @@ body {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  padding: 8px 12px 125px 12px; /* Ditingkatkan agar lembaran Quran punya ruang dari dock */
+  padding: 6px 12px 145px 12px; /* Diberikan batas 145px agar teks & footer tidak pernah nembus dock */
 }
 
 /* Container Lembaran Buku */
@@ -103,6 +103,7 @@ body {
   transform-style: preserve-3d;
   transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
   backface-visibility: hidden;
+  overflow: hidden; /* Mencegah elemen keluar batas */
 }
 
 /* Animasi Membalik */
@@ -127,18 +128,22 @@ body {
   color: #ececec;
   width: 100%;
   word-spacing: 1px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly; /* Meratakan jarak antar baris */
 }
 
 /* Mode Layout 15 Baris (Madinah Standard) */
 .mushaf-text.layout-15-lines {
-  font-size: 1.15rem;
-  line-height: 2.1rem;
+  font-size: 0.98rem; /* Font pas agar 15 baris muat presisi */
+  line-height: 1.65rem;
 }
 
 /* Mode Layout 18 Baris (Afrika / Sudani) */
 .mushaf-text.layout-18-lines {
-  font-size: 1.02rem;
-  line-height: 1.72rem;
+  font-size: 0.88rem; /* Font lebih padat untuk 18 baris */
+  line-height: 1.48rem;
 }
 
 .verse-num-symbol {
@@ -146,7 +151,7 @@ body {
   display: inline-block;
   margin: 0 2px;
   color: #9ca3af;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .mushaf-text.text-hidden .verse-word {
@@ -156,8 +161,8 @@ body {
 /* Page Footer & Number */
 .page-footer {
   width: 100%;
-  margin-top: 6px;
-  margin-bottom: 6px;
+  margin-top: 4px;
+  margin-bottom: 2px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -180,7 +185,7 @@ body {
 /* Live Transcript Status Bar */
 .transcript-status {
   position: fixed;
-  bottom: 85px; /* Dinaikkan dari 74px agar pas di atas dock */
+  bottom: 85px; /* Posisikan aman di atas dock */
   left: 50%;
   transform: translateX(-50%);
   background: rgba(24, 24, 27, 0.92);
@@ -201,7 +206,7 @@ body {
 /* Bottom Controller Dock */
 .bottom-dock {
   position: fixed;
-  bottom: 24px; /* Dinaikkan dari 12px agar aman dari offset bawah Samsung Browser */
+  bottom: 20px; /* Dinaikkan dari dasar browser */
   left: 50%;
   transform: translateX(-50%);
   width: calc(100% - 24px);
