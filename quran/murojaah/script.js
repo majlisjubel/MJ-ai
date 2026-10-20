@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const mushafLabel = document.getElementById('mushafLabel');
 
   const urlParams = new URLSearchParams(window.location.search);
-  let currentPage = parseInt(urlParams.get('page')) || 77;
+  let currentPage = parseInt(urlParams.get('page')) || 1;
   let isAnimating = false;
 
   // State Jenis Mushaf ('madinah' atau 'afrika')
