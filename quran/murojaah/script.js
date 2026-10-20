@@ -140,10 +140,10 @@ async function loadQuranPage(page) {
 
     if (mushafMode === "AFR") {
       mushafPage.className = "mushaf-text layout-18-lines";
-      mushafBadge.innerText = "AFRIKA (18 BARIS)";
+      if (mushafBadge) mushafBadge.innerText = "AFRIKA (18 BARIS)";
     } else {
       mushafPage.className = "mushaf-text layout-15-lines";
-      mushafBadge.innerText = "MADINAH (15 BARIS)";
+      if (mushafBadge) mushafBadge.innerText = "MADINAH (15 BARIS)";
     }
 
     if (isTextHidden) {
@@ -162,11 +162,11 @@ async function fetchSurahInfo(surahId, page, juz) {
     const data = await res.json();
     const ch = data.chapter;
 
-    surahName.innerText = ch.name_simple;
+    if (surahName) surahName.innerText = ch.name_simple;
     const revPlace = ch.revelation_place.toUpperCase();
-    surahMeta.innerHTML = `Halaman ${page} | Juz ${juz} | ${revPlace}`;
+    if (surahMeta) surahMeta.innerHTML = `Halaman ${page} | Juz ${juz} | ${revPlace}`;
   } catch (e) {
-    surahMeta.innerHTML = `Halaman ${page} | Juz ${juz}`;
+    if (surahMeta) surahMeta.innerHTML = `Halaman ${page} | Juz ${juz}`;
   }
 }
 
@@ -177,10 +177,10 @@ if (btnMushafType) {
   btnMushafType.addEventListener("click", () => {
     if (mushafMode === "MDN") {
       mushafMode = "AFR";
-      mushafLabel.innerText = "AFR";
+      if (mushafLabel) mushafLabel.innerText = "AFR";
     } else {
       mushafMode = "MDN";
-      mushafLabel.innerText = "MDN";
+      if (mushafLabel) mushafLabel.innerText = "MDN";
     }
     currentPage = 1;
     loadQuranPage(currentPage);
@@ -402,7 +402,8 @@ function validateMurojaahVerse(spokenText) {
   const wordNodes = targetVerse.querySelectorAll('.verse-word');
   let targetWordsArray = [];
   wordNodes.forEach(w => {
-    const cleanW = cleanArabicText(w.innerText);
+    // PERBAIKAN: Menggunakan textContent agar teks tetap terbaca JS meskipun tersembunyi secara visual
+    const cleanW = cleanArabicText(w.textContent || w.innerText);
     if (cleanW.length > 0) targetWordsArray.push(cleanW);
   });
 
