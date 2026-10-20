@@ -476,7 +476,7 @@ function stopMurojaahMic() {
 }
 
 // ==========================================
-// LOGIKA VALIDASI BACAAN AYAT (KETAT & AKURAT)
+// LOGIKA VALIDASI BACAAN AYAT (BERTAHAP / PER KATA)
 // ==========================================
 function validateMurojaahVerse(spokenText) {
   if (!isTextHidden) return;
@@ -491,56 +491,56 @@ function validateMurojaahVerse(spokenText) {
   }
 
   const wordNodes = targetVerse.querySelectorAll('.verse-word');
-  let targetWordsArray = [];
-  wordNodes.forEach(w => {
-    const cleanW = cleanArabicText(w.textContent || w.innerText);
-    if (cleanW.length > 0) targetWordsArray.push(cleanW);
-  });
+  if (wordNodes.length === 0) return;
 
-  const targetVerseClean = targetWordsArray.join(" ");
-  const speechWordsArray = cleanArabicText(spokenText).split(" ").filter(w => w.length > 0);
+  // Bersihkan teks bacaan user
+  const speechClean = cleanArabicText(spokenText);
+  const speechWords = speechClean.split(" ").filter(w => w.length > 0);
 
-  // Jika hasil rekaman terlalu pendek dibanding jumlah kata di ayat target, abaikan (mencegah tebak sebagian)
-  if (speechWordsArray.length < Math.max(2, Math.floor(targetWordsArray.length * 0.5))) {
-    if (transcriptStatus) transcriptStatus.innerText = "Bacaan terlalu singkat, lanjutkan ayatnya!";
-    return;
-  }
-
-  let exactWordMatches = 0;
-  targetWordsArray.forEach(word => {
-    if (speechWordsArray.some(sWord => sWord === word || (word.length > 3 && sWord.includes(word)))) {
-      exactWordMatches++;
+  // Cek kata demi kata di ayat target yang cocok dengan kata yang diucapkan user
+  let matchedCount = 0;
+  
+  wordNodes.forEach((wordNode) => {
+    const targetWord = cleanArabicText(wordNode.textContent || wordNode.innerText);
+    
+    // Jika kata ini sudah terbuka sebelumnya ATAU cocok dengan ucapan user
+    if (wordNode.classList.contains('word-revealed')) {
+      matchedCount++;
+    } else {
+      const isWordMatch = speechWords.some(sWord => sWord === targetWord || (targetWord.length > 2 && sWord.includes(targetWord)));
+      if (isWordMatch) {
+        wordNode.classList.add('word-revealed'); // Terbuka hijau per kata/frasa
+        matchedCount++;
+      }
     }
   });
 
-  const letterSimilarity = getLetterSimilarity(spokenText, targetVerseClean);
-  const wordMatchRatio = targetWordsArray.length > 0 ? (exactWordMatches / targetWordsArray.length) : 0;
+  const progressRatio = matchedCount / wordNodes.length;
+  console.log(`Progress Ayat Ke-${currentVerseIndex + 1}: ${matchedCount}/${wordNodes.length} kata (${(progressRatio * 100).toFixed(0)}%)`);
 
-  // PERKETAT KETENTUAN: Minimal 65% kata cocok ATAU 70% kemiripan huruf utuh
-  const isMatched = (wordMatchRatio >= 0.65) || (letterSimilarity >= 0.70);
-
-  console.log(`Target Verse [${currentVerseIndex + 1}]: "${targetVerseClean}"`);
-  console.log(`Match Score -> Word: ${(wordMatchRatio * 100).toFixed(0)}% | Letter: ${(letterSimilarity * 100).toFixed(0)}%`);
-
-  if (isMatched) {
+  // Jika minimal 65% kata dalam ayat tersebut sudah terbuka atau hampir selesai seluruhnya
+  if (progressRatio >= 0.65 || matchedCount >= wordNodes.length - 1) {
+    // Tandai seluruh ayat selesai
     targetVerse.classList.remove("verse-error");
     targetVerse.classList.add("verse-revealed");
     
-    currentVerseIndex++; // Lanjut ke ayat berikutnya
+    // Pastikan semua kata dalam ayat ini ikut hijau
+    wordNodes.forEach(w => w.classList.add('word-revealed'));
 
+    currentVerseIndex++; // Pindah pointer ke ayat berikutnya
     if (transcriptStatus) {
-      transcriptStatus.innerText = `Benar! Ayat ke-${currentVerseIndex} terbuka.`;
+      transcriptStatus.innerText = `Sempurna! Lanjut ke ayat ke-${currentVerseIndex + 1}.`;
+    }
+  } else if (matchedCount > 0) {
+    // Baru sebagian kata yang benar (bertahap)
+    if (transcriptStatus) {
+      transcriptStatus.innerText = `Bagus, lanjutkan potongan ayat berikutnya... (${matchedCount}/${wordNodes.length} kata)`;
     }
   } else {
-    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-
-    targetVerse.classList.add("verse-error");
-    setTimeout(() => {
-      targetVerse.classList.remove("verse-error");
-    }, 1500);
-
+    // Belum ada kata yang cocok
+    if (navigator.vibrate) navigator.vibrate(100);
     if (transcriptStatus) {
-      transcriptStatus.innerText = `Belum tepat (Cocok: ${(wordMatchRatio * 100).toFixed(0)}%), coba ulangi!`;
+      transcriptStatus.innerText = `Belum tepat, silakan ulangi bacaan potongan ayat!`;
     }
   }
 }
