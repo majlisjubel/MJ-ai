@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Murojaah AI - Quran Mode</title>
-  <link rel="stylesheet" href="style.css?v=13.0">
+  <link rel="stylesheet" href="style.css?v=14.0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
@@ -13,7 +13,7 @@
 
   <!-- Top Navigation Header -->
   <header class="top-bar">
-    <button class="icon-btn" id="btnMenu">
+    <button class="icon-btn" id="btnMenu" title="Buka Daftar Juz & Surah">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
     </button>
     
@@ -76,6 +76,27 @@
     </button>
   </div>
 
-  <script src="script.js?v=13.0"></script>
+  <!-- Sidebar Drawer Navigasi Juz & Surah -->
+  <div id="sidebarOverlay" class="sidebar-overlay"></div>
+  <aside id="juzSidebar" class="juz-sidebar">
+    <div class="sidebar-header">
+      <h3>Pilih Juz / Surah</h3>
+      <button id="btnCloseSidebar" class="close-btn">&times;</button>
+    </div>
+    
+    <div class="sidebar-tabs">
+      <button id="tabJuz" class="tab-btn active">Daftar Juz (1-30)</button>
+      <button id="tabSurah" class="tab-btn">Daftar Surah</button>
+    </div>
+
+    <div class="sidebar-content">
+      <!-- Container List 30 Juz -->
+      <div id="juzListContainer" class="list-container"></div>
+      <!-- Container List 114 Surah -->
+      <div id="surahListContainer" class="list-container" style="display: none;"></div>
+    </div>
+  </aside>
+
+  <script src="script.js?v=14.0"></script>
 </body>
 </html>
