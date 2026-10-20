@@ -2,79 +2,71 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#08080a">
-  <title>Murojaah AI - MJ Qur'an</title>
-  <link rel="stylesheet" href="./style.css?v=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Murojaah AI - Quran Mode</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Font Uthmani / Amiri for authentic Mushaf feel -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-  <div class="murojaah-wrapper">
-    <!-- Header Back + Info Surah -->
-    <header class="murojaah-header">
-      <a href="../" class="btn-back">←</a>
-      <div class="surah-info">
-        <h2>Al-Fatihah</h2>
-        <span class="surah-meta">Ayat 1 - 7 • Makkiyah</span>
+  <!-- Top Navigation Header -->
+  <header class="top-bar">
+    <button class="icon-btn" id="btnMenu">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+    
+    <div class="surah-info-box">
+      <div class="surah-title-row">
+        <span id="surahName">An-Nisa</span>
+        <button class="bookmark-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>
+        </button>
       </div>
-      <button id="btnToggleHide" class="btn-icon" title="Sembunyikan/Tampilkan Teks">
-        👁️
+      <div class="surah-sub-info" id="surahMeta">
+        Halaman 101 | Juz 5 | Hizb...
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <button class="icon-btn" id="btnSearch">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
       </button>
-    </header>
-
-    <!-- Display Area Ayat -->
-    <main class="murojaah-content">
-      <div class="bismillah-text">بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</div>
-      
-      <!-- Container Teks Arab (Bisa di-toggle mode 'hidden-mode') -->
-      <div id="quranContainer" class="quran-container">
-        <div class="verse-item" data-verse="1">
-          <span class="verse-arabic">ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَٰلَمِينَ</span>
-          <span class="verse-number">(١)</span>
-        </div>
-        <div class="verse-item" data-verse="2">
-          <span class="verse-arabic">ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</span>
-          <span class="verse-number">(٢)</span>
-        </div>
-        <div class="verse-item" data-verse="3">
-          <span class="verse-arabic">مَٰلِكِ يَوْمِ ٱلدِّينِ</span>
-          <span class="verse-number">(٣)</span>
-        </div>
-        <div class="verse-item" data-verse="4">
-          <span class="verse-arabic">إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ</span>
-          <span class="verse-number">(٤)</span>
-        </div>
-        <div class="verse-item" data-verse="5">
-          <span class="verse-arabic">ٱهْدِنَا ٱلصِّرَٰطَ ٱلْمُسْتَقِيمَ</span>
-          <span class="verse-number">(٥)</span>
-        </div>
-        <div class="verse-item" data-verse="6">
-          <span class="verse-arabic">صِرَٰطَ ٱلَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ ٱلْمَغْضُوبِ عَلَيْهِمْ وَلَا ٱلضَّآلِّينَ</span>
-          <span class="verse-number">(٦)</span>
-        </div>
-      </div>
-
-      <!-- Live Transcript Feedback -->
-      <div id="speechFeedback" class="speech-feedback">
-        <span class="status-indicator">● Siap mendengarkan</span>
-        <p id="liveText" class="live-text">Tekan tombol mikrofon di bawah lalu mulailah membaca...</p>
-      </div>
-    </main>
-
-    <!-- Control Dock Bawah -->
-    <footer class="murojaah-dock">
-      <button class="dock-btn btn-secondary" title="Pilih Surah">📖</button>
-      
-      <!-- Tombol Utama Mic / Voice Tracking -->
-      <button id="btnMic" class="dock-btn btn-mic" title="Mulai Murojaah">
-        <div class="mic-icon">🎙️</div>
+      <button class="icon-btn" id="btnGift">🎁</button>
+      <button class="icon-btn" id="btnSettings">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       </button>
+    </div>
+  </header>
 
-      <button class="dock-btn btn-secondary" title="Riwayat Kesalahan">📊</button>
-    </footer>
+  <!-- Mushaf Text View -->
+  <main class="mushaf-container">
+    <div id="mushafPage" class="mushaf-text">
+      <!-- Teks Arab flowing di-render via JavaScript -->
+    </div>
+    <div class="page-number" id="pageNumber">101</div>
+  </main>
+
+  <!-- Bottom Floating Controller Dock -->
+  <div class="bottom-dock">
+    <button class="pill-btn-danger" id="btnKesalahan">Kesalahan</button>
+    
+    <div class="dock-center-actions">
+      <button class="dock-circle-btn" id="btnNote" title="Catatan">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      </button>
+      <button class="dock-circle-btn" id="btnToggleHide" title="Sembunyikan Teks">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+      </button>
+    </div>
+
+    <button class="mic-glow-btn" id="btnMic">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+    </button>
   </div>
 
-  <script src="./script.js?v=1"></script>
+  <script src="script.js"></script>
 </body>
-  </html>
-                                  
+</html>
