@@ -1,88 +1,72 @@
 document.addEventListener('DOMContentLoaded', () => {
+  const mushafPage = document.getElementById('mushafPage');
+  const surahName = document.getElementById('surahName');
+  const surahMeta = document.getElementById('surahMeta');
   const btnToggleHide = document.getElementById('btnToggleHide');
-  const quranContainer = document.getElementById('quranContainer');
-  const surahTitle = document.querySelector('.surah-info h2');
-  const surahMeta = document.querySelector('.surah-meta');
-  const liveText = document.getElementById('liveText');
+  const btnMic = document.getElementById('btnMic');
 
-  // 1. Ambil nomor surah dari parameter URL (Default: Surah 1 / Al-Fatihah)
   const urlParams = new URLSearchParams(window.location.search);
-  const surahId = urlParams.get('surah') || 1;
+  const surahId = urlParams.get('surah') || 4; // Default Surah 4 (An-Nisa)
 
-  // 2. Fungsi Load Data Surah menggunakan Quran.com API v4
-  async function loadSurahData(id) {
-    liveText.textContent = `Memuat data Surah ${id} dari Quran.com...`;
-    
-    // Cek cache lokal biar offline-first & instan
-    const cachedData = localStorage.getItem(`quran_com_surah_${id}`);
+  async function loadSurah(id) {
+    const cachedData = localStorage.getItem(`quran_v4_surah_${id}`);
     if (cachedData) {
-      const data = JSON.parse(cachedData);
-      renderSurah(data);
+      renderMushaf(JSON.parse(cachedData));
       return;
     }
 
     try {
-      // Endpoint publik Quran.com v4 untuk teks Uthmani dan terjemahan
       const res = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${id}`);
       const json = await res.json();
 
-      // Kita fetch juga informasi detail surahnya (nama latin, jumlah ayat, dll)
       const chapterRes = await fetch(`https://api.quran.com/api/v4/chapters/${id}`);
       const chapterJson = await chapterRes.json();
 
       if (json.verses && chapterJson.chapter) {
-        const surahPayload = {
-          namaLatin: chapterJson.chapter.name_simple,
-          namaComplex: chapterJson.chapter.name_arabic,
-          jumlahAyat: chapterJson.chapter.verses_count,
-          tempatTurun: chapterJson.chapter.revelation_place,
+        const payload = {
+          info: chapterJson.chapter,
           verses: json.verses
         };
-
-        // Simpan ke localStorage
-        localStorage.setItem(`quran_com_surah_${id}`, JSON.stringify(surahPayload));
-        renderSurah(surahPayload);
-      } else {
-        liveText.textContent = 'Gagal memuat data surah.';
+        localStorage.setItem(`quran_v4_surah_${id}`, JSON.stringify(payload));
+        renderMushaf(payload);
       }
-    } catch (error) {
-      console.error('Error fetching quran.com API:', error);
-      liveText.textContent = 'Terjadi kesalahan jaringan. Cek koneksi Anda.';
+    } catch (err) {
+      console.error("Gagal memuat data Quran:", err);
     }
   }
 
-  // 3. Render Teks ke UI
-  function renderSurah(data) {
-    surahTitle.textContent = data.namaLatin;
-    surahMeta.textContent = `Ayat 1 - ${data.jumlahAyat} • ${data.tempatTurun.toUpperCase()}`;
+  function renderMushaf(data) {
+    surahName.textContent = data.info.name_simple;
+    surahMeta.textContent = `Halaman 101 | Juz ${data.info.pages[0]} | ${data.info.revelation_place.toUpperCase()}`;
+
+    let htmlContent = '';
     
-    quranContainer.innerHTML = '';
-
-    data.verses.forEach((verse, index) => {
-      const verseItem = document.createElement('div');
-      verseItem.className = 'verse-item';
-      verseItem.setAttribute('data-verse', index + 1);
-
-      // Menggunakan teks Uthmani asli dari quran.com
-      verseItem.innerHTML = `
-        <span class="verse-arabic">${verse.text_uthmani}</span>
-        <span class="verse-number">(${index + 1})</span>
-      `;
-      quranContainer.appendChild(verseItem);
+    data.verses.forEach((verse, idx) => {
+      const verseNum = idx + 1;
+      const arabicNum = convertToArabicNumbers(verseNum);
+      
+      // Bungkus kata agar bisa di-hide saat mode hafalan
+      htmlContent += `<span class="verse-word">${verse.text_uthmani}</span> `;
+      htmlContent += `<span class="verse-num-symbol">﴿${arabicNum}﴾</span> `;
     });
 
-    liveText.textContent = 'Tekan tombol mikrofon di bawah lalu mulailah membaca...';
+    mushafPage.innerHTML = htmlContent;
   }
 
-  // Toggle Sembunyikan Teks Arab Total (Mode Hafalan)
+  function convertToArabicNumbers(num) {
+    const arabicDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+    return num.toString().split('').map(d => arabicDigits[d]).join('');
+  }
+
+  // Toggle Mode Hafalan (Hide Teks)
   btnToggleHide.addEventListener('click', () => {
-    quranContainer.classList.toggle('text-hidden');
-    if (quranContainer.classList.contains('text-hidden')) {
-      btnToggleHide.textContent = '🙈';
-    } else {
-      btnToggleHide.textContent = '👁️';
-    }
+    mushafPage.classList.toggle('text-hidden');
   });
 
-  loadSurahData(surahId);
+  // Visual Toggle Mikrofon
+  btnMic.addEventListener('click', () => {
+    btnMic.classList.toggle('recording');
+  });
+
+  loadSurah(surahId);
 });
