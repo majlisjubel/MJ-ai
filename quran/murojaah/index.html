@@ -2,12 +2,14 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Murojaah AI - Quran Mode</title>
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+  <!-- Library Page-Flip untuk Efek 3D Buka Buku Real-time -->
+  <script src="https://cdn.jsdelivr.net/npm/page-flip@0.6.5/dist/js/page-flip.browser.js"></script>
 </head>
 <body>
 
@@ -40,23 +42,23 @@
     </div>
   </header>
 
-  <!-- Mushaf Text Viewport dengan Efek Buku 3D -->
-  <main class="mushaf-viewport">
-    <div class="mushaf-container" id="mushafCard">
-      <div id="mushafPage" class="mushaf-text">
-        <!-- Teks Arab flowing di-render via JavaScript -->
-      </div>
-      
-      <div class="page-footer">
-        <div class="page-divider"></div>
-        <div class="page-number" id="pageNumber">77</div>
+  <!-- Interactive 3D Book Container -->
+  <main class="book-viewport">
+    <div id="bookContainer">
+      <!-- Slot Halaman Aktif untuk PageFlip Engine -->
+      <div class="page-sheet" id="pageSheet">
+        <div id="mushafPage" class="mushaf-text"></div>
+        <div class="page-footer">
+          <div class="page-divider"></div>
+          <div class="page-number" id="pageNumber">77</div>
+        </div>
       </div>
     </div>
   </main>
 
   <!-- Live Transcript Status Bar -->
   <div class="transcript-status" id="transcriptStatus">
-    Tekan sisi layar untuk ganti halaman...
+    Usap / Swipe layar untuk membuka halaman...
   </div>
 
   <!-- Bottom Floating Controller Dock -->
