@@ -26,7 +26,7 @@
         </button>
       </div>
       <div class="surah-sub-info" id="surahMeta">
-        Halaman 101 | Juz 5 | Hizb...
+        Halaman 101 | Juz 5 | MADINAH
       </div>
     </div>
 
@@ -41,13 +41,23 @@
     </div>
   </header>
 
-  <!-- Mushaf Text View -->
+  <!-- Mushaf Text View Container -->
   <main class="mushaf-container">
     <div id="mushafPage" class="mushaf-text">
       <!-- Teks Arab flowing di-render via JavaScript -->
     </div>
-    <div class="page-number" id="pageNumber">101</div>
+    
+    <!-- Garis Batas & Nomor Halaman Ala Mushaf -->
+    <div class="page-footer">
+      <div class="page-divider"></div>
+      <div class="page-number" id="pageNumber">101</div>
+    </div>
   </main>
+
+  <!-- Live Transcript Status Bar -->
+  <div class="transcript-status" id="transcriptStatus">
+    Klik mikrofon untuk mulai membaca...
+  </div>
 
   <!-- Bottom Floating Controller Dock -->
   <div class="bottom-dock">
