@@ -8,11 +8,18 @@ let mushafMode = "MDN"; // "MDN" = Madinah (15 baris), "AFR" = Afrika (18 baris)
 let isTextHidden = false;
 let currentVerseIndex = 0; // Pointer pelacak urutan AYAT yang harus dibaca
 
+// Mapping Halaman Awal Tiap Juz (Mushaf Madinah 1-604)
+const JUZ_PAGE_MAP = {
+  1: 1, 2: 22, 3: 42, 4: 62, 5: 82, 6: 102, 7: 122, 8: 142, 9: 162, 10: 182,
+  11: 202, 12: 222, 13: 242, 14: 262, 15: 282, 16: 302, 17: 322, 18: 342, 19: 362, 20: 382,
+  21: 402, 22: 422, 23: 442, 24: 462, 25: 482, 26: 502, 27: 522, 28: 542, 29: 562, 30: 582
+};
+
 // State Perekam Audio & VAD
 let mediaRecorder = null;
 let audioChunks = [];
 let isMicActive = false;
-let isProcessing = false; // Flag penting untuk mencegah spamming request
+let isProcessing = false; // Flag pencegah spam request
 let audioContext = null;
 let analyser = null;
 let microphone = null;
@@ -34,6 +41,16 @@ const btnToggleHide = document.getElementById("btnToggleHide");
 const mushafCard = document.getElementById("mushafCard");
 const btnMic = document.getElementById("btnMic");
 const transcriptStatus = document.getElementById("transcriptStatus");
+
+// Sidebar DOM Elements
+const btnMenu = document.querySelector('.top-bar .icon-btn'); // Tombol Garis 3
+const juzSidebar = document.getElementById("juzSidebar");
+const sidebarOverlay = document.getElementById("sidebarOverlay");
+const btnCloseSidebar = document.getElementById("btnCloseSidebar");
+const tabJuz = document.getElementById("tabJuz");
+const tabSurah = document.getElementById("tabSurah");
+const juzListContainer = document.getElementById("juzListContainer");
+const surahListContainer = document.getElementById("surahListContainer");
 
 // ==========================================
 // HELPER & UTILS ARAB
@@ -171,6 +188,86 @@ async function fetchSurahInfo(surahId, page, juz) {
 }
 
 // ==========================================
+// FITUR SIDEBAR NAVIGASI JUZ & SURAH
+// ==========================================
+function openSidebar() {
+  if (juzSidebar && sidebarOverlay) {
+    renderJuzList();
+    renderSurahList();
+    juzSidebar.classList.add("active");
+    sidebarOverlay.classList.add("active");
+  }
+}
+
+function closeSidebar() {
+  if (juzSidebar && sidebarOverlay) {
+    juzSidebar.classList.remove("active");
+    sidebarOverlay.classList.remove("active");
+  }
+}
+
+function renderJuzList() {
+  if (!juzListContainer) return;
+  let html = "";
+  for (let i = 1; i <= 30; i++) {
+    const pageTarget = JUZ_PAGE_MAP[i] || 1;
+    html += `
+      <button class="list-item-btn" onclick="jumpToPage(${pageTarget})">
+        <span>Juz ${i}</span>
+        <span class="item-sub">Halaman ${pageTarget}</span>
+      </button>
+    `;
+  }
+  juzListContainer.innerHTML = html;
+}
+
+async function renderSurahList() {
+  if (!surahListContainer || surahListContainer.children.length > 0) return;
+  try {
+    const res = await fetch("https://api.quran.com/api/v4/chapters");
+    const data = await res.json();
+    let html = "";
+    data.chapters.forEach(ch => {
+      html += `
+        <button class="list-item-btn" onclick="jumpToPage(${ch.pages[0]})">
+          <span>${ch.id}. ${ch.name_simple}</span>
+          <span class="item-sub">${ch.verses_count} Ayat</span>
+        </button>
+      `;
+    });
+    surahListContainer.innerHTML = html;
+  } catch (e) {
+    surahListContainer.innerHTML = `<div style="padding:16px; color:#aaa;">Gagal memuat surah.</div>`;
+  }
+}
+
+function jumpToPage(page) {
+  closeSidebar();
+  currentPage = page;
+  loadQuranPage(currentPage);
+}
+
+if (btnMenu) btnMenu.addEventListener("click", openSidebar);
+if (btnCloseSidebar) btnCloseSidebar.addEventListener("click", closeSidebar);
+if (sidebarOverlay) sidebarOverlay.addEventListener("click", closeSidebar);
+
+if (tabJuz && tabSurah) {
+  tabJuz.addEventListener("click", () => {
+    tabJuz.classList.add("active");
+    tabSurah.classList.remove("active");
+    juzListContainer.style.display = "block";
+    surahListContainer.style.display = "none";
+  });
+
+  tabSurah.addEventListener("click", () => {
+    tabSurah.classList.add("active");
+    tabJuz.classList.remove("active");
+    surahListContainer.style.display = "block";
+    juzListContainer.style.display = "none";
+  });
+}
+
+// ==========================================
 // EVENT HANDLERS (MODE & SWIPE)
 // ==========================================
 if (btnMushafType) {
@@ -206,13 +303,13 @@ let touchEndX = 0;
 let touchEndY = 0;
 
 document.addEventListener("touchstart", e => {
-  if (e.target.closest('.bottom-dock') || e.target.closest('button')) return;
+  if (e.target.closest('.bottom-dock') || e.target.closest('button') || e.target.closest('#juzSidebar')) return;
   touchStartX = e.changedTouches[0].screenX;
   touchStartY = e.changedTouches[0].screenY;
 });
 
 document.addEventListener("touchend", e => {
-  if (e.target.closest('.bottom-dock') || e.target.closest('button')) return;
+  if (e.target.closest('.bottom-dock') || e.target.closest('button') || e.target.closest('#juzSidebar')) return;
   touchEndX = e.changedTouches[0].screenX;
   touchEndY = e.changedTouches[0].screenY;
   handleSwipe();
@@ -252,7 +349,6 @@ async function startMurojaahMic() {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     
-    // Deteksi VAD Audio Context untuk Jeda Napas
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
     analyser = audioContext.createAnalyser();
     microphone = audioContext.createMediaStreamSource(stream);
@@ -275,12 +371,10 @@ async function startMurojaahMic() {
       const audioBlob = new Blob(audioChunks, { type: options.mimeType || 'audio/webm' });
       audioChunks = [];
 
-      // Kirim audio jika ukuran cukup dan tidak dalam keadaan memproses
       if (audioBlob.size > 2000 && isMicActive && !isProcessing) {
         await sendToMurojaahProxy(audioBlob);
       }
 
-      // Lanjut rekam otomatis untuk ayat berikutnya jika mic masih menyala
       if (isMicActive && mediaRecorder.state === "inactive") {
         mediaRecorder.start();
       }
@@ -312,7 +406,6 @@ function detectSilence() {
   let average = sum / dataArray.length;
 
   if (average < SILENCE_THRESHOLD) {
-    // Pengguna hening / jeda napas
     if (!silenceTimer && mediaRecorder && mediaRecorder.state === "recording" && !isProcessing) {
       silenceTimer = setTimeout(() => {
         if (mediaRecorder && mediaRecorder.state === "recording") {
@@ -322,7 +415,6 @@ function detectSilence() {
       }, SILENCE_DURATION);
     }
   } else {
-    // Pengguna masih membaca
     if (silenceTimer) {
       clearTimeout(silenceTimer);
       silenceTimer = null;
@@ -336,7 +428,7 @@ function detectSilence() {
 
 async function sendToMurojaahProxy(audioBlob) {
   if (isProcessing) return;
-  isProcessing = true; // Kunci proses agar tidak spamming
+  isProcessing = true;
 
   const formData = new FormData();
   formData.append("file", audioBlob, "speech.webm");
@@ -344,7 +436,6 @@ async function sendToMurojaahProxy(audioBlob) {
   try {
     if (transcriptStatus) transcriptStatus.innerText = "Memverifikasi bacaan (Groq AI)...";
 
-    // Kirim audio ke Worker Proxy Khusus Murojaah
     const response = await fetch(MUROJAAH_WORKER_URL, {
       method: "POST",
       body: formData
@@ -364,7 +455,7 @@ async function sendToMurojaahProxy(audioBlob) {
     console.error("Murojaah Proxy Error:", error);
     if (transcriptStatus) transcriptStatus.innerText = "Gagal terhubung ke server Murojaah.";
   } finally {
-    isProcessing = false; // Buka kunci proses untuk ayat berikutnya
+    isProcessing = false;
   }
 }
 
@@ -385,7 +476,7 @@ function stopMurojaahMic() {
 }
 
 // ==========================================
-// LOGIKA VALIDASI BACAAN AYAT
+// LOGIKA VALIDASI BACAAN AYAT (KETAT & AKURAT)
 // ==========================================
 function validateMurojaahVerse(spokenText) {
   if (!isTextHidden) return;
@@ -402,7 +493,6 @@ function validateMurojaahVerse(spokenText) {
   const wordNodes = targetVerse.querySelectorAll('.verse-word');
   let targetWordsArray = [];
   wordNodes.forEach(w => {
-    // PERBAIKAN: Menggunakan textContent agar teks tetap terbaca JS meskipun tersembunyi secara visual
     const cleanW = cleanArabicText(w.textContent || w.innerText);
     if (cleanW.length > 0) targetWordsArray.push(cleanW);
   });
@@ -410,9 +500,15 @@ function validateMurojaahVerse(spokenText) {
   const targetVerseClean = targetWordsArray.join(" ");
   const speechWordsArray = cleanArabicText(spokenText).split(" ").filter(w => w.length > 0);
 
+  // Jika hasil rekaman terlalu pendek dibanding jumlah kata di ayat target, abaikan (mencegah tebak sebagian)
+  if (speechWordsArray.length < Math.max(2, Math.floor(targetWordsArray.length * 0.5))) {
+    if (transcriptStatus) transcriptStatus.innerText = "Bacaan terlalu singkat, lanjutkan ayatnya!";
+    return;
+  }
+
   let exactWordMatches = 0;
   targetWordsArray.forEach(word => {
-    if (speechWordsArray.some(sWord => sWord.includes(word) || word.includes(sWord))) {
+    if (speechWordsArray.some(sWord => sWord === word || (word.length > 3 && sWord.includes(word)))) {
       exactWordMatches++;
     }
   });
@@ -420,8 +516,8 @@ function validateMurojaahVerse(spokenText) {
   const letterSimilarity = getLetterSimilarity(spokenText, targetVerseClean);
   const wordMatchRatio = targetWordsArray.length > 0 ? (exactWordMatches / targetWordsArray.length) : 0;
 
-  // Syarat Lolos: Minimal 35% kata cocok ATAU kemiripan huruf 50%
-  const isMatched = (wordMatchRatio >= 0.35) || (letterSimilarity >= 0.50);
+  // PERKETAT KETENTUAN: Minimal 65% kata cocok ATAU 70% kemiripan huruf utuh
+  const isMatched = (wordMatchRatio >= 0.65) || (letterSimilarity >= 0.70);
 
   console.log(`Target Verse [${currentVerseIndex + 1}]: "${targetVerseClean}"`);
   console.log(`Match Score -> Word: ${(wordMatchRatio * 100).toFixed(0)}% | Letter: ${(letterSimilarity * 100).toFixed(0)}%`);
