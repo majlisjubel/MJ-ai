@@ -3,14 +3,43 @@ document.addEventListener('DOMContentLoaded', () => {
   const mushafPage = document.getElementById('mushafPage');
   const surahName = document.getElementById('surahName');
   const surahMeta = document.getElementById('surahMeta');
+  const mushafBadge = document.getElementById('mushafBadge');
   const pageNumber = document.getElementById('pageNumber');
   const btnToggleHide = document.getElementById('btnToggleHide');
   const btnMic = document.getElementById('btnMic');
   const transcriptStatus = document.getElementById('transcriptStatus');
+  const btnMushafType = document.getElementById('btnMushafType');
+  const mushafLabel = document.getElementById('mushafLabel');
 
   const urlParams = new URLSearchParams(window.location.search);
   let currentPage = parseInt(urlParams.get('page')) || 77;
   let isAnimating = false;
+
+  // State Jenis Mushaf ('madinah' atau 'afrika')
+  let currentMushafType = localStorage.getItem('mushafType') || 'madinah';
+
+  // Inisialisasi Tampilan Label Awal
+  function updateMushafUI() {
+    if (mushafLabel) {
+      mushafLabel.textContent = currentMushafType === 'afrika' ? 'AFR' : 'MDN';
+    }
+  }
+  updateMushafUI();
+
+  // Event Klik Tombol Switch Versi Mushaf
+  if (btnMushafType) {
+    btnMushafType.addEventListener('click', () => {
+      currentMushafType = currentMushafType === 'madinah' ? 'afrika' : 'madinah';
+      localStorage.setItem('mushafType', currentMushafType);
+      updateMushafUI();
+      
+      // Batasi maksimal halaman sesuai tipe (Madinah = 604, Afrika = 480)
+      const maxPages = currentMushafType === 'afrika' ? 480 : 604;
+      if (currentPage > maxPages) currentPage = maxPages;
+
+      loadPageData(currentPage);
+    });
+  }
 
   // Variabel untuk Swipe Touch Gesture
   let touchStartX = 0;
@@ -18,7 +47,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function changePage(targetPage, direction = 'next') {
     if (isAnimating) return;
-    if (targetPage < 1 || targetPage > 604) return;
+    const maxPages = currentMushafType === 'afrika' ? 480 : 604;
+    if (targetPage < 1 || targetPage > maxPages) return;
 
     isAnimating = true;
     const animClass = direction === 'next' ? 'flip-next' : 'flip-prev';
@@ -37,8 +67,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function loadPageData(page) {
-    transcriptStatus.textContent = `Memuat Halaman ${page}...`;
-    const cacheKey = `quran_page_v3_${page}`;
+    transcriptStatus.textContent = `Memuat Halaman ${page} (${currentMushafType.toUpperCase()})...`;
+    const cacheKey = `quran_${currentMushafType}_page_${page}`;
     const cachedData = localStorage.getItem(cacheKey);
     
     if (cachedData) {
@@ -47,10 +77,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      const res = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?page_number=${page}`);
+      // Jika mode Afrika, kita lakukan mapping halaman (karena API quran.com berbasis Madinah 604)
+      let apiPage = page;
+      if (currentMushafType === 'afrika') {
+        // Konversi kasar proporsional dari 480 hal ke 604 hal API
+        apiPage = Math.min(604, Math.max(1, Math.round(page * (604 / 480))));
+      }
+
+      const res = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?page_number=${apiPage}`);
       const json = await res.json();
 
-      const metaRes = await fetch(`https://api.quran.com/api/v4/verses/by_page/${page}?language=id&words=false&page=1&per_page=1`);
+      const metaRes = await fetch(`https://api.quran.com/api/v4/verses/by_page/${apiPage}?language=id&words=false&page=1&per_page=1`);
       const metaJson = await metaRes.json();
 
       if (json.verses && metaJson.verses.length > 0) {
@@ -58,7 +95,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const chapterId = firstVerse.verse_key.split(':')[0];
         
         let validJuz = firstVerse.juz_number;
-        if (!validJuz || validJuz > 30) validJuz = Math.min(30, Math.ceil(page / 20));
+        const juzDiv = currentMushafType === 'afrika' ? 16 : 20;
+        if (!validJuz || validJuz > 30) validJuz = Math.min(30, Math.ceil(page / juzDiv));
 
         const chapterRes = await fetch(`https://api.quran.com/api/v4/chapters/${chapterId}`);
         const chapterJson = await chapterRes.json();
@@ -82,7 +120,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderPage(data) {
     surahName.textContent = data.surahName;
-    surahMeta.textContent = `Halaman ${data.page} | Juz ${data.juz} | ${data.origin}`;
+    const badgeText = currentMushafType === 'afrika' ? 'AFRIKA (480 HAL)' : 'MADINAH';
+    surahMeta.innerHTML = `Halaman ${data.page} | Juz ${data.juz} | <span id="mushafBadge">${badgeText}</span>`;
     pageNumber.textContent = data.page;
 
     let htmlContent = '';
@@ -106,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return num.toString().split('').map(d => arabicDigits[d]).join('');
   }
 
-    // Deteksi Swipe Jari di Layar (Dibalik untuk Teks Arab / RTL)
+  // Deteksi Swipe Jari di Layar (Dibalik untuk Teks Arab / RTL)
   document.addEventListener('touchstart', (e) => {
     if (e.target.closest('.bottom-dock') || e.target.closest('.top-bar')) return;
     touchStartX = e.changedTouches[0].screenX;
@@ -119,13 +158,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }, { passive: true });
 
   function handleSwipe() {
-    const threshold = 40; // Sensitivitas geseran
+    const threshold = 40; 
     
     if (touchEndX - touchStartX > threshold) {
-      // Geser ke KANAN -> Halaman Berikutnya (Bertambah, misal 77 -> 78)
       changePage(currentPage + 1, 'next');
     } else if (touchStartX - touchEndX > threshold) {
-      // Geser ke KIRI -> Halaman Sebelumnya (Berkurang, misal 78 -> 77)
       changePage(currentPage - 1, 'prev');
     }
   }
