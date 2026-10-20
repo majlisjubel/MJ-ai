@@ -2,14 +2,12 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Murojaah AI - PageFlip Mode</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Murojaah AI - Quran Mode</title>
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
-  <!-- StPageFlip Engine Library for Real 3D Dragging & Page Curling -->
-  <script src="https://cdn.jsdelivr.net/npm/page-flip@0.6.5/dist/js/page-flip.browser.js"></script>
 </head>
 <body>
 
@@ -42,35 +40,21 @@
     </div>
   </header>
 
-  <!-- Container khusus PageFlip Engine -->
-  <main class="book-viewport">
-    <div id="pageFlipContainer" class="flip-book">
-      <!-- 2 Layer Halaman untuk Rendering Animasi Buka Buku -->
-      <div class="page page-cover" data-density="hard">
-        <div class="page-content" id="mushafPageCurrent">
-          <!-- Teks Halaman Aktif -->
-        </div>
-        <div class="page-footer">
-          <div class="page-divider"></div>
-          <div class="page-number" id="pageNumberCurrent">77</div>
-        </div>
-      </div>
-
-      <div class="page page-cover" data-density="hard">
-        <div class="page-content" id="mushafPageNext">
-          <!-- Teks Halaman Berikutnya/Sebelumnya -->
-        </div>
-        <div class="page-footer">
-          <div class="page-divider"></div>
-          <div class="page-number" id="pageNumberNext">78</div>
-        </div>
+  <!-- Mushaf Text Viewport dengan Efek Buku 3D -->
+  <main class="mushaf-viewport">
+    <div class="mushaf-container" id="mushafCard">
+      <div id="mushafPage" class="mushaf-text"></div>
+      
+      <div class="page-footer">
+        <div class="page-divider"></div>
+        <div class="page-number" id="pageNumber">77</div>
       </div>
     </div>
   </main>
 
   <!-- Live Transcript Status Bar -->
   <div class="transcript-status" id="transcriptStatus">
-    Seret / Drag pinggir layar untuk membuka buku...
+    Geser atau tap sisi layar untuk mengganti halaman...
   </div>
 
   <!-- Bottom Floating Controller Dock -->
