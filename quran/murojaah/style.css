@@ -6,8 +6,9 @@
 }
 
 html, body {
-  height: 100%;
-  overflow: hidden; /* Mencegah scroll pada seluruh halaman utama */
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden; /* Lock scroll total pada level window */
 }
 
 body {
@@ -15,6 +16,7 @@ body {
   color: #ffffff;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
 }
 
 /* Top Navigation Bar */
@@ -22,7 +24,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 16px;
+  padding: 6px 12px;
   background-color: #1a1a1a;
   border-bottom: 1px solid #282828;
   flex-shrink: 0;
@@ -33,12 +35,12 @@ body {
   background: none;
   border: none;
   color: #d1d5db;
-  font-size: 1.1rem;
+  font-size: 1rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 6px;
+  padding: 4px;
 }
 
 .surah-info-box {
@@ -46,15 +48,15 @@ body {
   flex-direction: column;
   align-items: center;
   background-color: #242424;
-  padding: 4px 14px;
-  border-radius: 8px;
+  padding: 3px 12px;
+  border-radius: 6px;
 }
 
 .surah-title-row {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: #ffffff;
 }
@@ -68,49 +70,48 @@ body {
 }
 
 .surah-sub-info {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   color: #9ca3af;
-  margin-top: 1px;
 }
 
 .top-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
-/* Mushaf Page Container - Disesuaikan agar pas 1 Layar HP */
+/* Mushaf Page Container - Presisi Fit 1 Layar */
 .mushaf-container {
   flex: 1;
-  padding: 12px 16px 140px 16px; /* Space bawah cukup untuk floating dock & status */
-  max-width: 600px;
+  padding: 8px 12px 120px 12px; /* Bottom space aman dari dock & status bar */
+  max-width: 500px;
   margin: 0 auto;
   width: 100%;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  overflow-y: auto; /* Scroll internal halus jika ayat sangat banyak */
-  -webkit-overflow-scrolling: touch;
+  overflow: hidden; /* Mencegah scroll di dalam container */
 }
 
 .mushaf-text {
   direction: rtl;
   font-family: 'Amiri', 'Traditional Arabic', serif;
-  font-size: 1.25rem; /* Ukuran font lebih pas agar tidak terlalu melimpah */
-  line-height: 2.1rem; /* Spasi antar baris dioptimalkan */
+  font-size: 1.05rem; /* Ukuran font dipresisikan agar pas 1 layar */
+  line-height: 1.85rem; /* Jarak antar baris diperketat */
   text-align: justify;
   text-align-last: center;
   color: #ececec;
   width: 100%;
+  word-spacing: 1px;
 }
 
 /* Inline Verse Number Frame */
 .verse-num-symbol {
   font-family: 'Amiri', serif;
   display: inline-block;
-  margin: 0 3px;
+  margin: 0 2px;
   color: #9ca3af;
-  font-size: 1.05rem;
+  font-size: 0.9rem;
 }
 
 /* Mode Hafalan / Hidden Text */
@@ -121,7 +122,7 @@ body {
 /* Page Divider & Number */
 .page-footer {
   width: 100%;
-  margin-top: 16px;
+  margin-top: 6px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -132,30 +133,30 @@ body {
   width: 100%;
   height: 1px;
   background-color: #2a2a2a;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .page-number {
-  font-size: 0.85rem;
-  color: #9ca3af;
+  font-size: 0.78rem;
+  color: #888888;
   font-weight: 500;
 }
 
 /* Live Transcript Status Bar */
 .transcript-status {
   position: fixed;
-  bottom: 82px;
+  bottom: 74px;
   left: 50%;
   transform: translateX(-50%);
   background: rgba(24, 24, 27, 0.92);
   backdrop-filter: blur(8px);
   color: #a1a1aa;
-  padding: 5px 14px;
-  border-radius: 20px;
-  font-size: 0.75rem;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 0.72rem;
   border: 1px solid #3f3f46;
   z-index: 90;
-  max-width: 90%;
+  max-width: 88%;
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
@@ -165,11 +166,11 @@ body {
 /* Bottom Controller Dock */
 .bottom-dock {
   position: fixed;
-  bottom: 16px;
+  bottom: 12px;
   left: 50%;
   transform: translateX(-50%);
-  width: calc(100% - 32px);
-  max-width: 480px;
+  width: calc(100% - 24px);
+  max-width: 440px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -181,9 +182,9 @@ body {
   background-color: #2a2a2c;
   color: #e5e7eb;
   border: 1px solid #3f3f46;
-  padding: 10px 18px;
-  border-radius: 20px;
-  font-size: 0.85rem;
+  padding: 8px 14px;
+  border-radius: 18px;
+  font-size: 0.8rem;
   font-weight: 500;
   cursor: pointer;
 }
@@ -191,15 +192,15 @@ body {
 .dock-center-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .dock-circle-btn {
   background-color: #2a2a2c;
   color: #d1d5db;
   border: 1px solid #3f3f46;
-  width: 42px;
-  height: 42px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -212,25 +213,25 @@ body {
   background: linear-gradient(135deg, #2ecc71, #27ae60);
   border: none;
   color: #ffffff;
-  width: 58px;
-  height: 58px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 0 20px rgba(46, 204, 113, 0.45);
+  box-shadow: 0 0 16px rgba(46, 204, 113, 0.45);
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .mic-glow-btn.recording {
   animation: pulse 1.5s infinite;
   background: linear-gradient(135deg, #e74c3c, #c0392b);
-  box-shadow: 0 0 20px rgba(231, 76, 60, 0.6);
+  box-shadow: 0 0 16px rgba(231, 76, 60, 0.6);
 }
 
 @keyframes pulse {
   0% { transform: scale(1); }
-  50% { transform: scale(1.08); }
+  50% { transform: scale(1.06); }
   100% { transform: scale(1); }
 }
