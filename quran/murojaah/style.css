@@ -8,7 +8,7 @@
 html, body {
   height: 100vh;
   width: 100vw;
-  overflow: hidden; /* Lock scroll total pada level window */
+  overflow: hidden;
 }
 
 body {
@@ -80,24 +80,50 @@ body {
   gap: 6px;
 }
 
-/* Mushaf Page Container - Presisi Fit 1 Layar */
-.mushaf-container {
+/* Viewport 3D Perspektif */
+.mushaf-viewport {
   flex: 1;
-  padding: 8px 12px 120px 12px; /* Bottom space aman dari dock & status bar */
-  max-width: 500px;
-  margin: 0 auto;
+  perspective: 1200px; /* Memberikan efek kedalaman 3D */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 8px 12px 110px 12px;
+}
+
+/* Container Lembaran Buku */
+.mushaf-container {
   width: 100%;
+  max-width: 500px;
+  height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  overflow: hidden; /* Mencegah scroll di dalam container */
+  background-color: #121212;
+  transform-style: preserve-3d;
+  transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease;
+  backface-visibility: hidden;
+}
+
+/* Kelas Animasi Membalik Ke Kiri (Next) */
+.mushaf-container.flip-next {
+  transform-origin: left center;
+  transform: rotateY(-90deg) scale(0.95);
+  opacity: 0.2;
+}
+
+/* Kelas Animasi Membalik Ke Kanan (Prev) */
+.mushaf-container.flip-prev {
+  transform-origin: right center;
+  transform: rotateY(90deg) scale(0.95);
+  opacity: 0.2;
 }
 
 .mushaf-text {
   direction: rtl;
   font-family: 'Amiri', 'Traditional Arabic', serif;
-  font-size: 1.05rem; /* Ukuran font dipresisikan agar pas 1 layar */
-  line-height: 1.85rem; /* Jarak antar baris diperketat */
+  font-size: 1.05rem;
+  line-height: 1.85rem;
   text-align: justify;
   text-align-last: center;
   color: #ececec;
@@ -105,7 +131,6 @@ body {
   word-spacing: 1px;
 }
 
-/* Inline Verse Number Frame */
 .verse-num-symbol {
   font-family: 'Amiri', serif;
   display: inline-block;
@@ -114,12 +139,10 @@ body {
   font-size: 0.9rem;
 }
 
-/* Mode Hafalan / Hidden Text */
 .mushaf-text.text-hidden .verse-word {
   visibility: hidden;
 }
 
-/* Page Divider & Number */
 .page-footer {
   width: 100%;
   margin-top: 6px;
@@ -208,7 +231,6 @@ body {
   cursor: pointer;
 }
 
-/* Floating Green Mic Button */
 .mic-glow-btn {
   background: linear-gradient(135deg, #2ecc71, #27ae60);
   border: none;
