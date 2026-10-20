@@ -13,7 +13,7 @@ const mushafLabel = document.getElementById("mushafLabel");
 const mushafBadge = document.getElementById("mushafBadge");
 const btnToggleHide = document.getElementById("btnToggleHide");
 const mushafCard = document.getElementById("mushafCard");
-const btnMic = document.getElementById("btnMic"); // Tombol Mic di Dock Bawah
+const btnMic = document.getElementById("btnMic");
 
 // Format Angka Arab
 function toArabicDigits(num) {
@@ -21,11 +21,12 @@ function toArabicDigits(num) {
   return num.toString().split('').map(d => arabicDigits[d] || d).join('');
 }
 
-// Mapping Halaman Afrika (Total 480 Halaman) ke Basis API Quran.com (604 Halaman)
+// Mapping Akurat Halaman Afrika (1-480) ke Madinah (1-604) Tanpa Loncat Halaman
 function getBasePageForAfrika(afrPage) {
   if (afrPage <= 1) return 1;
   if (afrPage >= 480) return 604;
-  return Math.round(((afrPage - 1) / (480 - 1)) * (604 - 1)) + 1;
+  // Menggunakan ceil/floor yang konsisten agar tidak ada halaman yang hilang
+  return Math.floor(((afrPage - 1) / 479) * 603) + 1;
 }
 
 // Fetch Data Halaman Quran dari API
@@ -65,7 +66,6 @@ async function loadQuranPage(page) {
     mushafPage.innerHTML = htmlContent;
     pageNumber.innerText = page;
 
-    // Atur kelas layout CSS berdasarkan mode
     if (mushafMode === "AFR") {
       mushafPage.className = "mushaf-text layout-18-lines";
       mushafBadge.innerText = "AFRIKA (18 BARIS)";
@@ -80,7 +80,7 @@ async function loadQuranPage(page) {
 
   } catch (error) {
     console.error("Fetch Error:", error);
-    mushafPage.innerHTML = `<div style="text-align:center; padding: 40px; color: #e74c3c;">Koneksi terputus. Coba periksa jaringan.</div>`;
+    mushafPage.innerHTML = `<div style="text-align:center; padding: 40px; color: #e74c3c;">Koneksi terputus.</div>`;
   }
 }
 
@@ -104,16 +104,15 @@ btnMushafType.addEventListener("click", () => {
   if (mushafMode === "MDN") {
     mushafMode = "AFR";
     mushafLabel.innerText = "AFR";
-    currentPage = 1; // Reset ke halaman 1 saat ganti mode
   } else {
     mushafMode = "MDN";
     mushafLabel.innerText = "MDN";
-    currentPage = 1;
   }
+  currentPage = 1;
   loadQuranPage(currentPage);
 });
 
-// Handler Toggle Sembunyikan Teks (Murojaah Hafalan)
+// Handler Toggle Sembunyikan Teks
 btnToggleHide.addEventListener("click", () => {
   isTextHidden = !isTextHidden;
   if (isTextHidden) {
@@ -123,21 +122,33 @@ btnToggleHide.addEventListener("click", () => {
   }
 });
 
-// Navigasi Touch Swipe (RTL Standard)
+// Navigasi Touch Swipe (RTL Standard) - Diberi batasan agar tidak bentrok dengan tombol bawah
 let touchStartX = 0;
+let touchStartY = 0;
 let touchEndX = 0;
+let touchEndY = 0;
 
 document.addEventListener("touchstart", e => {
+  // Jika sentuhan dimulai di area dock bawah (tombol mic dll), jangan anggap sebagai swipe halaman
+  if (e.target.closest('.bottom-dock') || e.target.closest('button')) return;
   touchStartX = e.changedTouches[0].screenX;
+  touchStartY = e.changedTouches[0].screenY;
 });
 
 document.addEventListener("touchend", e => {
+  if (e.target.closest('.bottom-dock') || e.target.closest('button')) return;
   touchEndX = e.changedTouches[0].screenX;
+  touchEndY = e.changedTouches[0].screenY;
   handleSwipe();
 });
 
 function handleSwipe() {
   const swipeThreshold = 50;
+  const verticalThreshold = 100;
+  
+  // Pastikan geseran murni horizontal (bukan scroll vertikal)
+  if (Math.abs(touchEndY - touchStartY) > verticalThreshold) return;
+
   // Geser Kanan -> Kiri = Halaman Selanjutnya
   if (touchEndX - touchStartX > swipeThreshold) {
     changePage(currentPage + 1, "next");
@@ -161,35 +172,38 @@ function changePage(newPage, dir) {
   }, 300);
 }
 
-// --- FITUR VOICE RECOGNITION (MIC) ---
+// --- PERBAIKAN TOTAL TOMBOL MIC (SUPAYA BISA DIKLIK & RESPONSIF) ---
 if (btnMic) {
-  btnMic.addEventListener("click", () => {
+  // Gunakan pointerdown / click agar responsif di semua jenis HP
+  btnMic.addEventListener("click", (e) => {
+    e.stopPropagation(); // Mencegah bentrok event sentuh dengan layar
+    
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     
     if (!SpeechRecognition) {
-      alert("Maaf, browser ini tidak mendukung fitur pengenalan suara (Speech Recognition). Gunakan Google Chrome versi terbaru.");
+      alert("Browser ini tidak mendukung fitur pengenalan suara.");
       return;
     }
 
     const recognition = new SpeechRecognition();
-    recognition.lang = 'ar-SA'; // Set bahasa Arab
+    recognition.lang = 'ar-SA';
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
 
     recognition.onstart = () => {
-      console.log("Mic mendengarkan...");
-      btnMic.style.background = "#e74c3c"; // Indikator merah saat merekam
+      console.log("Mic aktif...");
+      btnMic.style.background = "#e74c3c";
     };
 
     recognition.onresult = (event) => {
       const speechResult = event.results[0][0].transcript;
-      console.log("Suara dikenali:", speechResult);
-      alert("Suara ditangkap: " + speechResult); // Sementara ditampilkan ke alert untuk testing
+      console.log("Suara:", speechResult);
+      alert("Suara dikenali: " + speechResult);
     };
 
     recognition.onerror = (event) => {
-      console.error("Speech recognition error:", event.error);
-      alert("Error Mic: " + event.error);
+      console.error("Mic error:", event.error);
+      alert("Gagal mendengarkan: " + event.error);
       btnMic.style.background = "";
     };
 
@@ -200,8 +214,8 @@ if (btnMic) {
     try {
       recognition.start();
     } catch (err) {
-      console.error("Gagal memulai mic:", err);
-      alert("Gagal mengaktifkan mikrofon. Pastikan izin mic sudah diaktifkan di setelan situs.");
+      console.error("Gagal start mic:", err);
+      alert("Gagal mengaktifkan mikrofon.");
     }
   });
 }
