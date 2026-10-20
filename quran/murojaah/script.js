@@ -7,14 +7,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnMic = document.getElementById('btnMic');
   const transcriptStatus = document.getElementById('transcriptStatus');
 
-  // Ambil parameter page dari URL (Default: Halaman 101)
+  // Ambil parameter page dari URL (Default: Halaman 77 - Awal Surah An-Nisa)
   const urlParams = new URLSearchParams(window.location.search);
-  const pageId = urlParams.get('page') || 101;
+  const pageId = urlParams.get('page') || 77;
 
-  // 1. Fetch Data berdasarkan Nomor Halaman Mushaf
+  // 1. Fetch Data berdasarkan Nombor Halaman Mushaf yang Betul
   async function loadPageData(page) {
     transcriptStatus.textContent = `Memuat Halaman ${page}...`;
-    const cachedData = localStorage.getItem(`quran_page_${page}`);
+    
+    // Guna key versi 2 untuk elak konflik dengan cache salah yang lama
+    const cacheKey = `quran_page_v2_${page}`;
+    const cachedData = localStorage.getItem(cacheKey);
     
     if (cachedData) {
       renderPage(JSON.parse(cachedData));
@@ -22,36 +25,39 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      // Endpoint Quran.com v4 khusus per halaman
+      // Fetch ayat-ayat khusus untuk halaman ini sahaja dari Quran.com v4
       const res = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?page_number=${page}`);
       const json = await res.json();
 
-      // Ambil metadata halaman (surah apa, juz berapa)
+      // Fetch maklumat juz dan verse key untuk halaman ini
       const metaRes = await fetch(`https://api.quran.com/api/v4/verses/by_page/${page}?language=id&words=false&page=1&per_page=1`);
       const metaJson = await metaRes.json();
 
       if (json.verses && metaJson.verses.length > 0) {
-        const firstVerseKey = metaJson.verses[0].verse_key; // Contoh "4:141"
-        const chapterId = firstVerseKey.split(':')[0];
+        const firstVerse = metaJson.verses[0];
+        const chapterId = firstVerse.verse_key.split(':')[0];
 
-        // Fetch detail nama surah
+        // Fetch nama surah yang betul
         const chapterRes = await fetch(`https://api.quran.com/api/v4/chapters/${chapterId}`);
         const chapterJson = await chapterRes.json();
 
         const payload = {
-          page: page,
+          page: parseInt(page),
           surahName: chapterJson.chapter.name_simple,
-          juz: metaJson.verses[0].juz_number,
+          juz: firstVerse.juz_number, // Juz yang betul (1 - 30)
           origin: chapterJson.chapter.revelation_place.toUpperCase(),
           verses: json.verses
         };
 
-        localStorage.setItem(`quran_page_${page}`, JSON.stringify(payload));
+        // Simpan ke localStorage
+        localStorage.setItem(cacheKey, JSON.stringify(payload));
         renderPage(payload);
+      } else {
+        transcriptStatus.textContent = "Data halaman tidak ditemui.";
       }
     } catch (err) {
       console.error("Gagal memuat data halaman:", err);
-      transcriptStatus.textContent = "Gagal memuat data. Cek koneksi internet Anda.";
+      transcriptStatus.textContent = "Gagal memuat data. Sila semak sambungan internet anda.";
     }
   }
 
@@ -63,29 +69,32 @@ document.addEventListener('DOMContentLoaded', () => {
     let htmlContent = '';
     
     data.verses.forEach((verse) => {
-      // verse_key contohnya "4:141" -> kita ambil nomor ayatnya saja (141)
-      const verseNum = verse.verse_key ? verse.verse_key.split(':')[1] : 1;
+      // Ambil nombor ayat dari verse_key (contoh "4:1" -> "1")
+      const verseNum = verse.verse_key ? verse.verse_key.split(':')[1] : '';
       const arabicNum = convertToArabicNumbers(verseNum);
       
       htmlContent += `<span class="verse-word">${verse.text_uthmani}</span> `;
-      htmlContent += `<span class="verse-num-symbol">﴿${arabicNum}﴾</span> `;
+      if (arabicNum) {
+        htmlContent += `<span class="verse-num-symbol">﴿${arabicNum}﴾</span> `;
+      }
     });
 
     mushafPage.innerHTML = htmlContent;
-    transcriptStatus.textContent = "Tekan mikrofon untuk mulai Murojaah AI...";
+    transcriptStatus.textContent = "Tekan mikrofon untuk mula Murojaah AI...";
   }
 
   function convertToArabicNumbers(num) {
+    if (!num) return '';
     const arabicDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
     return num.toString().split('').map(d => arabicDigits[d]).join('');
   }
 
-  // 2. Toggle Mode Hafalan (Hide Teks)
+  // 2. Toggle Mode Hafalan (Sembunyi Teks)
   btnToggleHide.addEventListener('click', () => {
     mushafPage.classList.toggle('text-hidden');
   });
 
-  // 3. Web Speech API (Voice Recognition)
+  // 3. Web Speech API (Pengecaman Suara)
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   let recognition = null;
   let isListening = false;
@@ -99,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
     recognition.onstart = () => {
       isListening = true;
       btnMic.classList.add('recording');
-      transcriptStatus.textContent = "🎙️ Mendengarkan bacaan Anda...";
+      transcriptStatus.textContent = "🎙️ Mendengar bacaan anda...";
     };
 
     recognition.onresult = (event) => {
@@ -112,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     recognition.onerror = (event) => {
       console.error("Speech Recognition Error:", event.error);
-      transcriptStatus.textContent = "Izin mic ditolak atau audio tidak terdeteksi.";
+      transcriptStatus.textContent = "Kebenaran mic ditolak atau audio tidak dikesan.";
       stopListening();
     };
 
@@ -120,18 +129,18 @@ document.addEventListener('DOMContentLoaded', () => {
       if (isListening) recognition.start();
     };
   } else {
-    transcriptStatus.textContent = "Browser Anda tidak mendukung Web Speech API.";
+    transcriptStatus.textContent = "Pelayar anda tidak menyokong Web Speech API.";
   }
 
   function stopListening() {
     isListening = false;
     btnMic.classList.remove('recording');
     if (recognition) recognition.stop();
-    transcriptStatus.textContent = "Murojaah dihentikan. Klik mic untuk mulai lagi.";
+    transcriptStatus.textContent = "Murojaah dihentikan. Klik mic untuk mula semula.";
   }
 
   btnMic.addEventListener('click', () => {
-    if (!recognition) return alert("Browser tidak mendukung mikrofon!");
+    if (!recognition) return alert("Pelayar tidak menyokong mikrofon!");
     if (isListening) stopListening();
     else recognition.start();
   });
