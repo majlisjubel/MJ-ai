@@ -7,51 +7,64 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnMic = document.getElementById('btnMic');
   const transcriptStatus = document.getElementById('transcriptStatus');
 
+  // Ambil parameter page dari URL (Default: Halaman 101)
   const urlParams = new URLSearchParams(window.location.search);
-  const surahId = urlParams.get('surah') || 4; // Default Surah 4 (An-Nisa)
+  const pageId = urlParams.get('page') || 101;
 
-  // 1. Fetch & Render Data Surah
-  async function loadSurah(id) {
-    transcriptStatus.textContent = `Memuat Surah ${id}...`;
-    const cachedData = localStorage.getItem(`quran_v4_surah_${id}`);
+  // 1. Fetch Data berdasarkan Nomor Halaman Mushaf
+  async function loadPageData(page) {
+    transcriptStatus.textContent = `Memuat Halaman ${page}...`;
+    const cachedData = localStorage.getItem(`quran_page_${page}`);
     
     if (cachedData) {
-      renderMushaf(JSON.parse(cachedData));
+      renderPage(JSON.parse(cachedData));
       return;
     }
 
     try {
-      const res = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${id}`);
+      // Endpoint Quran.com v4 khusus per halaman
+      const res = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?page_number=${page}`);
       const json = await res.json();
 
-      const chapterRes = await fetch(`https://api.quran.com/api/v4/chapters/${id}`);
-      const chapterJson = await chapterRes.json();
+      // Ambil metadata halaman (surah apa, juz berapa)
+      const metaRes = await fetch(`https://api.quran.com/api/v4/verses/by_page/${page}?language=id&words=false&page=1&per_page=1`);
+      const metaJson = await metaRes.json();
 
-      if (json.verses && chapterJson.chapter) {
+      if (json.verses && metaJson.verses.length > 0) {
+        const firstVerseKey = metaJson.verses[0].verse_key; // Contoh "4:141"
+        const chapterId = firstVerseKey.split(':')[0];
+
+        // Fetch detail nama surah
+        const chapterRes = await fetch(`https://api.quran.com/api/v4/chapters/${chapterId}`);
+        const chapterJson = await chapterRes.json();
+
         const payload = {
-          info: chapterJson.chapter,
+          page: page,
+          surahName: chapterJson.chapter.name_simple,
+          juz: metaJson.verses[0].juz_number,
+          origin: chapterJson.chapter.revelation_place.toUpperCase(),
           verses: json.verses
         };
-        localStorage.setItem(`quran_v4_surah_${id}`, JSON.stringify(payload));
-        renderMushaf(payload);
+
+        localStorage.setItem(`quran_page_${page}`, JSON.stringify(payload));
+        renderPage(payload);
       }
     } catch (err) {
-      console.error("Gagal memuat data Quran:", err);
+      console.error("Gagal memuat data halaman:", err);
       transcriptStatus.textContent = "Gagal memuat data. Cek koneksi internet Anda.";
     }
   }
 
-  function renderMushaf(data) {
-    surahName.textContent = data.info.name_simple;
-    const pageVal = data.info.pages ? data.info.pages[0] : 101;
-    
-    surahMeta.textContent = `Halaman ${pageVal} | Juz 5 | ${data.info.revelation_place.toUpperCase()}`;
-    pageNumber.textContent = pageVal;
+  function renderPage(data) {
+    surahName.textContent = data.surahName;
+    surahMeta.textContent = `Halaman ${data.page} | Juz ${data.juz} | ${data.origin}`;
+    pageNumber.textContent = data.page;
 
     let htmlContent = '';
     
-    data.verses.forEach((verse, idx) => {
-      const verseNum = idx + 1;
+    data.verses.forEach((verse) => {
+      // verse_key contohnya "4:141" -> kita ambil nomor ayatnya saja (141)
+      const verseNum = verse.verse_key ? verse.verse_key.split(':')[1] : 1;
       const arabicNum = convertToArabicNumbers(verseNum);
       
       htmlContent += `<span class="verse-word">${verse.text_uthmani}</span> `;
@@ -67,12 +80,12 @@ document.addEventListener('DOMContentLoaded', () => {
     return num.toString().split('').map(d => arabicDigits[d]).join('');
   }
 
-  // 2. Toggle Hide Teks (Mode Hafalan)
+  // 2. Toggle Mode Hafalan (Hide Teks)
   btnToggleHide.addEventListener('click', () => {
     mushafPage.classList.toggle('text-hidden');
   });
 
-  // 3. Integrasi Web Speech API (Voice Recognition)
+  // 3. Web Speech API (Voice Recognition)
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   let recognition = null;
   let isListening = false;
@@ -81,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
     recognition = new SpeechRecognition();
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang = 'ar-SA'; // Set pengenalan ke Bahasa Arab
+    recognition.lang = 'ar-SA';
 
     recognition.onstart = () => {
       isListening = true;
@@ -104,9 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     recognition.onend = () => {
-      if (isListening) {
-        recognition.start(); // Auto-restart biar terus mendengarkan
-      }
+      if (isListening) recognition.start();
     };
   } else {
     transcriptStatus.textContent = "Browser Anda tidak mendukung Web Speech API.";
@@ -120,17 +131,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   btnMic.addEventListener('click', () => {
-    if (!recognition) {
-      alert("Browser Anda tidak mendukung fitur mikrofon!");
-      return;
-    }
-
-    if (isListening) {
-      stopListening();
-    } else {
-      recognition.start();
-    }
+    if (!recognition) return alert("Browser tidak mendukung mikrofon!");
+    if (isListening) stopListening();
+    else recognition.start();
   });
 
-  loadSurah(surahId);
+  loadPageData(pageId);
 });
