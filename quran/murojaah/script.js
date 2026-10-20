@@ -25,7 +25,6 @@ function toArabicDigits(num) {
 function getBasePageForAfrika(afrPage) {
   if (afrPage <= 1) return 1;
   if (afrPage >= 480) return 604;
-  // Menggunakan ceil/floor yang konsisten agar tidak ada halaman yang hilang
   return Math.floor(((afrPage - 1) / 479) * 603) + 1;
 }
 
@@ -112,7 +111,7 @@ btnMushafType.addEventListener("click", () => {
   loadQuranPage(currentPage);
 });
 
-// Handler Toggle Sembunyikan Teks
+// Handler Toggle Sembunyikan Teks (Murojaah)
 btnToggleHide.addEventListener("click", () => {
   isTextHidden = !isTextHidden;
   if (isTextHidden) {
@@ -122,14 +121,13 @@ btnToggleHide.addEventListener("click", () => {
   }
 });
 
-// Navigasi Touch Swipe (RTL Standard) - Diberi batasan agar tidak bentrok dengan tombol bawah
+// Navigasi Touch Swipe (RTL Standard)
 let touchStartX = 0;
 let touchStartY = 0;
 let touchEndX = 0;
 let touchEndY = 0;
 
 document.addEventListener("touchstart", e => {
-  // Jika sentuhan dimulai di area dock bawah (tombol mic dll), jangan anggap sebagai swipe halaman
   if (e.target.closest('.bottom-dock') || e.target.closest('button')) return;
   touchStartX = e.changedTouches[0].screenX;
   touchStartY = e.changedTouches[0].screenY;
@@ -146,15 +144,11 @@ function handleSwipe() {
   const swipeThreshold = 50;
   const verticalThreshold = 100;
   
-  // Pastikan geseran murni horizontal (bukan scroll vertikal)
   if (Math.abs(touchEndY - touchStartY) > verticalThreshold) return;
 
-  // Geser Kanan -> Kiri = Halaman Selanjutnya
   if (touchEndX - touchStartX > swipeThreshold) {
     changePage(currentPage + 1, "next");
-  } 
-  // Geser Kiri -> Kanan = Halaman Sebelumnya
-  else if (touchStartX - touchEndX > swipeThreshold) {
+  } else if (touchStartX - touchEndX > swipeThreshold) {
     changePage(currentPage - 1, "prev");
   }
 }
@@ -172,11 +166,10 @@ function changePage(newPage, dir) {
   }, 300);
 }
 
-// --- PERBAIKAN TOTAL TOMBOL MIC (SUPAYA BISA DIKLIK & RESPONSIF) ---
+// --- FITUR VOICE RECOGNITION & AUTO-REVEAL TEXT ---
 if (btnMic) {
-  // Gunakan pointerdown / click agar responsif di semua jenis HP
   btnMic.addEventListener("click", (e) => {
-    e.stopPropagation(); // Mencegah bentrok event sentuh dengan layar
+    e.stopPropagation();
     
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     
@@ -186,19 +179,40 @@ if (btnMic) {
     }
 
     const recognition = new SpeechRecognition();
-    recognition.lang = 'ar-SA';
+    recognition.lang = 'ar-SA'; // Set bahasa Arab
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
 
     recognition.onstart = () => {
-      console.log("Mic aktif...");
-      btnMic.style.background = "#e74c3c";
+      console.log("Mic aktif mendengarkan...");
+      btnMic.style.background = "#e74c3c"; // Berubah merah saat merekam
     };
 
     recognition.onresult = (event) => {
-      const speechResult = event.results[0][0].transcript;
-      console.log("Suara:", speechResult);
-      alert("Suara dikenali: " + speechResult);
+      const speechResult = event.results[0][0].transcript.trim();
+      console.log("Suara ditangkap:", speechResult);
+
+      const wordElements = mushafPage.querySelectorAll('.verse-word');
+      
+      // Jika mode teks disembunyikan, cocokkan suara dengan kata di halaman
+      if (isTextHidden) {
+        let matchedCount = 0;
+        
+        wordElements.forEach(el => {
+          const wordText = el.innerText.trim();
+          if (speechResult.includes(wordText) || wordText.includes(speechResult)) {
+            el.style.visibility = "visible"; // Munculkan kata yang benar dibaca
+            el.style.color = "#2ecc71";      // Beri warna hijau penanda benar
+            matchedCount++;
+          }
+        });
+
+        if (matchedCount === 0) {
+          alert("Bacaan tidak cocok atau kurang jelas: " + speechResult);
+        }
+      } else {
+        alert("Suara dikenali: " + speechResult);
+      }
     };
 
     recognition.onerror = (event) => {
