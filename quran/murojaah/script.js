@@ -13,34 +13,36 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentPage = parseInt(urlParams.get('page')) || 77;
   let pageFlipInstance = null;
 
-  // 1. Inisialisasi PageFlip Engine 3D Canvas
+  // 1. Inisialisasi PageFlip menyesuaikan ukuran layar HP secara dinamis
   function initPageFlip() {
     const bookElem = document.getElementById('pageFlipContainer');
     if (!bookElem) return;
 
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight - 150; // Kurangi header & dock
+
     pageFlipInstance = new St.PageFlip(bookElem, {
-      width: 380,
-      height: 580,
-      size: 'stretch',
-      minWidth: 300,
-      maxWidth: 500,
+      width: screenWidth,
+      height: screenHeight,
+      size: 'fixed',
+      minWidth: 280,
+      maxWidth: screenWidth,
       minHeight: 400,
-      maxHeight: 700,
-      maxShadowOpacity: 0.8,
+      maxHeight: screenHeight,
+      maxShadowOpacity: 0.5,
       showCover: false,
+      usePortrait: true,
       mobileScrollSupport: false
     });
 
     pageFlipInstance.loadFromHTML(document.querySelectorAll('.page'));
 
-    // Event ketika pengguna selesai menarik & melepas lipatan kertas
     pageFlipInstance.on('flip', (e) => {
-      if (e.data === 1) {
-        // Berhasil tarik lembaran -> Pindah Halaman
-        currentPage++;
+      const targetPage = currentPage + 1;
+      if (targetPage <= 604) {
+        currentPage = targetPage;
         updateUrl(currentPage);
         loadPageData(currentPage);
-        setTimeout(() => pageFlipInstance.turnToPage(0), 100);
       }
     });
   }
@@ -50,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.history.pushState({ page: page }, '', newUrl);
   }
 
-  // 2. Fetch Data Ayat
+  // 2. Fetch Data Ayat Quran.com v4
   async function loadPageData(page) {
     transcriptStatus.textContent = `Memuat Halaman ${page}...`;
     const cacheKey = `quran_page_v3_${page}`;
@@ -91,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (err) {
       console.error("Gagal memuat data:", err);
-      transcriptStatus.textContent = "Gagal memuat data. Cek koneksi.";
+      transcriptStatus.textContent = "Gagal memuat data. Periksa koneksi internet.";
     }
   }
 
@@ -113,8 +115,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     mushafCurrent.innerHTML = htmlContent;
-    mushafNext.innerHTML = htmlContent; // Pre-render lembaran balik
-    transcriptStatus.textContent = "Tarik pinggir layar ke kiri/kanan untuk membalik buku.";
+    mushafNext.innerHTML = htmlContent;
+    transcriptStatus.textContent = "Seret pinggir layar untuk membuka halaman...";
   }
 
   function convertToArabicNumbers(num) {
