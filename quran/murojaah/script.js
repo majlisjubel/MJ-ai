@@ -3,7 +3,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const mushafPage = document.getElementById('mushafPage');
   const surahName = document.getElementById('surahName');
   const surahMeta = document.getElementById('surahMeta');
-  const mushafBadge = document.getElementById('mushafBadge');
   const pageNumber = document.getElementById('pageNumber');
   const btnToggleHide = document.getElementById('btnToggleHide');
   const btnMic = document.getElementById('btnMic');
@@ -18,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // State Jenis Mushaf ('madinah' atau 'afrika')
   let currentMushafType = localStorage.getItem('mushafType') || 'madinah';
 
-  // Inisialisasi Tampilan Label Awal
+  // Update Tampilan Label Tombol Dock Bawah
   function updateMushafUI() {
     if (mushafLabel) {
       mushafLabel.textContent = currentMushafType === 'afrika' ? 'AFR' : 'MDN';
@@ -26,14 +25,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   updateMushafUI();
 
-  // Event Klik Tombol Switch Versi Mushaf
+  // Event Switch Versi Mushaf
   if (btnMushafType) {
     btnMushafType.addEventListener('click', () => {
       currentMushafType = currentMushafType === 'madinah' ? 'afrika' : 'madinah';
       localStorage.setItem('mushafType', currentMushafType);
       updateMushafUI();
       
-      // Batasi maksimal halaman sesuai tipe (Madinah = 604, Afrika = 480)
+      // Batasi maksimal halaman (Madinah = 604, Afrika = 480)
       const maxPages = currentMushafType === 'afrika' ? 480 : 604;
       if (currentPage > maxPages) currentPage = maxPages;
 
@@ -41,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Variabel untuk Swipe Touch Gesture
+  // Variabel Gesture Touch/Swipe
   let touchStartX = 0;
   let touchEndX = 0;
 
@@ -67,8 +66,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function loadPageData(page) {
-    transcriptStatus.textContent = `Memuat Halaman ${page} (${currentMushafType.toUpperCase()})...`;
-    const cacheKey = `quran_${currentMushafType}_page_${page}`;
+    transcriptStatus.textContent = `Memuat Halaman ${page}...`;
+    // Menggunakan cacheKey v5 untuk memburu dan memperbarui data lama
+    const cacheKey = `quran_${currentMushafType}_page_v5_${page}`;
     const cachedData = localStorage.getItem(cacheKey);
     
     if (cachedData) {
@@ -77,10 +77,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      // Jika mode Afrika, kita lakukan mapping halaman (karena API quran.com berbasis Madinah 604)
       let apiPage = page;
       if (currentMushafType === 'afrika') {
-        // Konversi kasar proporsional dari 480 hal ke 604 hal API
+        // Pemetaan proporsional dari 480 hal (Afrika) ke 604 hal (Madinah API)
         apiPage = Math.min(604, Math.max(1, Math.round(page * (604 / 480))));
       }
 
@@ -98,14 +97,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const juzDiv = currentMushafType === 'afrika' ? 16 : 20;
         if (!validJuz || validJuz > 30) validJuz = Math.min(30, Math.ceil(page / juzDiv));
 
+        // Ambil detail resmi Surah
         const chapterRes = await fetch(`https://api.quran.com/api/v4/chapters/${chapterId}`);
         const chapterJson = await chapterRes.json();
+
+        // Format Asal Turun Surah
+        const revPlace = chapterJson.chapter.revelation_place.toLowerCase();
+        const originLabel = (revPlace === 'maddinah' || revPlace === 'madinah') ? 'MADANIYAH' : 'MAKKIYAH';
 
         const payload = {
           page: parseInt(page),
           surahName: chapterJson.chapter.name_simple,
           juz: validJuz,
-          origin: chapterJson.chapter.revelation_place.toUpperCase(),
+          origin: originLabel,
           verses: json.verses
         };
 
@@ -120,9 +124,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderPage(data) {
     surahName.textContent = data.surahName;
-    const badgeText = currentMushafType === 'afrika' ? 'AFRIKA (480 HAL)' : 'MADINAH';
-    surahMeta.innerHTML = `Halaman ${data.page} | Juz ${data.juz} | <span id="mushafBadge">${badgeText}</span>`;
+    
+    // Top Bar bersih: Hanya Halaman, Juz, dan Makkiyah/Madaniyah
+    surahMeta.textContent = `Halaman ${data.page} | Juz ${data.juz} | ${data.origin}`;
     pageNumber.textContent = data.page;
+
+    // Toggle Class CSS 15 Baris (Madinah) vs 18 Baris (Afrika/Sudani)
+    if (currentMushafType === 'afrika') {
+      mushafPage.classList.add('layout-18-lines');
+      mushafPage.classList.remove('layout-15-lines');
+    } else {
+      mushafPage.classList.add('layout-15-lines');
+      mushafPage.classList.remove('layout-18-lines');
+    }
 
     let htmlContent = '';
     data.verses.forEach((verse) => {
@@ -145,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return num.toString().split('').map(d => arabicDigits[d]).join('');
   }
 
-  // Deteksi Swipe Jari di Layar (Dibalik untuk Teks Arab / RTL)
+  // Touch Swipe Gesture
   document.addEventListener('touchstart', (e) => {
     if (e.target.closest('.bottom-dock') || e.target.closest('.top-bar')) return;
     touchStartX = e.changedTouches[0].screenX;
@@ -167,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Mode Hafalan
+  // Mode Hafalan / Sembunyikan Teks
   btnToggleHide.addEventListener('click', () => {
     mushafPage.classList.toggle('text-hidden');
   });
