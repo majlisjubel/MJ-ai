@@ -89,7 +89,7 @@ body {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  padding: 8px 12px 135px 12px; /* Padding bawah kunci area aman dock */
+  padding: 8px 12px 135px 12px;
   position: relative;
 }
 
@@ -148,16 +148,53 @@ body {
   line-height: 1.65rem;
 }
 
+.verse-block {
+  display: inline;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
 .verse-num-symbol {
   font-family: 'Amiri', serif;
   display: inline-block;
   margin: 0 2px;
   color: #9ca3af;
   font-size: 0.85rem;
+  transition: color 0.3s ease;
 }
 
-.mushaf-text.text-hidden .verse-word {
+/* --- LOGIKA SEMBUNYI & BACA PER KALIMAT --- */
+
+/* 1. Sembunyikan semua kata saat mode sembunyi aktif */
+.mushaf-text.text-hidden .verse-block .verse-word {
+  opacity: 0;
   visibility: hidden;
+  transition: opacity 0.3s ease, color 0.3s ease;
+}
+
+/* 2. BACAAN BENAR: Tampilkan seluruh kalimat dalam ayat tersebut secara serentak */
+.mushaf-text.text-hidden .verse-block.verse-revealed .verse-word {
+  opacity: 1 !important;
+  visibility: visible !important;
+  color: #2ecc71 !important; /* Hijau */
+}
+
+/* 3. BACAAN SALAH: Indikator kesalahan visual pada ayat target */
+.mushaf-text.text-hidden .verse-block.verse-error {
+  background-color: rgba(231, 76, 60, 0.25) !important; /* Background Merah Transparan */
+  animation: shake 0.4s ease-in-out;
+}
+
+.mushaf-text.text-hidden .verse-block.verse-error .verse-num-symbol {
+  color: #e74c3c !important; /* Simbol nomor ayat menyala merah */
+}
+
+/* Animasi Shake (Goyang saat salah) */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px); }
+  40%, 80% { transform: translateX(4px); }
 }
 
 /* Page Footer & Number */
@@ -283,10 +320,3 @@ body {
   50% { transform: scale(1.06); }
   100% { transform: scale(1); }
 }
-
-.verse-block {
-  display: inline;
-}
-.mushaf-text.text-hidden .verse-word {
-  visibility: hidden;
-  }
