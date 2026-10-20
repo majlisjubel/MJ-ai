@@ -1,59 +1,85 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const mushafPage = document.getElementById('mushafPage');
+  const mushafCurrent = document.getElementById('mushafPageCurrent');
+  const mushafNext = document.getElementById('mushafPageNext');
+  const pageNumCurrent = document.getElementById('pageNumberCurrent');
+  const pageNumNext = document.getElementById('pageNumberNext');
   const surahName = document.getElementById('surahName');
   const surahMeta = document.getElementById('surahMeta');
-  const pageNumber = document.getElementById('pageNumber');
   const btnToggleHide = document.getElementById('btnToggleHide');
   const btnMic = document.getElementById('btnMic');
   const transcriptStatus = document.getElementById('transcriptStatus');
-  const bookViewport = document.querySelector('.book-viewport');
 
   const urlParams = new URLSearchParams(window.location.search);
   let currentPage = parseInt(urlParams.get('page')) || 77;
+  let pageFlipInstance = null;
 
-  // Touch Swipe Handler Variables
-  let touchStartX = 0;
-  let touchEndX = 0;
+  // 1. Inisialisasi PageFlip Engine 3D Canvas
+  function initPageFlip() {
+    const bookElem = document.getElementById('pageFlipContainer');
+    if (!bookElem) return;
 
+    pageFlipInstance = new St.PageFlip(bookElem, {
+      width: 380,
+      height: 580,
+      size: 'stretch',
+      minWidth: 300,
+      maxWidth: 500,
+      minHeight: 400,
+      maxHeight: 700,
+      maxShadowOpacity: 0.8,
+      showCover: false,
+      mobileScrollSupport: false
+    });
+
+    pageFlipInstance.loadFromHTML(document.querySelectorAll('.page'));
+
+    // Event ketika pengguna selesai menarik & melepas lipatan kertas
+    pageFlipInstance.on('flip', (e) => {
+      if (e.data === 1) {
+        // Berhasil tarik lembaran -> Pindah Halaman
+        currentPage++;
+        updateUrl(currentPage);
+        loadPageData(currentPage);
+        setTimeout(() => pageFlipInstance.turnToPage(0), 100);
+      }
+    });
+  }
+
+  function updateUrl(page) {
+    const newUrl = `${window.location.pathname}?page=${page}`;
+    window.history.pushState({ page: page }, '', newUrl);
+  }
+
+  // 2. Fetch Data Ayat
   async function loadPageData(page) {
-    if (page < 1) page = 1;
-    if (page > 604) page = 604;
-    currentPage = page;
-
-    const newUrl = `${window.location.pathname}?page=${currentPage}`;
-    window.history.pushState({ page: currentPage }, '', newUrl);
-
-    transcriptStatus.textContent = `Memuat Halaman ${currentPage}...`;
-    
-    const cacheKey = `quran_page_v3_${currentPage}`;
+    transcriptStatus.textContent = `Memuat Halaman ${page}...`;
+    const cacheKey = `quran_page_v3_${page}`;
     const cachedData = localStorage.getItem(cacheKey);
-    
+
     if (cachedData) {
       renderPage(JSON.parse(cachedData));
       return;
     }
 
     try {
-      const res = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?page_number=${currentPage}`);
+      const res = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?page_number=${page}`);
       const json = await res.json();
 
-      const metaRes = await fetch(`https://api.quran.com/api/v4/verses/by_page/${currentPage}?language=id&words=false&page=1&per_page=1`);
+      const metaRes = await fetch(`https://api.quran.com/api/v4/verses/by_page/${page}?language=id&words=false&page=1&per_page=1`);
       const metaJson = await metaRes.json();
 
       if (json.verses && metaJson.verses.length > 0) {
         const firstVerse = metaJson.verses[0];
         const chapterId = firstVerse.verse_key.split(':')[0];
-        
+
         let validJuz = firstVerse.juz_number;
-        if (!validJuz || validJuz > 30) {
-          validJuz = Math.min(30, Math.ceil(currentPage / 20));
-        }
+        if (!validJuz || validJuz > 30) validJuz = Math.min(30, Math.ceil(page / 20));
 
         const chapterRes = await fetch(`https://api.quran.com/api/v4/chapters/${chapterId}`);
         const chapterJson = await chapterRes.json();
 
         const payload = {
-          page: parseInt(currentPage),
+          page: parseInt(page),
           surahName: chapterJson.chapter.name_simple,
           juz: validJuz,
           origin: chapterJson.chapter.revelation_place.toUpperCase(),
@@ -64,30 +90,31 @@ document.addEventListener('DOMContentLoaded', () => {
         renderPage(payload);
       }
     } catch (err) {
-      console.error("Gagal memuat data halaman:", err);
-      transcriptStatus.textContent = "Gagal memuat data. Cek koneksi internet.";
+      console.error("Gagal memuat data:", err);
+      transcriptStatus.textContent = "Gagal memuat data. Cek koneksi.";
     }
   }
 
   function renderPage(data) {
     surahName.textContent = data.surahName;
     surahMeta.textContent = `Halaman ${data.page} | Juz ${data.juz} | ${data.origin}`;
-    pageNumber.textContent = data.page;
+    pageNumCurrent.textContent = data.page;
+    pageNumNext.textContent = data.page + 1;
 
     let htmlContent = '';
-    
     data.verses.forEach((verse) => {
       const verseNum = verse.verse_key ? verse.verse_key.split(':')[1] : '';
       const arabicNum = convertToArabicNumbers(verseNum);
-      
+
       htmlContent += `<span class="verse-word">${verse.text_uthmani}</span> `;
       if (arabicNum) {
         htmlContent += `<span class="verse-num-symbol">﴿${arabicNum}﴾</span> `;
       }
     });
 
-    mushafPage.innerHTML = htmlContent;
-    transcriptStatus.textContent = "Usap / Swipe layar untuk ganti halaman.";
+    mushafCurrent.innerHTML = htmlContent;
+    mushafNext.innerHTML = htmlContent; // Pre-render lembaran balik
+    transcriptStatus.textContent = "Tarik pinggir layar ke kiri/kanan untuk membalik buku.";
   }
 
   function convertToArabicNumbers(num) {
@@ -96,34 +123,12 @@ document.addEventListener('DOMContentLoaded', () => {
     return num.toString().split('').map(d => arabicDigits[d]).join('');
   }
 
-  // Detect Swipe / Drag Jari Tangannya
-  bookViewport.addEventListener('touchstart', (e) => {
-    touchStartX = e.changedTouches[0].screenX;
-  }, { passive: true });
-
-  bookViewport.addEventListener('touchend', (e) => {
-    touchEndX = e.changedTouches[0].screenX;
-    handleSwipe();
-  }, { passive: true });
-
-  function handleSwipe() {
-    const swipeThreshold = 50; // Jarak minimal geseran jari (px)
-    
-    if (touchStartX - touchEndX > swipeThreshold) {
-      // Swipe Kiri -> Halaman Selanjutnya
-      loadPageData(currentPage + 1);
-    } else if (touchEndX - touchStartX > swipeThreshold) {
-      // Swipe Kanan -> Halaman Sebelumnya
-      loadPageData(currentPage - 1);
-    }
-  }
-
-  // Toggle Mode Hafalan
+  // 3. Mode Hafalan (Hide Teks)
   btnToggleHide.addEventListener('click', () => {
-    mushafPage.classList.toggle('text-hidden');
+    mushafCurrent.classList.toggle('text-hidden');
   });
 
-  // Web Speech API
+  // 4. Web Speech API (Voice Recognition)
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   let recognition = null;
   let isListening = false;
@@ -174,5 +179,6 @@ document.addEventListener('DOMContentLoaded', () => {
     else recognition.start();
   });
 
+  initPageFlip();
   loadPageData(currentPage);
 });
