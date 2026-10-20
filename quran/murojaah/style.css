@@ -1,40 +1,258 @@
-/* Book Viewport - Full Lebar Layar */
-.book-viewport {
-  flex: 1;
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+html, body {
+  height: 100vh;
   width: 100vw;
+  overflow: hidden;
+}
+
+body {
+  background-color: #121212;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Top Navigation Bar */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background-color: #1a1a1a;
+  border-bottom: 1px solid #282828;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  color: #d1d5db;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+}
+
+.surah-info-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #242424;
+  padding: 3px 12px;
+  border-radius: 6px;
+}
+
+.surah-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.bookmark-btn {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  display: flex;
+}
+
+.surah-sub-info {
+  font-size: 0.68rem;
+  color: #9ca3af;
+}
+
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Viewport 3D Perspektif */
+.mushaf-viewport {
+  flex: 1;
+  perspective: 1200px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  padding-bottom: 80px;
+  padding: 8px 12px 110px 12px;
 }
 
-.flip-book {
-  width: 100% !important;
-  height: 100% !important;
+/* Container Lembaran Buku */
+.mushaf-container {
+  width: 100%;
+  max-width: 500px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background-color: #121212;
+  transform-style: preserve-3d;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+  backface-visibility: hidden;
 }
 
-/* Mengatur agar setiap halaman memenuhi seluruh area layar */
-.page {
-  background-color: #121212 !important;
-  width: 100% !important;
-  height: 100% !important;
-  display: flex !important;
-  flex-direction: column !important;
-  justify-content: space-between !important;
-  padding: 16px 20px !important;
-  box-sizing: border-box;
+/* Animasi Membalik */
+.mushaf-container.flip-next {
+  transform-origin: left center;
+  transform: rotateY(-90deg) scale(0.95);
+  opacity: 0.1;
 }
 
-.page-content {
+.mushaf-container.flip-prev {
+  transform-origin: right center;
+  transform: rotateY(90deg) scale(0.95);
+  opacity: 0.1;
+}
+
+.mushaf-text {
   direction: rtl;
   font-family: 'Amiri', 'Traditional Arabic', serif;
-  font-size: 1.15rem;
-  line-height: 2.1rem;
+  font-size: 1.05rem;
+  line-height: 1.85rem;
   text-align: justify;
   text-align-last: center;
   color: #ececec;
   width: 100%;
-  flex: 1;
+  word-spacing: 1px;
+}
+
+.verse-num-symbol {
+  font-family: 'Amiri', serif;
+  display: inline-block;
+  margin: 0 2px;
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+.mushaf-text.text-hidden .verse-word {
+  visibility: hidden;
+}
+
+.page-footer {
+  width: 100%;
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.page-divider {
+  width: 100%;
+  height: 1px;
+  background-color: #2a2a2a;
+  margin-bottom: 4px;
+}
+
+.page-number {
+  font-size: 0.78rem;
+  color: #888888;
+  font-weight: 500;
+}
+
+/* Live Transcript Status Bar */
+.transcript-status {
+  position: fixed;
+  bottom: 74px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(24, 24, 27, 0.92);
+  backdrop-filter: blur(8px);
+  color: #a1a1aa;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 0.72rem;
+  border: 1px solid #3f3f46;
+  z-index: 90;
+  max-width: 88%;
+  text-align: center;
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Bottom Controller Dock */
+.bottom-dock {
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 24px);
+  max-width: 440px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 100;
+  padding: 0 4px;
+}
+
+.pill-btn-danger {
+  background-color: #2a2a2c;
+  color: #e5e7eb;
+  border: 1px solid #3f3f46;
+  padding: 8px 14px;
+  border-radius: 18px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.dock-center-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dock-circle-btn {
+  background-color: #2a2a2c;
+  color: #d1d5db;
+  border: 1px solid #3f3f46;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.mic-glow-btn {
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  border: none;
+  color: #ffffff;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 0 16px rgba(46, 204, 113, 0.45);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.mic-glow-btn.recording {
+  animation: pulse 1.5s infinite;
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  box-shadow: 0 0 16px rgba(231, 76, 60, 0.6);
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+  100% { transform: scale(1); }
 }
