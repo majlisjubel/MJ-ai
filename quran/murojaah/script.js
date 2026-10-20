@@ -13,6 +13,7 @@ const mushafLabel = document.getElementById("mushafLabel");
 const mushafBadge = document.getElementById("mushafBadge");
 const btnToggleHide = document.getElementById("btnToggleHide");
 const mushafCard = document.getElementById("mushafCard");
+const btnMic = document.getElementById("btnMic"); // Tombol Mic di Dock Bawah
 
 // Format Angka Arab
 function toArabicDigits(num) {
@@ -20,7 +21,7 @@ function toArabicDigits(num) {
   return num.toString().split('').map(d => arabicDigits[d] || d).join('');
 }
 
-// Algoritma Mapping Afrika (480 Hal -> Base 604 Hal)
+// Mapping Halaman Afrika (Total 480 Halaman) ke Basis API Quran.com (604 Halaman)
 function getBasePageForAfrika(afrPage) {
   if (afrPage <= 1) return 1;
   if (afrPage >= 480) return 604;
@@ -30,7 +31,7 @@ function getBasePageForAfrika(afrPage) {
 // Fetch Data Halaman Quran dari API
 async function loadQuranPage(page) {
   try {
-    mushafPage.innerHTML = `<div style="text-align:center; padding: 40px; color: #888;">Memuat data...</div>`;
+    mushafPage.innerHTML = `<div style="text-align:center; padding: 40px; color: #888;">Memuat halaman...</div>`;
     
     let actualFetchPage = page;
     if (mushafMode === "AFR") {
@@ -41,14 +42,14 @@ async function loadQuranPage(page) {
     const data = await response.json();
 
     if (!data.verses || data.verses.length === 0) {
-      mushafPage.innerHTML = `<div style="text-align:center; padding: 40px; color: #e74c3c;">Gagal memuat data.</div>`;
+      mushafPage.innerHTML = `<div style="text-align:center; padding: 40px; color: #e74c3c;">Gagal memuat data ayat.</div>`;
       return;
     }
 
     let htmlContent = "";
     let firstVerse = data.verses[0];
-
     const surahKey = firstVerse.verse_key.split(":")[0];
+    
     fetchSurahInfo(surahKey, page, firstVerse.juz_number);
 
     data.verses.forEach(verse => {
@@ -64,10 +65,13 @@ async function loadQuranPage(page) {
     mushafPage.innerHTML = htmlContent;
     pageNumber.innerText = page;
 
+    // Atur kelas layout CSS berdasarkan mode
     if (mushafMode === "AFR") {
       mushafPage.className = "mushaf-text layout-18-lines";
+      mushafBadge.innerText = "AFRIKA (18 BARIS)";
     } else {
       mushafPage.className = "mushaf-text layout-15-lines";
+      mushafBadge.innerText = "MADINAH (15 BARIS)";
     }
 
     if (isTextHidden) {
@@ -76,7 +80,7 @@ async function loadQuranPage(page) {
 
   } catch (error) {
     console.error("Fetch Error:", error);
-    mushafPage.innerHTML = `<div style="text-align:center; padding: 40px; color: #e74c3c;">Koneksi gagal. Coba refresh.</div>`;
+    mushafPage.innerHTML = `<div style="text-align:center; padding: 40px; color: #e74c3c;">Koneksi terputus. Coba periksa jaringan.</div>`;
   }
 }
 
@@ -100,16 +104,16 @@ btnMushafType.addEventListener("click", () => {
   if (mushafMode === "MDN") {
     mushafMode = "AFR";
     mushafLabel.innerText = "AFR";
-    mushafBadge.innerText = "AFRIKA";
+    currentPage = 1; // Reset ke halaman 1 saat ganti mode
   } else {
     mushafMode = "MDN";
     mushafLabel.innerText = "MDN";
-    mushafBadge.innerText = "MADINAH";
+    currentPage = 1;
   }
   loadQuranPage(currentPage);
 });
 
-// Handler Toggle Sembunyikan Teks
+// Handler Toggle Sembunyikan Teks (Murojaah Hafalan)
 btnToggleHide.addEventListener("click", () => {
   isTextHidden = !isTextHidden;
   if (isTextHidden) {
@@ -119,7 +123,7 @@ btnToggleHide.addEventListener("click", () => {
   }
 });
 
-// Navigasi Touch Swipe
+// Navigasi Touch Swipe (RTL Standard)
 let touchStartX = 0;
 let touchEndX = 0;
 
@@ -134,12 +138,11 @@ document.addEventListener("touchend", e => {
 
 function handleSwipe() {
   const swipeThreshold = 50;
-  
-  // Geser Jari ke Kanan -> Buka Halaman Selanjutnya
+  // Geser Kanan -> Kiri = Halaman Selanjutnya
   if (touchEndX - touchStartX > swipeThreshold) {
     changePage(currentPage + 1, "next");
   } 
-  // Geser Jari ke Kiri -> Buka Halaman Sebelumnya
+  // Geser Kiri -> Kanan = Halaman Sebelumnya
   else if (touchStartX - touchEndX > swipeThreshold) {
     changePage(currentPage - 1, "prev");
   }
@@ -156,6 +159,51 @@ function changePage(newPage, dir) {
     loadQuranPage(currentPage);
     mushafCard.classList.remove("flip-next", "flip-prev");
   }, 300);
+}
+
+// --- FITUR VOICE RECOGNITION (MIC) ---
+if (btnMic) {
+  btnMic.addEventListener("click", () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+      alert("Maaf, browser ini tidak mendukung fitur pengenalan suara (Speech Recognition). Gunakan Google Chrome versi terbaru.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'ar-SA'; // Set bahasa Arab
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      console.log("Mic mendengarkan...");
+      btnMic.style.background = "#e74c3c"; // Indikator merah saat merekam
+    };
+
+    recognition.onresult = (event) => {
+      const speechResult = event.results[0][0].transcript;
+      console.log("Suara dikenali:", speechResult);
+      alert("Suara ditangkap: " + speechResult); // Sementara ditampilkan ke alert untuk testing
+    };
+
+    recognition.onerror = (event) => {
+      console.error("Speech recognition error:", event.error);
+      alert("Error Mic: " + event.error);
+      btnMic.style.background = "";
+    };
+
+    recognition.onend = () => {
+      btnMic.style.background = "";
+    };
+
+    try {
+      recognition.start();
+    } catch (err) {
+      console.error("Gagal memulai mic:", err);
+      alert("Gagal mengaktifkan mikrofon. Pastikan izin mic sudah diaktifkan di setelan situs.");
+    }
+  });
 }
 
 // Inisialisasi Pertama
