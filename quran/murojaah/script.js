@@ -3,6 +3,8 @@ let currentPage = 1;
 let mushafMode = "MDN"; // "MDN" = Madinah (15 baris), "AFR" = Afrika (18 baris)
 let isTextHidden = false;
 let currentVerseIndex = 0; // Pointer pelacak urutan AYAT yang harus dibaca
+let isMicActive = false; // State untuk mengontrol status mic manual
+let recognition = null;
 
 // DOM Elements
 const mushafPage = document.getElementById("mushafPage");
@@ -35,22 +37,53 @@ function resetMurojaahPointer() {
   currentVerseIndex = 0;
 }
 
-// Fungsi Pembersih Harakat & Tanda Baca Arab
+// Fungsi Pembersih Harakat & Tanda Baca Arab Ketat
 function cleanArabicText(text) {
   if (!text) return "";
   return text
     .replace(/[\u064B-\u065F\u0670\u06D6-\u06DC\u06DF-\u06E8\u06EA-\u06ED]/g, "") // Hapus harakat & tajwid
     .replace(/[ٱإأآء]/g, "ا") // Normalisasi Alif
     .replace(/ة/g, "ه")
+    .replace(/ى/g, "ي")
     .replace(/[^\u0621-\u064A\s]/g, "") // Huruf Arab & spasi saja
     .replace(/\s+/g, " ") // Rapikan spasi ganda
     .trim()
     .toLowerCase();
 }
 
+// Algoritma Levenshtein Distance untuk Cek Kemiripan Huruf (0.0 - 1.0)
+function getLetterSimilarity(str1, str2) {
+  const s1 = cleanArabicText(str1);
+  const s2 = cleanArabicText(str2);
+  
+  if (s1 === s2) return 1.0;
+  if (s1.length === 0 || s2.length === 0) return 0.0;
+
+  const track = Array(s2.length + 1).fill(null).map(() =>
+    Array(s1.length + 1).fill(null));
+
+  for (let i = 0; i <= s1.length; i += 1) track[0][i] = i;
+  for (let j = 0; j <= s2.length; j += 1) track[j][0] = j;
+
+  for (let j = 1; j <= s2.length; j += 1) {
+    for (let i = 1; i <= s1.length; i += 1) {
+      const indicator = s1[i - 1] === s2[j - 1] ? 0 : 1;
+      track[j][i] = Math.min(
+        track[j][i - 1] + 1, // deletion
+        track[j - 1][i] + 1, // insertion
+        track[j - 1][i - 1] + indicator // substitution
+      );
+    }
+  }
+
+  const distance = track[s2.length][s1.length];
+  const maxLength = Math.max(s1.length, s2.length);
+  return (maxLength - distance) / maxLength;
+}
+
 // Fetch Data Halaman Quran dari API
 async function loadQuranPage(page) {
-  resetMurojaahPointer(); // Reset urutan ayat tiap ganti halaman
+  resetMurojaahPointer();
   try {
     mushafPage.innerHTML = `<div style="text-align:center; padding: 40px; color: #888;">Memuat halaman...</div>`;
     
@@ -139,14 +172,14 @@ btnToggleHide.addEventListener("click", () => {
   isTextHidden = !isTextHidden;
   if (isTextHidden) {
     mushafPage.classList.add("text-hidden");
-    if (transcriptStatus) transcriptStatus.innerText = "Mode sembunyi aktif. Silakan baca ayat pertama!";
+    if (transcriptStatus) transcriptStatus.innerText = "Mode sembunyi aktif. Tekan Mic dan baca ayat!";
   } else {
     mushafPage.classList.remove("text-hidden");
     if (transcriptStatus) transcriptStatus.innerText = "Geser atau tap sisi layar untuk mengganti halaman...";
   }
 });
 
-// Navigasi Touch Swipe (RTL Standard)
+// Navigasi Touch Swipe
 let touchStartX = 0;
 let touchStartY = 0;
 let touchEndX = 0;
@@ -191,114 +224,124 @@ function changePage(newPage, dir) {
   }, 300);
 }
 
-// --- FITUR VOICE RECOGNITION (MIC) VALIDASI PER KALIMAT / PER AYAT ---
-if (btnMic) {
-  btnMic.addEventListener("click", (e) => {
-    e.stopPropagation();
-    
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    
-    if (!SpeechRecognition) {
-      alert("Browser ini tidak mendukung fitur pengenalan suara.");
-      return;
+// --- INISIALISASI SPEECH RECOGNITION (KONTINU & KETAT) ---
+function initSpeechRecognition() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    alert("Browser ini tidak mendukung fitur pengenalan suara.");
+    return null;
+  }
+
+  const rec = new SpeechRecognition();
+  rec.lang = 'ar-SA';
+  rec.interimResults = true; // Mengambil hasil sementara secara realtime
+  rec.continuous = true;     // Mic tetap menyala terus
+  rec.maxAlternatives = 1;
+
+  rec.onstart = () => {
+    btnMic.classList.add("recording");
+    if (transcriptStatus) transcriptStatus.innerText = "Mendengarkan bacaan...";
+  };
+
+  rec.onresult = (event) => {
+    let rawSpeech = "";
+    for (let i = event.resultIndex; i < event.results.length; ++i) {
+      rawSpeech += event.results[i][0].transcript;
     }
 
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'ar-SA';
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
+    const cleanSpeech = cleanArabicText(rawSpeech);
+    if (transcriptStatus) transcriptStatus.innerText = "Suara: " + rawSpeech;
 
-    recognition.onstart = () => {
-      console.log("Mic mendengarkan...");
-      btnMic.classList.add("recording");
-      if (transcriptStatus) transcriptStatus.innerText = "Mendengarkan bacaan Anda...";
-    };
+    if (isTextHidden) {
+      const verseElements = mushafPage.querySelectorAll('.verse-block');
+      if (verseElements.length === 0) return;
 
-    recognition.onresult = (event) => {
-      const rawSpeech = event.results[0][0].transcript;
-      const cleanSpeech = cleanArabicText(rawSpeech);
-      console.log("Suara Ditangkap (Clean):", cleanSpeech);
-
-      if (transcriptStatus) {
-        transcriptStatus.innerText = "Suara ditangkap: " + rawSpeech;
+      const targetVerse = verseElements[currentVerseIndex];
+      if (!targetVerse) {
+        if (transcriptStatus) transcriptStatus.innerText = "Halaman ini sudah selesai!";
+        return;
       }
 
-      if (isTextHidden) {
-        const verseElements = mushafPage.querySelectorAll('.verse-block');
-        if (verseElements.length === 0) return;
+      // Ambil teks asli ayat target
+      const wordNodes = targetVerse.querySelectorAll('.verse-word');
+      let fullVerseText = "";
+      wordNodes.forEach(w => {
+        fullVerseText += w.innerText + " ";
+      });
 
-        // Ambil elemen ayat target yang sedang dibaca
-        const targetVerse = verseElements[currentVerseIndex];
-        if (!targetVerse) {
-          if (transcriptStatus) transcriptStatus.innerText = "Semua ayat di halaman ini sudah selesai dibaca!";
-          return;
+      const targetVerseClean = cleanArabicText(fullVerseText);
+
+      // --- HITUNG KEMIRIPAN HUKUM HURUF (PERSENTASE KETAT 88% - 90%) ---
+      const similarity = getLetterSimilarity(cleanSpeech, targetVerseClean);
+      console.log(`Target: "${targetVerseClean}" | Suara: "${cleanSpeech}" | Akurasi: ${(similarity * 100).toFixed(1)}%`);
+
+      // Hanya izinkan buka jika tingkat kemiripan huruf minimal 88% (hampir tidak boleh ada beda huruf)
+      if (similarity >= 0.88) {
+        // BACAAN BENAR
+        targetVerse.classList.remove("verse-error");
+        targetVerse.classList.add("verse-revealed");
+        
+        currentVerseIndex++; // Pindah ke ayat selanjutnya
+
+        if (transcriptStatus) {
+          transcriptStatus.innerText = `Benar! Ayat ke-${currentVerseIndex} terbuka (${(similarity * 100).toFixed(0)}%).`;
         }
+      } else if (cleanSpeech.length >= targetVerseClean.length * 0.7) {
+        // BACAAN SALAH (Panjang suara sudah hampir sepanjang ayat tetapi akurasi < 88%)
+        if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
 
-        // Ambil teks lengkap Uthmani dalam ayat target
-        const wordNodes = targetVerse.querySelectorAll('.verse-word');
-        let fullVerseText = "";
-        wordNodes.forEach(w => {
-          fullVerseText += w.innerText + " ";
-        });
-
-        const targetVerseClean = cleanArabicText(fullVerseText);
-
-        // Pencocokan fleksibel: suara mengandung bagian utama dari ayat target
-        // atau ayat target mengandung suara yang ditangkap
-        const isMatched = cleanSpeech.length > 0 && 
-          (targetVerseClean.includes(cleanSpeech) || cleanSpeech.includes(targetVerseClean));
-
-        if (isMatched) {
-          // BACAAN BENAR: Munculkan seluruh kalimat dalam ayat tersebut
+        targetVerse.classList.add("verse-error");
+        setTimeout(() => {
           targetVerse.classList.remove("verse-error");
-          targetVerse.classList.add("verse-revealed");
-          
-          currentVerseIndex++; // Pindah ke ayat berikutnya!
+        }, 1500);
 
-          if (transcriptStatus) {
-            transcriptStatus.innerText = `Benar! Ayat ke-${currentVerseIndex} terbuka.`;
-          }
-        } else {
-          // BACAAN SALAH
-          console.warn(`SALAH! Target: "${targetVerseClean}", Suara: "${cleanSpeech}"`);
-
-          // 1. Getar HP
-          if (navigator.vibrate) {
-            navigator.vibrate([200, 100, 200]);
-          }
-
-          // 2. Beri indikator merah dan animasi shake pada ayat yang sedang dibaca
-          targetVerse.classList.add("verse-error");
-
-          // Reset status error setelah 1.5 detik
-          setTimeout(() => {
-            targetVerse.classList.remove("verse-error");
-          }, 1500);
-
-          if (transcriptStatus) {
-            transcriptStatus.innerText = "Bacaan belum sesuai, silakan coba lagi!";
-          }
+        if (transcriptStatus) {
+          transcriptStatus.innerText = `Salah! Akurasi hanya ${(similarity * 100).toFixed(0)}% (Butuh >= 88%)`;
         }
-      } else {
-        alert("Suara ditangkap: " + rawSpeech);
       }
-    };
+    }
+  };
 
-    recognition.onerror = (event) => {
-      console.error("Mic error:", event.error);
-      if (navigator.vibrate) navigator.vibrate(300);
+  rec.onerror = (event) => {
+    console.error("Mic error:", event.error);
+    if (event.error === 'no-speech') return;
+    if (navigator.vibrate) navigator.vibrate(300);
+  };
+
+  // KUNCI CONTINUOUS MIC: Restart otomatis jika terhenti tetapi state mic masih aktif
+  rec.onend = () => {
+    if (isMicActive) {
+      console.log("Auto-restarting Mic...");
+      try { rec.start(); } catch (e) {}
+    } else {
       btnMic.classList.remove("recording");
-      if (transcriptStatus) transcriptStatus.innerText = "Gagal menangkap suara. Coba lagi.";
-    };
+      if (transcriptStatus) transcriptStatus.innerText = "Mic dimatikan.";
+    }
+  };
 
-    recognition.onend = () => {
-      btnMic.classList.remove("recording");
-    };
+  return rec;
+}
 
-    try {
-      recognition.start();
-    } catch (err) {
-      console.error("Gagal start mic:", err);
+// Toggle Mic On/Off Manual
+if (btnMic) {
+  recognition = initSpeechRecognition();
+
+  btnMic.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (!recognition) return;
+
+    if (isMicActive) {
+      // Matikan Mic
+      isMicActive = false;
+      recognition.stop();
+    } else {
+      // Jalankan Mic
+      isMicActive = true;
+      try {
+        recognition.start();
+      } catch (err) {
+        console.log("Mic already started:", err);
+      }
     }
   });
 }
