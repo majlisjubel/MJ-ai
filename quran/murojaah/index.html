@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Murojaah AI - Quran Mode</title>
   <link rel="stylesheet" href="style.css">
-  <!-- Font Uthmani / Amiri for authentic Mushaf feel -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
@@ -26,7 +25,7 @@
         </button>
       </div>
       <div class="surah-sub-info" id="surahMeta">
-        Halaman 101 | Juz 5 | MADINAH
+        Halaman 77 | Juz 4 | MADINAH
       </div>
     </div>
 
@@ -41,22 +40,23 @@
     </div>
   </header>
 
-  <!-- Mushaf Text View Container -->
-  <main class="mushaf-container">
-    <div id="mushafPage" class="mushaf-text">
-      <!-- Teks Arab flowing di-render via JavaScript -->
-    </div>
-    
-    <!-- Garis Batas & Nomor Halaman Ala Mushaf -->
-    <div class="page-footer">
-      <div class="page-divider"></div>
-      <div class="page-number" id="pageNumber">101</div>
+  <!-- Mushaf Text Viewport dengan Efek Buku 3D -->
+  <main class="mushaf-viewport">
+    <div class="mushaf-container" id="mushafCard">
+      <div id="mushafPage" class="mushaf-text">
+        <!-- Teks Arab flowing di-render via JavaScript -->
+      </div>
+      
+      <div class="page-footer">
+        <div class="page-divider"></div>
+        <div class="page-number" id="pageNumber">77</div>
+      </div>
     </div>
   </main>
 
   <!-- Live Transcript Status Bar -->
   <div class="transcript-status" id="transcriptStatus">
-    Klik mikrofon untuk mulai membaca...
+    Tekan sisi layar untuk ganti halaman...
   </div>
 
   <!-- Bottom Floating Controller Dock -->
