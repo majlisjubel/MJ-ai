@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const mushafCard = document.getElementById('mushafCard');
   const mushafPage = document.getElementById('mushafPage');
   const surahName = document.getElementById('surahName');
   const surahMeta = document.getElementById('surahMeta');
@@ -7,39 +6,26 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnToggleHide = document.getElementById('btnToggleHide');
   const btnMic = document.getElementById('btnMic');
   const transcriptStatus = document.getElementById('transcriptStatus');
+  const bookViewport = document.querySelector('.book-viewport');
 
   const urlParams = new URLSearchParams(window.location.search);
   let currentPage = parseInt(urlParams.get('page')) || 77;
-  let isAnimating = false;
 
-  // 1. Fetch & Change Page dengan Efek Buku 3D
-  async function changePage(targetPage, direction = 'next') {
-    if (isAnimating) return;
-    if (targetPage < 1 || targetPage > 604) return;
-
-    isAnimating = true;
-
-    // Trigger animasi rotasi lembaran buku
-    const animClass = direction === 'next' ? 'flip-next' : 'flip-prev';
-    mushafCard.classList.add(animClass);
-
-    setTimeout(async () => {
-      currentPage = targetPage;
-      const newUrl = `${window.location.pathname}?page=${currentPage}`;
-      window.history.pushState({ page: currentPage }, '', newUrl);
-
-      await loadPageData(currentPage);
-
-      // Kembalikan lembaran buku dengan animasi balik
-      mushafCard.classList.remove(animClass);
-      isAnimating = false;
-    }, 350); // Waktu yang pas sesuai CSS transition
-  }
+  // Touch Swipe Handler Variables
+  let touchStartX = 0;
+  let touchEndX = 0;
 
   async function loadPageData(page) {
-    transcriptStatus.textContent = `Memuat Halaman ${page}...`;
+    if (page < 1) page = 1;
+    if (page > 604) page = 604;
+    currentPage = page;
+
+    const newUrl = `${window.location.pathname}?page=${currentPage}`;
+    window.history.pushState({ page: currentPage }, '', newUrl);
+
+    transcriptStatus.textContent = `Memuat Halaman ${currentPage}...`;
     
-    const cacheKey = `quran_page_v3_${page}`;
+    const cacheKey = `quran_page_v3_${currentPage}`;
     const cachedData = localStorage.getItem(cacheKey);
     
     if (cachedData) {
@@ -48,10 +34,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      const res = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?page_number=${page}`);
+      const res = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?page_number=${currentPage}`);
       const json = await res.json();
 
-      const metaRes = await fetch(`https://api.quran.com/api/v4/verses/by_page/${page}?language=id&words=false&page=1&per_page=1`);
+      const metaRes = await fetch(`https://api.quran.com/api/v4/verses/by_page/${currentPage}?language=id&words=false&page=1&per_page=1`);
       const metaJson = await metaRes.json();
 
       if (json.verses && metaJson.verses.length > 0) {
@@ -60,14 +46,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let validJuz = firstVerse.juz_number;
         if (!validJuz || validJuz > 30) {
-          validJuz = Math.min(30, Math.ceil(page / 20));
+          validJuz = Math.min(30, Math.ceil(currentPage / 20));
         }
 
         const chapterRes = await fetch(`https://api.quran.com/api/v4/chapters/${chapterId}`);
         const chapterJson = await chapterRes.json();
 
         const payload = {
-          page: parseInt(page),
+          page: parseInt(currentPage),
           surahName: chapterJson.chapter.name_simple,
           juz: validJuz,
           origin: chapterJson.chapter.revelation_place.toUpperCase(),
@@ -101,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     mushafPage.innerHTML = htmlContent;
-    transcriptStatus.textContent = "Tap sisi layar untuk membalik halaman.";
+    transcriptStatus.textContent = "Usap / Swipe layar untuk ganti halaman.";
   }
 
   function convertToArabicNumbers(num) {
@@ -110,30 +96,34 @@ document.addEventListener('DOMContentLoaded', () => {
     return num.toString().split('').map(d => arabicDigits[d]).join('');
   }
 
-  // 2. Navigasi Tap Sisi Layar
-  document.addEventListener('click', (e) => {
-    if (e.target.closest('.bottom-dock') || e.target.closest('.top-bar') || e.target.closest('.transcript-status')) {
-      return;
+  // Detect Swipe / Drag Jari Tangannya
+  bookViewport.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+  }, { passive: true });
+
+  bookViewport.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+  }, { passive: true });
+
+  function handleSwipe() {
+    const swipeThreshold = 50; // Jarak minimal geseran jari (px)
+    
+    if (touchStartX - touchEndX > swipeThreshold) {
+      // Swipe Kiri -> Halaman Selanjutnya
+      loadPageData(currentPage + 1);
+    } else if (touchEndX - touchStartX > swipeThreshold) {
+      // Swipe Kanan -> Halaman Sebelumnya
+      loadPageData(currentPage - 1);
     }
+  }
 
-    const screenWidth = window.innerWidth;
-    const clickX = e.clientX;
-
-    if (clickX < screenWidth * 0.35) {
-      // Tap sisi kiri -> Membalik ke Halaman Berikutnya
-      changePage(currentPage + 1, 'next');
-    } else if (clickX > screenWidth * 0.65) {
-      // Tap sisi kanan -> Membalik ke Halaman Sebelumnya
-      changePage(currentPage - 1, 'prev');
-    }
-  });
-
-  // 3. Toggle Mode Hafalan
+  // Toggle Mode Hafalan
   btnToggleHide.addEventListener('click', () => {
     mushafPage.classList.toggle('text-hidden');
   });
 
-  // 4. Web Speech API (Voice Recognition)
+  // Web Speech API
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   let recognition = null;
   let isListening = false;
