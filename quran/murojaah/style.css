@@ -6,7 +6,7 @@
 }
 
 html, body {
-  height: 100vh;
+  height: 100dvh; /* Menggunakan Dynamic Viewport Height untuk browser HP */
   width: 100vw;
   overflow: hidden;
 }
@@ -80,7 +80,7 @@ body {
   gap: 6px;
 }
 
-/* Viewport 3D Perspektif - Ruang Bawah Aman dari Dock */
+/* Viewport 3D Perspektif */
 .mushaf-viewport {
   flex: 1;
   perspective: 1200px;
@@ -88,7 +88,7 @@ body {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  padding: 6px 12px 145px 12px; /* Diberikan batas 145px agar teks & footer tidak pernah nembus dock */
+  padding: 8px 12px 135px 12px; /* Jarak bawah aman dari dock */
 }
 
 /* Container Lembaran Buku */
@@ -103,7 +103,7 @@ body {
   transform-style: preserve-3d;
   transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
   backface-visibility: hidden;
-  overflow: hidden; /* Mencegah elemen keluar batas */
+  overflow: hidden;
 }
 
 /* Animasi Membalik */
@@ -128,22 +128,21 @@ body {
   color: #ececec;
   width: 100%;
   word-spacing: 1px;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-evenly; /* Meratakan jarak antar baris */
+  display: block; /* Mengalir normal sebagai paragraf */
+  overflow-y: auto; /* Aman dari meluber di layar HP yang pendek */
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Mode Layout 15 Baris (Madinah Standard) */
 .mushaf-text.layout-15-lines {
-  font-size: 0.98rem; /* Font pas agar 15 baris muat presisi */
-  line-height: 1.65rem;
+  font-size: 0.96rem;
+  line-height: 2.0rem;
 }
 
 /* Mode Layout 18 Baris (Afrika / Sudani) */
 .mushaf-text.layout-18-lines {
-  font-size: 0.88rem; /* Font lebih padat untuk 18 baris */
-  line-height: 1.48rem;
+  font-size: 0.86rem;
+  line-height: 1.7rem;
 }
 
 .verse-num-symbol {
@@ -161,8 +160,8 @@ body {
 /* Page Footer & Number */
 .page-footer {
   width: 100%;
-  margin-top: 4px;
-  margin-bottom: 2px;
+  margin-top: 6px;
+  margin-bottom: 4px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -185,7 +184,7 @@ body {
 /* Live Transcript Status Bar */
 .transcript-status {
   position: fixed;
-  bottom: 85px; /* Posisikan aman di atas dock */
+  bottom: 82px;
   left: 50%;
   transform: translateX(-50%);
   background: rgba(24, 24, 27, 0.92);
@@ -206,7 +205,7 @@ body {
 /* Bottom Controller Dock */
 .bottom-dock {
   position: fixed;
-  bottom: 20px; /* Dinaikkan dari dasar browser */
+  bottom: 18px;
   left: 50%;
   transform: translateX(-50%);
   width: calc(100% - 24px);
