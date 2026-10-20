@@ -88,7 +88,7 @@ body {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  padding: 8px 12px 115px 12px; /* Diberi ruang bawah agar tidak mepet dock */
+  padding: 8px 12px 125px 12px; /* Ditingkatkan agar lembaran Quran punya ruang dari dock */
 }
 
 /* Container Lembaran Buku */
@@ -157,7 +157,7 @@ body {
 .page-footer {
   width: 100%;
   margin-top: 6px;
-  margin-bottom: 6px; /* Jarak dari bawah */
+  margin-bottom: 6px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -180,7 +180,7 @@ body {
 /* Live Transcript Status Bar */
 .transcript-status {
   position: fixed;
-  bottom: 74px;
+  bottom: 85px; /* Dinaikkan dari 74px agar pas di atas dock */
   left: 50%;
   transform: translateX(-50%);
   background: rgba(24, 24, 27, 0.92);
@@ -201,7 +201,7 @@ body {
 /* Bottom Controller Dock */
 .bottom-dock {
   position: fixed;
-  bottom: 12px;
+  bottom: 24px; /* Dinaikkan dari 12px agar aman dari offset bawah Samsung Browser */
   left: 50%;
   transform: translateX(-50%);
   width: calc(100% - 24px);
