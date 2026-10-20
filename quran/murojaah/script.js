@@ -1,241 +1,168 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const mushafCard = document.getElementById('mushafCard');
-  const mushafPage = document.getElementById('mushafPage');
-  const surahName = document.getElementById('surahName');
-  const surahMeta = document.getElementById('surahMeta');
-  const pageNumber = document.getElementById('pageNumber');
-  const btnToggleHide = document.getElementById('btnToggleHide');
-  const btnMic = document.getElementById('btnMic');
-  const transcriptStatus = document.getElementById('transcriptStatus');
-  const btnMushafType = document.getElementById('btnMushafType');
-  const mushafLabel = document.getElementById('mushafLabel');
+// State Aplikasi
+let currentPage = 1;
+let mushafMode = "MDN"; // "MDN" = Madinah (15 baris), "AFR" = Afrika (18 baris)
+let isTextHidden = false;
 
-  const urlParams = new URLSearchParams(window.location.search);
-  let currentPage = parseInt(urlParams.get('page')) || 77;
-  let isAnimating = false;
+// DOM Elements
+const mushafPage = document.getElementById("mushafPage");
+const surahName = document.getElementById("surahName");
+const surahMeta = document.getElementById("surahMeta");
+const pageNumber = document.getElementById("pageNumber");
+const btnMushafType = document.getElementById("btnMushafType");
+const mushafLabel = document.getElementById("mushafLabel");
+const mushafBadge = document.getElementById("mushafBadge");
+const btnToggleHide = document.getElementById("btnToggleHide");
+const mushafCard = document.getElementById("mushafCard");
 
-  // State Jenis Mushaf ('madinah' atau 'afrika')
-  let currentMushafType = localStorage.getItem('mushafType') || 'madinah';
+// Format Angka Arab
+function toArabicDigits(num) {
+  const arabicDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+  return num.toString().split('').map(d => arabicDigits[d] || d).join('');
+}
 
-  // Update Tampilan Label Tombol Dock Bawah
-  function updateMushafUI() {
-    if (mushafLabel) {
-      mushafLabel.textContent = currentMushafType === 'afrika' ? 'AFR' : 'MDN';
-    }
-  }
-  updateMushafUI();
+// Algoritma Mapping Afrika (480 Hal -> Base 604 Hal)
+function getBasePageForAfrika(afrPage) {
+  if (afrPage <= 1) return 1;
+  if (afrPage >= 480) return 604;
+  return Math.round(((afrPage - 1) / (480 - 1)) * (604 - 1)) + 1;
+}
 
-  // Event Switch Versi Mushaf
-  if (btnMushafType) {
-    btnMushafType.addEventListener('click', () => {
-      currentMushafType = currentMushafType === 'madinah' ? 'afrika' : 'madinah';
-      localStorage.setItem('mushafType', currentMushafType);
-      updateMushafUI();
-      
-      // Batasi maksimal halaman (Madinah = 604, Afrika = 480)
-      const maxPages = currentMushafType === 'afrika' ? 480 : 604;
-      if (currentPage > maxPages) currentPage = maxPages;
-
-      loadPageData(currentPage);
-    });
-  }
-
-  // Variabel Gesture Touch/Swipe
-  let touchStartX = 0;
-  let touchEndX = 0;
-
-  async function changePage(targetPage, direction = 'next') {
-    if (isAnimating) return;
-    const maxPages = currentMushafType === 'afrika' ? 480 : 604;
-    if (targetPage < 1 || targetPage > maxPages) return;
-
-    isAnimating = true;
-    const animClass = direction === 'next' ? 'flip-next' : 'flip-prev';
-    mushafCard.classList.add(animClass);
-
-    setTimeout(async () => {
-      currentPage = targetPage;
-      const newUrl = `${window.location.pathname}?page=${currentPage}`;
-      window.history.pushState({ page: currentPage }, '', newUrl);
-
-      await loadPageData(currentPage);
-
-      mushafCard.classList.remove(animClass);
-      isAnimating = false;
-    }, 300);
-  }
-
-  async function loadPageData(page) {
-    transcriptStatus.textContent = `Memuat Halaman ${page}...`;
-    // Menggunakan cacheKey v5 untuk memburu dan memperbarui data lama
-    const cacheKey = `quran_${currentMushafType}_page_v5_${page}`;
-    const cachedData = localStorage.getItem(cacheKey);
+// Fetch Data Halaman Quran dari API
+async function loadQuranPage(page) {
+  try {
+    mushafPage.innerHTML = `<div style="text-align:center; padding: 40px; color: #888;">Memuat data...</div>`;
     
-    if (cachedData) {
-      renderPage(JSON.parse(cachedData));
+    // Tentukan Halaman Mana yang di-fetch berdasarkan mode
+    let actualFetchPage = page;
+    if (mushafMode === "AFR") {
+      actualFetchPage = getBasePageForAfrika(page);
+    }
+
+    const response = await fetch(`https://api.quran.com/api/v4/verses/by_page/${actualFetchPage}?words=true&word_fields=text_uthmani`);
+    const data = await response.json();
+
+    if (!data.verses || data.verses.length === 0) {
+      mushafPage.innerHTML = `<div style="text-align:center; padding: 40px; color: #e74c3c;">Gagal memuat data.</div>`;
       return;
     }
 
-    try {
-      let apiPage = page;
-      if (currentMushafType === 'afrika') {
-        // Pemetaan proporsional dari 480 hal (Afrika) ke 604 hal (Madinah API)
-        apiPage = Math.min(604, Math.max(1, Math.round(page * (604 / 480))));
-      }
+    // Render Teks Ayat
+    let htmlContent = "";
+    let firstVerse = data.verses[0];
 
-      const res = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?page_number=${apiPage}`);
-      const json = await res.json();
+    // Update Header Surah Metadata
+    const surahKey = firstVerse.verse_key.split(":")[0];
+    fetchSurahInfo(surahKey, page, firstVerse.juz_number);
 
-      const metaRes = await fetch(`https://api.quran.com/api/v4/verses/by_page/${apiPage}?language=id&words=false&page=1&per_page=1`);
-      const metaJson = await metaRes.json();
-
-      if (json.verses && metaJson.verses.length > 0) {
-        const firstVerse = metaJson.verses[0];
-        const chapterId = firstVerse.verse_key.split(':')[0];
-        
-        let validJuz = firstVerse.juz_number;
-        const juzDiv = currentMushafType === 'afrika' ? 16 : 20;
-        if (!validJuz || validJuz > 30) validJuz = Math.min(30, Math.ceil(page / juzDiv));
-
-        // Ambil detail resmi Surah
-        const chapterRes = await fetch(`https://api.quran.com/api/v4/chapters/${chapterId}`);
-        const chapterJson = await chapterRes.json();
-
-        // Format Asal Turun Surah
-        const revPlace = chapterJson.chapter.revelation_place.toLowerCase();
-        const originLabel = (revPlace === 'maddinah' || revPlace === 'madinah') ? 'MADANIYAH' : 'MAKKIYAH';
-
-        const payload = {
-          page: parseInt(page),
-          surahName: chapterJson.chapter.name_simple,
-          juz: validJuz,
-          origin: originLabel,
-          verses: json.verses
-        };
-
-        localStorage.setItem(cacheKey, JSON.stringify(payload));
-        renderPage(payload);
-      }
-    } catch (err) {
-      console.error("Gagal memuat data:", err);
-      transcriptStatus.textContent = "Gagal memuat data. Cek koneksi.";
-    }
-  }
-
-  function renderPage(data) {
-    surahName.textContent = data.surahName;
-    
-    // Top Bar bersih: Hanya Halaman, Juz, dan Makkiyah/Madaniyah
-    surahMeta.textContent = `Halaman ${data.page} | Juz ${data.juz} | ${data.origin}`;
-    pageNumber.textContent = data.page;
-
-    // Toggle Class CSS 15 Baris (Madinah) vs 18 Baris (Afrika/Sudani)
-    if (currentMushafType === 'afrika') {
-      mushafPage.classList.add('layout-18-lines');
-      mushafPage.classList.remove('layout-15-lines');
-    } else {
-      mushafPage.classList.add('layout-15-lines');
-      mushafPage.classList.remove('layout-18-lines');
-    }
-
-    let htmlContent = '';
-    data.verses.forEach((verse) => {
-      const verseNum = verse.verse_key ? verse.verse_key.split(':')[1] : '';
-      const arabicNum = convertToArabicNumbers(verseNum);
-      
-      htmlContent += `<span class="verse-word">${verse.text_uthmani}</span> `;
-      if (arabicNum) {
-        htmlContent += `<span class="verse-num-symbol">﴿${arabicNum}﴾</span> `;
-      }
+    data.verses.forEach(verse => {
+      verse.words.forEach(word => {
+        if (word.char_type_name === "word") {
+          htmlContent += `<span class="verse-word">${word.text_uthmani}</span> `;
+        }
+      });
+      // Nomor Ayat Arab
+      const verseNum = verse.verse_key.split(":")[1];
+      htmlContent += `<span class="verse-num-symbol">﴿${toArabicDigits(verseNum)}﴾</span> `;
     });
 
     mushafPage.innerHTML = htmlContent;
-    transcriptStatus.textContent = "Geser layar ke kiri/kanan untuk buka halaman.";
-  }
+    pageNumber.innerText = page;
 
-  function convertToArabicNumbers(num) {
-    if (!num) return '';
-    const arabicDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
-    return num.toString().split('').map(d => arabicDigits[d]).join('');
-  }
-
-  // Touch Swipe Gesture
-  document.addEventListener('touchstart', (e) => {
-    if (e.target.closest('.bottom-dock') || e.target.closest('.top-bar')) return;
-    touchStartX = e.changedTouches[0].screenX;
-  }, { passive: true });
-
-  document.addEventListener('touchend', (e) => {
-    if (e.target.closest('.bottom-dock') || e.target.closest('.top-bar')) return;
-    touchEndX = e.changedTouches[0].screenX;
-    handleSwipe();
-  }, { passive: true });
-
-  function handleSwipe() {
-    const threshold = 40; 
-    
-    if (touchEndX - touchStartX > threshold) {
-      changePage(currentPage + 1, 'next');
-    } else if (touchStartX - touchEndX > threshold) {
-      changePage(currentPage - 1, 'prev');
+    // Terapkan Class Layout Sesuai Mode
+    if (mushafMode === "AFR") {
+      mushafPage.className = "mushaf-text layout-18-lines";
+    } else {
+      mushafPage.className = "mushaf-text layout-15-lines";
     }
+
+    if (isTextHidden) {
+      mushafPage.classList.add("text-hidden");
+    }
+
+  } catch (error) {
+    console.error("Fetch Error:", error);
+    mushafPage.innerHTML = `<div style="text-align:center; padding: 40px; color: #e74c3c;">Koneksi gagal. Coba refresh.</div>`;
   }
+}
 
-  // Mode Hafalan / Sembunyikan Teks
-  btnToggleHide.addEventListener('click', () => {
-    mushafPage.classList.toggle('text-hidden');
-  });
+// Fetch Metadata Surah (Nama & Tempat Turun)
+async function fetchSurahInfo(surahId, page, juz) {
+  try {
+    const res = await fetch(`https://api.quran.com/api/v4/chapters/${surahId}`);
+    const data = await res.json();
+    const ch = data.chapter;
 
-  // Web Speech API
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  let recognition = null;
-  let isListening = false;
+    surahName.innerText = ch.name_simple;
+    const revPlace = ch.revelation_place.toUpperCase();
+    surahMeta.innerHTML = `Halaman ${page} | Juz ${juz} | ${revPlace}`;
+  } catch (e) {
+    surahMeta.innerHTML = `Halaman ${page} | Juz ${juz}`;
+  }
+}
 
-  if (SpeechRecognition) {
-    recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'ar-SA';
-
-    recognition.onstart = () => {
-      isListening = true;
-      btnMic.classList.add('recording');
-      transcriptStatus.textContent = "🎙️ Mendengarkan bacaan Anda...";
-    };
-
-    recognition.onresult = (event) => {
-      let currentTranscript = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        currentTranscript += event.results[i][0].transcript;
-      }
-      transcriptStatus.textContent = `🔊 " ${currentTranscript} "`;
-    };
-
-    recognition.onerror = (event) => {
-      console.error("Speech Recognition Error:", event.error);
-      transcriptStatus.textContent = "Izin mikrofon ditolak.";
-      stopListening();
-    };
-
-    recognition.onend = () => {
-      if (isListening) recognition.start();
-    };
+// Handler Toggle Mode Mushaf (MDN <-> AFR)
+btnMushafType.addEventListener("click", () => {
+  if (mushafMode === "MDN") {
+    mushafMode = "AFR";
+    mushafLabel.innerText = "AFR";
+    mushafBadge.innerText = "AFRIKA";
   } else {
-    transcriptStatus.textContent = "Browser tidak mendukung Web Speech API.";
+    mushafMode = "MDN";
+    mushafLabel.innerText = "MDN";
+    mushafBadge.innerText = "MADINAH";
   }
+  loadQuranPage(currentPage);
+});
 
-  function stopListening() {
-    isListening = false;
-    btnMic.classList.remove('recording');
-    if (recognition) recognition.stop();
-    transcriptStatus.textContent = "Murojaah dihentikan.";
+// Handler Toggle Sembunyikan Teks (Mode Hafalan)
+btnToggleHide.addEventListener("click", () => {
+  isTextHidden = !isTextHidden;
+  if (isTextHidden) {
+    mushafPage.classList.add("text-hidden");
+  } else {
+    mushafPage.classList.remove("text-hidden");
   }
+});
 
-  btnMic.addEventListener('click', () => {
-    if (!recognition) return alert("Browser tidak mendukung mikrofon!");
-    if (isListening) stopListening();
-    else recognition.start();
-  });
+// Navigasi Touch Swipe
+let touchStartX = 0;
+let touchEndX = 0;
 
-  loadPageData(currentPage);
+document.addEventListener("touchstart", e => {
+  touchStartX = e.changedTouches[0].screenX;
+});
+
+document.addEventListener("touchend", e => {
+  touchEndX = e.changedTouches[0].screenX;
+  handleSwipe();
+});
+
+function handleSwipe() {
+  const swipeThreshold = 50;
+  if (touchStartX - touchEndX > swipeThreshold) {
+    // Swipe Kiri -> Halaman Selanjutnya
+    changePage(currentPage + 1, "next");
+  } else if (touchEndX - touchStartX > swipeThreshold) {
+    // Swipe Kanan -> Halaman Sebelumnya
+    changePage(currentPage - 1, "prev");
+  }
+}
+
+function changePage(newPage, dir) {
+  const maxPages = mushafMode === "AFR" ? 480 : 604;
+  if (newPage < 1 || newPage > maxPages) return;
+
+  currentPage = newPage;
+  
+  // Efek Animasi Flip
+  mushafCard.classList.add(dir === "next" ? "flip-next" : "flip-prev");
+  setTimeout(() => {
+    loadQuranPage(currentPage);
+    mushafCard.classList.remove("flip-next", "flip-prev");
+  }, 300);
+}
+
+// Inisialisasi Pertama
+document.addEventListener("DOMContentLoaded", () => {
+  loadQuranPage(currentPage);
 });
