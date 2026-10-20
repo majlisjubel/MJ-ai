@@ -186,33 +186,226 @@ document.addEventListener('DOMContentLoaded', () => {
     mushafPage.classList.toggle('text-hidden');
   });
 
-  // Web Speech API
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  
+  // Web Speech API — MJ Murojaah
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
   let recognition = null;
   let isListening = false;
+  let finalTranscript = "";
+  let restartRequested = false;
+
+  function normalizeArabic(text) {
+    return (text || "")
+      .normalize("NFC")
+      .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, "")
+      .replace(/\u0640/g, "")
+      .replace(/[أإآٱ]/g, "ا")
+      .replace(/ى/g, "ي")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function getExpectedWords() {
+    return currentVerses
+      .map(verse => verse.text_uthmani || "")
+      .join(" ")
+      .split(/\s+/)
+      .map(normalizeArabic)
+      .filter(Boolean);
+  }
+
+  // Mengukur kecocokan urutan kata menggunakan LCS.
+  // Ini hanya perkiraan teks, bukan penilaian tajwid.
+  function compareRecitation(spokenText) {
+    const spoken = normalizeArabic(spokenText)
+      .split(/\s+/)
+      .filter(Boolean);
+
+    const expected = getExpectedWords();
+
+    if (!spoken.length || !expected.length) {
+      return {
+        percent: 0,
+        message: "Menunggu bacaan...",
+        matched: 0
+      };
+    }
+
+    // Cari urutan kata terpanjang yang sama.
+    const previous = new Uint16Array(expected.length + 1);
+    let current = new Uint16Array(expected.length + 1);
+
+    for (const word of spoken) {
+      for (let j = 1; j <= expected.length; j++) {
+        current[j] = word === expected[j - 1]
+          ? previous[j - 1] + 1
+          : Math.max(previous[j], current[j - 1]);
+      }
+
+      [current, previous] = [previous, current];
+      current.fill(0);
+    }
+
+    const matched = previous[expected.length];
+    const percent = Math.round((matched / spoken.length) * 100);
+
+    let message;
+
+    if (percent >= 90) {
+      message = "🟢 Urutan kata sangat cocok dengan teks halaman.";
+    } else if (percent >= 65) {
+      message = "🟡 Sebagian bacaan cocok. Lanjutkan dan periksa kembali.";
+    } else {
+      message = "🟠 Kecocokan masih rendah. Periksa transkripsi atau ulangi.";
+    }
+
+    return { percent, message, matched };
+  }
+
+  function updateRecitationStatus(transcript) {
+    if (!transcript.trim()) {
+      transcriptStatus.textContent = "🎙️ Mendengarkan bacaan...";
+      return;
+    }
+
+    const result = compareRecitation(transcript);
+
+    // Tampilkan teks pengenalan suara dan perkiraan kecocokan.
+    transcriptStatus.textContent =
+      `${result.message} ${result.percent}% | ${transcript}`;
+  }
 
   if (SpeechRecognition) {
     recognition = new SpeechRecognition();
+    recognition.lang = "ar-SA";
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang = 'ar-SA';
+    recognition.maxAlternatives = 1;
 
     recognition.onstart = () => {
       isListening = true;
-      btnMic.classList.add('recording');
+      btnMic.classList.add("recording");
       transcriptStatus.textContent = "🎙️ Mendengarkan bacaan Anda...";
     };
 
     recognition.onresult = (event) => {
-      let currentTranscript = '';
+      let interimTranscript = "";
+
+      // Hasil final disimpan agar tidak hilang ketika hasil baru datang.
       for (let i = event.resultIndex; i < event.results.length; i++) {
-        currentTranscript += event.results[i][0].transcript;
+        const result = event.results[i];
+        const text = result[0].transcript;
+
+        if (result.isFinal) {
+          finalTranscript += " " + text;
+        } else {
+          interimTranscript += " " + text;
+        }
       }
-      transcriptStatus.textContent = `🔊 " ${currentTranscript} "`;
+
+      const fullTranscript =
+        (finalTranscript + " " + interimTranscript).trim();
+
+      updateRecitationStatus(fullTranscript);
     };
 
     recognition.onerror = (event) => {
       console.error("Speech Recognition Error:", event.error);
+
+      if (event.error === "no-speech") {
+        transcriptStatus.textContent =
+          "Belum ada bacaan terdeteksi. Coba baca lebih dekat ke mikrofon.";
+        return;
+      }
+
+      if (event.error === "not-allowed" ||
+          event.error === "service-not-allowed") {
+        isListening = false;
+        restartRequested = false;
+        btnMic.classList.remove("recording");
+        transcriptStatus.textContent =
+          "Izin mikrofon atau layanan pengenalan suara ditolak.";
+        return;
+      }
+
+      if (event.error === "language-not-supported") {
+        isListening = false;
+        restartRequested = false;
+        btnMic.classList.remove("recording");
+        transcriptStatus.textContent =
+          "Bahasa Arab tidak didukung oleh layanan pengenalan suara ini.";
+        return;
+      }
+
+      transcriptStatus.textContent =
+        `Pengenalan suara bermasalah: ${event.error}`;
+    };
+
+    recognition.onend = () => {
+      if (restartRequested) {
+        restartRequested = false;
+
+        if (isListening) {
+          try {
+            recognition.start();
+          } catch (error) {
+            console.warn("Mikrofon belum bisa dimulai ulang:", error);
+          }
+        }
+      } else {
+        isListening = false;
+        btnMic.classList.remove("recording");
+      }
+    };
+  } else {
+    transcriptStatus.textContent =
+      "Browser ini tidak mendukung Web Speech API.";
+  }
+
+  function stopListening() {
+    isListening = false;
+    restartRequested = false;
+    btnMic.classList.remove("recording");
+
+    if (recognition) {
+      try {
+        recognition.stop();
+      } catch (error) {
+        console.warn("Mikrofon sudah berhenti:", error);
+      }
+    }
+
+    transcriptStatus.textContent = "Murojaah dihentikan.";
+  }
+
+  btnMic.addEventListener("click", () => {
+    if (!recognition) {
+      alert("Browser tidak mendukung pengenalan suara.");
+      return;
+    }
+
+    if (isListening) {
+      stopListening();
+      return;
+    }
+
+    finalTranscript = "";
+    restartRequested = true;
+
+    try {
+      recognition.start();
+    } catch (error) {
+      restartRequested = false;
+      isListening = false;
+      btnMic.classList.remove("recording");
+      transcriptStatus.textContent =
+        "Mikrofon gagal dimulai. Coba tekan kembali.";
+      console.error(error);
+    }
+  });
+
       transcriptStatus.textContent = "Izin mikrofon ditolak.";
       stopListening();
     };
