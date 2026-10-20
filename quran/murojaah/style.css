@@ -11,7 +11,7 @@ html, body {
   height: 100vh;
   width: 100vw;
   overflow: hidden;
-  background-color: #0d0d0d;
+  background-color: #0b0b0c;
 }
 
 body {
@@ -81,40 +81,40 @@ body {
   gap: 6px;
 }
 
-/* Book Viewport Container */
+/* PageFlip Viewport */
 .book-viewport {
   flex: 1;
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-bottom: 90px;
-  touch-action: pan-y;
+  padding-bottom: 85px;
 }
 
-#bookContainer {
+.flip-book {
   width: 100%;
-  max-width: 480px;
+  max-width: 460px;
   height: 100%;
-  max-height: 680px;
+  max-height: 640px;
 }
 
-.page-sheet {
-  width: 100%;
-  height: 100%;
+/* Sheet Halaman */
+.page {
   background-color: #121212;
-  padding: 12px 16px;
+  border: 1px solid #222;
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.7);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  box-shadow: inset 0 0 100px rgba(0,0,0,0.8);
+  padding: 12px 16px;
+  overflow: hidden;
 }
 
-.mushaf-text {
+.page-content {
   direction: rtl;
   font-family: 'Amiri', 'Traditional Arabic', serif;
   font-size: 1.05rem;
-  line-height: 1.85rem;
+  line-height: 1.82rem;
   text-align: justify;
   text-align-last: center;
   color: #ececec;
@@ -130,7 +130,7 @@ body {
   font-size: 0.9rem;
 }
 
-.mushaf-text.text-hidden .verse-word {
+.page-content.text-hidden .verse-word {
   visibility: hidden;
 }
 
@@ -177,7 +177,7 @@ body {
   text-overflow: ellipsis;
 }
 
-/* Bottom Floating Controller Dock */
+/* Bottom Controller Dock */
 .bottom-dock {
   position: fixed;
   bottom: 12px;
