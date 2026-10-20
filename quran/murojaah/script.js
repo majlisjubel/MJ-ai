@@ -1,4 +1,8 @@
+
 document.addEventListener('DOMContentLoaded', () => {
+  // ==============================
+  // 1. AMBIL ELEMEN WEBSITE
+  // ==============================
   const mushafCard = document.getElementById('mushafCard');
   const mushafPage = document.getElementById('mushafPage');
   const surahName = document.getElementById('surahName');
@@ -10,126 +14,281 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnMushafType = document.getElementById('btnMushafType');
   const mushafLabel = document.getElementById('mushafLabel');
 
+  // Pastikan elemen utama tersedia
+  if (!mushafPage || !surahName || !surahMeta || !pageNumber) {
+    console.error('Elemen utama Mushaf tidak ditemukan. Periksa index.html.');
+    return;
+  }
+
+  // ==============================
+  // 2. VARIABEL UTAMA
+  // ==============================
   const urlParams = new URLSearchParams(window.location.search);
-  let currentPage = parseInt(urlParams.get('page')) || 1;
+
+  let currentPage = parseInt(urlParams.get('page'), 10) || 1;
   let isAnimating = false;
+  let currentVerses = [];
+  let currentMushafType =
+    localStorage.getItem('mushafType') || 'madinah';
 
-  // State Jenis Mushaf ('madinah' atau 'afrika')
-  let currentMushafType = localStorage.getItem('mushafType') || 'madinah';
-
-  // Update Tampilan Label Tombol Dock Bawah
+  // ==============================
+  // 3. PILIHAN JENIS MUSHAF
+  // ==============================
   function updateMushafUI() {
     if (mushafLabel) {
-      mushafLabel.textContent = currentMushafType === 'afrika' ? 'AFR' : 'MDN';
+      mushafLabel.textContent =
+        currentMushafType === 'afrika' ? 'AFR' : 'MDN';
     }
   }
+
   updateMushafUI();
 
-  // Event Switch Versi Mushaf
   if (btnMushafType) {
     btnMushafType.addEventListener('click', () => {
-      currentMushafType = currentMushafType === 'madinah' ? 'afrika' : 'madinah';
+      currentMushafType =
+        currentMushafType === 'madinah' ? 'afrika' : 'madinah';
+
       localStorage.setItem('mushafType', currentMushafType);
       updateMushafUI();
-      
-      // Batasi maksimal halaman (Madinah = 604, Afrika = 480)
-      const maxPages = currentMushafType === 'afrika' ? 480 : 604;
-      if (currentPage > maxPages) currentPage = maxPages;
+
+      const maxPages =
+        currentMushafType === 'afrika' ? 480 : 604;
+
+      if (currentPage > maxPages) {
+        currentPage = maxPages;
+      }
 
       loadPageData(currentPage);
     });
   }
 
-  // Variabel Gesture Touch/Swipe
+  // ==============================
+  // 4. GANTI HALAMAN DENGAN SWIPE
+  // ==============================
   let touchStartX = 0;
   let touchEndX = 0;
 
   async function changePage(targetPage, direction = 'next') {
     if (isAnimating) return;
-    const maxPages = currentMushafType === 'afrika' ? 480 : 604;
+
+    const maxPages =
+      currentMushafType === 'afrika' ? 480 : 604;
+
     if (targetPage < 1 || targetPage > maxPages) return;
 
     isAnimating = true;
-    const animClass = direction === 'next' ? 'flip-next' : 'flip-prev';
-    mushafCard.classList.add(animClass);
+
+    if (mushafCard) {
+      mushafCard.classList.add(
+        direction === 'next' ? 'flip-next' : 'flip-prev'
+      );
+    }
 
     setTimeout(async () => {
       currentPage = targetPage;
-      const newUrl = `${window.location.pathname}?page=${currentPage}`;
-      window.history.pushState({ page: currentPage }, '', newUrl);
+
+      const newUrl =
+        `${window.location.pathname}?page=${currentPage}`;
+
+      window.history.pushState(
+        { page: currentPage },
+        '',
+        newUrl
+      );
 
       await loadPageData(currentPage);
 
-      mushafCard.classList.remove(animClass);
+      if (mushafCard) {
+        mushafCard.classList.remove('flip-next', 'flip-prev');
+      }
+
       isAnimating = false;
     }, 300);
   }
 
-  async function loadPageData(page) {
-    transcriptStatus.textContent = `Memuat Halaman ${page}...`;
-    // Menggunakan cacheKey v5 untuk memburu dan memperbarui data lama
-    const cacheKey = `quran_${currentMushafType}_page_v5_${page}`;
-    const cachedData = localStorage.getItem(cacheKey);
-    
-    if (cachedData) {
-      renderPage(JSON.parse(cachedData));
+  document.addEventListener('touchstart', (event) => {
+    if (
+      event.target.closest('.bottom-dock') ||
+      event.target.closest('.top-bar')
+    ) {
       return;
     }
 
-    try {
-      let apiPage = page;
-      if (currentMushafType === 'afrika') {
-        // Pemetaan proporsional dari 480 hal (Afrika) ke 604 hal (Madinah API)
-        apiPage = Math.min(604, Math.max(1, Math.round(page * (604 / 480))));
-      }
+    touchStartX = event.changedTouches[0].screenX;
+  }, { passive: true });
 
-      const res = await fetch(`https://api.quran.com/api/v4/quran/verses/uthmani?page_number=${apiPage}`);
-      const json = await res.json();
+  document.addEventListener('touchend', (event) => {
+    if (
+      event.target.closest('.bottom-dock') ||
+      event.target.closest('.top-bar')
+    ) {
+      return;
+    }
 
-      const metaRes = await fetch(`https://api.quran.com/api/v4/verses/by_page/${apiPage}?language=id&words=false&page=1&per_page=1`);
-      const metaJson = await metaRes.json();
+    touchEndX = event.changedTouches[0].screenX;
+    handleSwipe();
+  }, { passive: true });
 
-      if (json.verses && metaJson.verses.length > 0) {
-        const firstVerse = metaJson.verses[0];
-        const chapterId = firstVerse.verse_key.split(':')[0];
-        
-        let validJuz = firstVerse.juz_number;
-        const juzDiv = currentMushafType === 'afrika' ? 16 : 20;
-        if (!validJuz || validJuz > 30) validJuz = Math.min(30, Math.ceil(page / juzDiv));
+  function handleSwipe() {
+    const threshold = 40;
 
-        // Ambil detail resmi Surah
-        const chapterRes = await fetch(`https://api.quran.com/api/v4/chapters/${chapterId}`);
-        const chapterJson = await chapterRes.json();
-
-        // Format Asal Turun Surah
-        const revPlace = chapterJson.chapter.revelation_place.toLowerCase();
-        const originLabel = (revPlace === 'maddinah' || revPlace === 'madinah') ? 'MADANIYAH' : 'MAKKIYAH';
-
-        const payload = {
-          page: parseInt(page),
-          surahName: chapterJson.chapter.name_simple,
-          juz: validJuz,
-          origin: originLabel,
-          verses: json.verses
-        };
-
-        localStorage.setItem(cacheKey, JSON.stringify(payload));
-        renderPage(payload);
-      }
-    } catch (err) {
-      console.error("Gagal memuat data:", err);
-      transcriptStatus.textContent = "Gagal memuat data. Cek koneksi.";
+    if (touchEndX - touchStartX > threshold) {
+      changePage(currentPage + 1, 'next');
+    } else if (touchStartX - touchEndX > threshold) {
+      changePage(currentPage - 1, 'prev');
     }
   }
 
+  // Mendukung tombol kembali/maju browser
+  window.addEventListener('popstate', () => {
+    const params = new URLSearchParams(window.location.search);
+    const page = parseInt(params.get('page'), 10) || 1;
+
+    currentPage = page;
+    loadPageData(currentPage);
+  });
+
+  // ==============================
+  // 5. MEMUAT DATA AL-QUR'AN
+  // ==============================
+  async function loadPageData(page) {
+    if (transcriptStatus) {
+      transcriptStatus.textContent = `Memuat halaman ${page}...`;
+    }
+
+    const cacheKey =
+      `quran_${currentMushafType}_page_v5_${page}`;
+
+    try {
+      const cachedData = localStorage.getItem(cacheKey);
+
+      if (cachedData) {
+        const parsedData = JSON.parse(cachedData);
+
+        if (
+          parsedData &&
+          Array.isArray(parsedData.verses) &&
+          parsedData.verses.length > 0
+        ) {
+          renderPage(parsedData);
+          return;
+        }
+      }
+    } catch (error) {
+      console.warn('Cache Quran tidak bisa dibaca:', error);
+    }
+
+    try {
+      // API Quran.com menggunakan halaman standar Madinah.
+      // Pemetaan Afrika di bawah hanya perkiraan, bukan layout resmi.
+      let apiPage = page;
+
+      if (currentMushafType === 'afrika') {
+        apiPage = Math.min(
+          604,
+          Math.max(1, Math.round(page * (604 / 480)))
+        );
+      }
+
+      const res = await fetch(
+        `https://api.quran.com/api/v4/quran/verses/uthmani?page_number=${apiPage}`
+      );
+
+      if (!res.ok) {
+        throw new Error(`API ayat gagal: HTTP ${res.status}`);
+      }
+
+      const json = await res.json();
+
+      if (!Array.isArray(json.verses) || json.verses.length === 0) {
+        throw new Error('Data ayat kosong dari API.');
+      }
+
+      const metaRes = await fetch(
+        `https://api.quran.com/api/v4/verses/by_page/${apiPage}?language=id&words=false&page=1&per_page=1`
+      );
+
+      if (!metaRes.ok) {
+        throw new Error(`API metadata gagal: HTTP ${metaRes.status}`);
+      }
+
+      const metaJson = await metaRes.json();
+      const firstVerse =
+        Array.isArray(metaJson.verses) && metaJson.verses.length
+          ? metaJson.verses[0]
+          : json.verses[0];
+
+      const chapterId = firstVerse.verse_key.split(':')[0];
+
+      const chapterRes = await fetch(
+        `https://api.quran.com/api/v4/chapters/${chapterId}?language=id`
+      );
+
+      if (!chapterRes.ok) {
+        throw new Error('Gagal mengambil informasi surah.');
+      }
+
+      const chapterJson = await chapterRes.json();
+      const chapter = chapterJson.chapter;
+
+      const revelationPlace =
+        (chapter.revelation_place || '').toLowerCase();
+
+      const originLabel =
+        revelationPlace === 'maddani' ||
+        revelationPlace === 'madinah'
+          ? 'MADANIYAH'
+          : revelationPlace === 'makkah' ||
+            revelationPlace === 'makkah'
+            ? 'MAKKIYAH'
+            : revelationPlace === 'maddinah'
+              ? 'MADANIYAH'
+              : 'MAKKIYAH';
+
+      const payload = {
+        page: parseInt(page, 10),
+        surahName: chapter.name_simple || 'Al-Qur’an',
+        juz: firstVerse.juz_number || '',
+        origin: originLabel,
+        verses: json.verses
+      };
+
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify(payload));
+      } catch (error) {
+        console.warn('Cache tidak dapat disimpan:', error);
+      }
+
+      renderPage(payload);
+    } catch (error) {
+      console.error('Gagal memuat halaman Quran:', error);
+
+      if (transcriptStatus) {
+        transcriptStatus.textContent =
+          'Gagal memuat ayat. Periksa internet lalu muat ulang halaman.';
+      }
+    }
+  }
+
+  // ==============================
+  // 6. MENAMPILKAN AYAT
+  // ==============================
   function renderPage(data) {
-    surahName.textContent = data.surahName;
-    
-    // Top Bar bersih: Hanya Halaman, Juz, dan Makkiyah/Madaniyah
-    surahMeta.textContent = `Halaman ${data.page} | Juz ${data.juz} | ${data.origin}`;
+    if (!data || !Array.isArray(data.verses)) {
+      console.error('Data halaman Quran tidak valid:', data);
+      return;
+    }
+
+    // Referensi ayat untuk fitur murojaah
+    currentVerses = data.verses;
+
+    surahName.textContent = data.surahName || 'Al-Qur’an';
+
+    surahMeta.textContent =
+      `Halaman ${data.page} | Juz ${data.juz} | ${data.origin}`;
+
     pageNumber.textContent = data.page;
 
-    // Toggle Class CSS 15 Baris (Madinah) vs 18 Baris (Afrika/Sudani)
     if (currentMushafType === 'afrika') {
       mushafPage.classList.add('layout-18-lines');
       mushafPage.classList.remove('layout-15-lines');
@@ -139,85 +298,99 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let htmlContent = '';
+
     data.verses.forEach((verse) => {
-      const verseNum = verse.verse_key ? verse.verse_key.split(':')[1] : '';
+      const verseNum = verse.verse_key
+        ? verse.verse_key.split(':')[1]
+        : '';
+
       const arabicNum = convertToArabicNumbers(verseNum);
-      
-      htmlContent += `<span class="verse-word">${verse.text_uthmani}</span> `;
+
+      htmlContent +=
+        `<span class="verse-word">${escapeHTML(verse.text_uthmani || '')}</span> `;
+
       if (arabicNum) {
-        htmlContent += `<span class="verse-num-symbol">﴿${arabicNum}﴾</span> `;
+        htmlContent +=
+          `<span class="verse-num-symbol">﴿${arabicNum}﴾</span> `;
       }
     });
 
     mushafPage.innerHTML = htmlContent;
-    transcriptStatus.textContent = "Geser layar ke kiri/kanan untuk buka halaman.";
-  }
 
-  function convertToArabicNumbers(num) {
-    if (!num) return '';
-    const arabicDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
-    return num.toString().split('').map(d => arabicDigits[d]).join('');
-  }
-
-  // Touch Swipe Gesture
-  document.addEventListener('touchstart', (e) => {
-    if (e.target.closest('.bottom-dock') || e.target.closest('.top-bar')) return;
-    touchStartX = e.changedTouches[0].screenX;
-  }, { passive: true });
-
-  document.addEventListener('touchend', (e) => {
-    if (e.target.closest('.bottom-dock') || e.target.closest('.top-bar')) return;
-    touchEndX = e.changedTouches[0].screenX;
-    handleSwipe();
-  }, { passive: true });
-
-  function handleSwipe() {
-    const threshold = 40; 
-    
-    if (touchEndX - touchStartX > threshold) {
-      changePage(currentPage + 1, 'next');
-    } else if (touchStartX - touchEndX > threshold) {
-      changePage(currentPage - 1, 'prev');
+    if (transcriptStatus) {
+      transcriptStatus.textContent =
+        'Geser layar ke kiri/kanan untuk buka halaman.';
     }
   }
 
-  // Mode Hafalan / Sembunyikan Teks
-  btnToggleHide.addEventListener('click', () => {
-    mushafPage.classList.toggle('text-hidden');
-  });
+  function escapeHTML(text) {
+    return String(text).replace(/[&<>"']/g, (character) => {
+      const entities = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      };
 
-  
-  // Web Speech API — MJ Murojaah
+      return entities[character];
+    });
+  }
+
+  function convertToArabicNumbers(number) {
+    if (!number) return '';
+
+    const digits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+
+    return String(number)
+      .split('')
+      .map((digit) => digits[Number(digit)])
+      .join('');
+  }
+
+  // ==============================
+  // 7. SEMBUNYIKAN / TAMPILKAN AYAT
+  // ==============================
+  if (btnToggleHide) {
+    btnToggleHide.addEventListener('click', () => {
+      mushafPage.classList.toggle('text-hidden');
+    });
+  }
+
+  // ==============================
+  // 8. FITUR MURAJAAH / MIKROFON
+  // ==============================
   const SpeechRecognition =
-    window.SpeechRecognition || window.webkitSpeechRecognition;
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
 
   let recognition = null;
   let isListening = false;
-  let finalTranscript = "";
-  let restartRequested = false;
+  let finalTranscript = '';
 
   function normalizeArabic(text) {
-    return (text || "")
-      .normalize("NFC")
-      .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, "")
-      .replace(/\u0640/g, "")
-      .replace(/[أإآٱ]/g, "ا")
-      .replace(/ى/g, "ي")
-      .replace(/\s+/g, " ")
+    return (text || '')
+      .normalize('NFC')
+      // Hilangkan harakat dan tanda baca Arab tertentu
+      .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '')
+      .replace(/\u0640/g, '')
+      .replace(/[أإآٱ]/g, 'ا')
+      .replace(/ى/g, 'ي')
+      .replace(/[۞۩،؛؟.,!?]/g, ' ')
+      .replace(/\s+/g, ' ')
       .trim();
   }
 
   function getExpectedWords() {
     return currentVerses
-      .map(verse => verse.text_uthmani || "")
-      .join(" ")
+      .map((verse) => verse.text_uthmani || '')
+      .join(' ')
       .split(/\s+/)
       .map(normalizeArabic)
       .filter(Boolean);
   }
 
-  // Mengukur kecocokan urutan kata menggunakan LCS.
-  // Ini hanya perkiraan teks, bukan penilaian tajwid.
+  // Perkiraan kecocokan urutan kata, bukan pemeriksaan tajwid.
   function compareRecitation(spokenText) {
     const spoken = normalizeArabic(spokenText)
       .split(/\s+/)
@@ -228,207 +401,209 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!spoken.length || !expected.length) {
       return {
         percent: 0,
-        message: "Menunggu bacaan...",
-        matched: 0
+        matched: 0,
+        message: 'Menunggu bacaan...'
       };
     }
 
-    // Cari urutan kata terpanjang yang sama.
-    const previous = new Uint16Array(expected.length + 1);
-    let current = new Uint16Array(expected.length + 1);
+    // LCS dengan satu baris memori agar lebih ringan.
+    const row = new Uint16Array(expected.length + 1);
 
     for (const word of spoken) {
-      for (let j = 1; j <= expected.length; j++) {
-        current[j] = word === expected[j - 1]
-          ? previous[j - 1] + 1
-          : Math.max(previous[j], current[j - 1]);
-      }
+      let diagonal = 0;
 
-      [current, previous] = [previous, current];
-      current.fill(0);
+      for (let j = 1; j <= expected.length; j++) {
+        const oldValue = row[j];
+
+        if (word === expected[j - 1]) {
+          row[j] = diagonal + 1;
+        } else {
+          row[j] = Math.max(row[j], row[j - 1]);
+        }
+
+        diagonal = oldValue;
+      }
     }
 
-    const matched = previous[expected.length];
-    const percent = Math.round((matched / spoken.length) * 100);
+    const matched = row[expected.length];
+    const percent = Math.min(
+      100,
+      Math.round((matched / spoken.length) * 100)
+    );
 
     let message;
 
     if (percent >= 90) {
-      message = "🟢 Urutan kata sangat cocok dengan teks halaman.";
+      message = '🟢 Banyak kata cocok dengan teks halaman.';
     } else if (percent >= 65) {
-      message = "🟡 Sebagian bacaan cocok. Lanjutkan dan periksa kembali.";
+      message = '🟡 Sebagian bacaan cocok. Periksa kembali.';
     } else {
-      message = "🟠 Kecocokan masih rendah. Periksa transkripsi atau ulangi.";
+      message = '🟠 Kecocokan rendah. Coba ulangi bacaan.';
     }
 
-    return { percent, message, matched };
+    return { percent, matched, message };
   }
 
   function updateRecitationStatus(transcript) {
+    if (!transcriptStatus) return;
+
     if (!transcript.trim()) {
-      transcriptStatus.textContent = "🎙️ Mendengarkan bacaan...";
+      transcriptStatus.textContent = '🎙️ Mendengarkan bacaan...';
       return;
     }
 
     const result = compareRecitation(transcript);
 
-    // Tampilkan teks pengenalan suara dan perkiraan kecocokan.
     transcriptStatus.textContent =
       `${result.message} ${result.percent}% | ${transcript}`;
   }
 
+  function stopListening() {
+    isListening = false;
+
+    if (btnMic) {
+      btnMic.classList.remove('recording');
+    }
+
+    if (recognition) {
+      try {
+        recognition.stop();
+      } catch (error) {
+        console.warn('Mikrofon sudah berhenti:', error);
+      }
+    }
+
+    if (transcriptStatus) {
+      transcriptStatus.textContent = 'Murojaah dihentikan.';
+    }
+  }
+
   if (SpeechRecognition) {
     recognition = new SpeechRecognition();
-    recognition.lang = "ar-SA";
+    recognition.lang = 'ar-SA';
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
 
     recognition.onstart = () => {
       isListening = true;
-      btnMic.classList.add("recording");
-      transcriptStatus.textContent = "🎙️ Mendengarkan bacaan Anda...";
+
+      if (btnMic) {
+        btnMic.classList.add('recording');
+      }
+
+      if (transcriptStatus) {
+        transcriptStatus.textContent =
+          '🎙️ Mendengarkan bacaan Anda...';
+      }
     };
 
     recognition.onresult = (event) => {
-      let interimTranscript = "";
+      let interimTranscript = '';
 
-      // Hasil final disimpan agar tidak hilang ketika hasil baru datang.
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i];
-        const text = result[0].transcript;
+        const recognizedText = result[0].transcript;
 
         if (result.isFinal) {
-          finalTranscript += " " + text;
+          finalTranscript += ' ' + recognizedText;
         } else {
-          interimTranscript += " " + text;
+          interimTranscript += ' ' + recognizedText;
         }
       }
 
       const fullTranscript =
-        (finalTranscript + " " + interimTranscript).trim();
+        `${finalTranscript} ${interimTranscript}`.trim();
 
       updateRecitationStatus(fullTranscript);
     };
 
     recognition.onerror = (event) => {
-      console.error("Speech Recognition Error:", event.error);
+      console.error('Speech Recognition Error:', event.error);
 
-      if (event.error === "no-speech") {
-        transcriptStatus.textContent =
-          "Belum ada bacaan terdeteksi. Coba baca lebih dekat ke mikrofon.";
-        return;
-      }
-
-      if (event.error === "not-allowed" ||
-          event.error === "service-not-allowed") {
-        isListening = false;
-        restartRequested = false;
-        btnMic.classList.remove("recording");
-        transcriptStatus.textContent =
-          "Izin mikrofon atau layanan pengenalan suara ditolak.";
-        return;
-      }
-
-      if (event.error === "language-not-supported") {
-        isListening = false;
-        restartRequested = false;
-        btnMic.classList.remove("recording");
-        transcriptStatus.textContent =
-          "Bahasa Arab tidak didukung oleh layanan pengenalan suara ini.";
-        return;
-      }
-
-      transcriptStatus.textContent =
-        `Pengenalan suara bermasalah: ${event.error}`;
-    };
-
-    recognition.onend = () => {
-      if (restartRequested) {
-        restartRequested = false;
-
-        if (isListening) {
-          try {
-            recognition.start();
-          } catch (error) {
-            console.warn("Mikrofon belum bisa dimulai ulang:", error);
-          }
+      if (event.error === 'no-speech') {
+        if (transcriptStatus) {
+          transcriptStatus.textContent =
+            'Belum ada bacaan terdeteksi. Coba bicara lebih dekat ke mikrofon.';
         }
-      } else {
-        isListening = false;
-        btnMic.classList.remove("recording");
+        return;
       }
-    };
-  } else {
-    transcriptStatus.textContent =
-      "Browser ini tidak mendukung Web Speech API.";
-  }
 
-  function stopListening() {
-    isListening = false;
-    restartRequested = false;
-    btnMic.classList.remove("recording");
-
-    if (recognition) {
-      try {
-        recognition.stop();
-      } catch (error) {
-        console.warn("Mikrofon sudah berhenti:", error);
-      }
-    }
-
-    transcriptStatus.textContent = "Murojaah dihentikan.";
-  }
-
-  btnMic.addEventListener("click", () => {
-    if (!recognition) {
-      alert("Browser tidak mendukung pengenalan suara.");
-      return;
-    }
-
-    if (isListening) {
-      stopListening();
-      return;
-    }
-
-    finalTranscript = "";
-    restartRequested = true;
-
-    try {
-      recognition.start();
-    } catch (error) {
-      restartRequested = false;
       isListening = false;
-      btnMic.classList.remove("recording");
-      transcriptStatus.textContent =
-        "Mikrofon gagal dimulai. Coba tekan kembali.";
-      console.error(error);
-    }
-  });
 
-      transcriptStatus.textContent = "Izin mikrofon ditolak.";
-      stopListening();
+      if (btnMic) {
+        btnMic.classList.remove('recording');
+      }
+
+      if (transcriptStatus) {
+        if (
+          event.error === 'not-allowed' ||
+          event.error === 'service-not-allowed'
+        ) {
+          transcriptStatus.textContent =
+            'Izin mikrofon ditolak. Periksa izin browser dan coba lagi.';
+        } else if (event.error === 'language-not-supported') {
+          transcriptStatus.textContent =
+            'Layanan pengenalan suara tidak mendukung bahasa Arab.';
+        } else {
+          transcriptStatus.textContent =
+            `Pengenalan suara bermasalah: ${event.error}`;
+        }
+      }
     };
 
     recognition.onend = () => {
-      if (isListening) recognition.start();
+      isListening = false;
+
+      if (btnMic) {
+        btnMic.classList.remove('recording');
+      }
+
+      // Tidak memulai ulang otomatis agar tidak terjadi loop error.
+      if (
+        transcriptStatus &&
+        transcriptStatus.textContent.includes('Mendengarkan')
+      ) {
+        transcriptStatus.textContent =
+          'Pengenalan suara berhenti. Tekan mikrofon untuk mencoba lagi.';
+      }
     };
-  } else {
-    transcriptStatus.textContent = "Browser tidak mendukung Web Speech API.";
+  } else if (transcriptStatus) {
+    transcriptStatus.textContent =
+      'Browser ini tidak mendukung Web Speech API. Coba Chrome.';
   }
 
-  function stopListening() {
-    isListening = false;
-    btnMic.classList.remove('recording');
-    if (recognition) recognition.stop();
-    transcriptStatus.textContent = "Murojaah dihentikan.";
+  if (btnMic) {
+    btnMic.addEventListener('click', () => {
+      if (!recognition) {
+        alert(
+          'Browser tidak mendukung pengenalan suara. Coba Chrome.'
+        );
+        return;
+      }
+
+      if (isListening) {
+        stopListening();
+        return;
+      }
+
+      finalTranscript = '';
+
+      try {
+        recognition.start();
+      } catch (error) {
+        console.error('Gagal memulai mikrofon:', error);
+
+        if (transcriptStatus) {
+          transcriptStatus.textContent =
+            'Mikrofon gagal dimulai. Tunggu sebentar lalu tekan lagi.';
+        }
+      }
+    });
   }
 
-  btnMic.addEventListener('click', () => {
-    if (!recognition) return alert("Browser tidak mendukung mikrofon!");
-    if (isListening) stopListening();
-    else recognition.start();
-  });
-
+  // ==============================
+  // 9. MULAI MUAT HALAMAN
+  // ==============================
   loadPageData(currentPage);
 });
