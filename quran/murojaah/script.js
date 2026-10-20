@@ -1,63 +1,46 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const mushafCurrent = document.getElementById('mushafPageCurrent');
-  const mushafNext = document.getElementById('mushafPageNext');
-  const pageNumCurrent = document.getElementById('pageNumberCurrent');
-  const pageNumNext = document.getElementById('pageNumberNext');
+  const mushafCard = document.getElementById('mushafCard');
+  const mushafPage = document.getElementById('mushafPage');
   const surahName = document.getElementById('surahName');
   const surahMeta = document.getElementById('surahMeta');
+  const pageNumber = document.getElementById('pageNumber');
   const btnToggleHide = document.getElementById('btnToggleHide');
   const btnMic = document.getElementById('btnMic');
   const transcriptStatus = document.getElementById('transcriptStatus');
 
   const urlParams = new URLSearchParams(window.location.search);
   let currentPage = parseInt(urlParams.get('page')) || 77;
-  let pageFlipInstance = null;
+  let isAnimating = false;
 
-  // 1. Inisialisasi PageFlip menyesuaikan ukuran layar HP secara dinamis
-  function initPageFlip() {
-    const bookElem = document.getElementById('pageFlipContainer');
-    if (!bookElem) return;
+  // Variabel untuk Swipe Touch Gesture
+  let touchStartX = 0;
+  let touchEndX = 0;
 
-    const screenWidth = window.innerWidth;
-    const screenHeight = window.innerHeight - 150; // Kurangi header & dock
+  async function changePage(targetPage, direction = 'next') {
+    if (isAnimating) return;
+    if (targetPage < 1 || targetPage > 604) return;
 
-    pageFlipInstance = new St.PageFlip(bookElem, {
-      width: screenWidth,
-      height: screenHeight,
-      size: 'fixed',
-      minWidth: 280,
-      maxWidth: screenWidth,
-      minHeight: 400,
-      maxHeight: screenHeight,
-      maxShadowOpacity: 0.5,
-      showCover: false,
-      usePortrait: true,
-      mobileScrollSupport: false
-    });
+    isAnimating = true;
+    const animClass = direction === 'next' ? 'flip-next' : 'flip-prev';
+    mushafCard.classList.add(animClass);
 
-    pageFlipInstance.loadFromHTML(document.querySelectorAll('.page'));
+    setTimeout(async () => {
+      currentPage = targetPage;
+      const newUrl = `${window.location.pathname}?page=${currentPage}`;
+      window.history.pushState({ page: currentPage }, '', newUrl);
 
-    pageFlipInstance.on('flip', (e) => {
-      const targetPage = currentPage + 1;
-      if (targetPage <= 604) {
-        currentPage = targetPage;
-        updateUrl(currentPage);
-        loadPageData(currentPage);
-      }
-    });
+      await loadPageData(currentPage);
+
+      mushafCard.classList.remove(animClass);
+      isAnimating = false;
+    }, 300);
   }
 
-  function updateUrl(page) {
-    const newUrl = `${window.location.pathname}?page=${page}`;
-    window.history.pushState({ page: page }, '', newUrl);
-  }
-
-  // 2. Fetch Data Ayat Quran.com v4
   async function loadPageData(page) {
     transcriptStatus.textContent = `Memuat Halaman ${page}...`;
     const cacheKey = `quran_page_v3_${page}`;
     const cachedData = localStorage.getItem(cacheKey);
-
+    
     if (cachedData) {
       renderPage(JSON.parse(cachedData));
       return;
@@ -73,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (json.verses && metaJson.verses.length > 0) {
         const firstVerse = metaJson.verses[0];
         const chapterId = firstVerse.verse_key.split(':')[0];
-
+        
         let validJuz = firstVerse.juz_number;
         if (!validJuz || validJuz > 30) validJuz = Math.min(30, Math.ceil(page / 20));
 
@@ -93,30 +76,28 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (err) {
       console.error("Gagal memuat data:", err);
-      transcriptStatus.textContent = "Gagal memuat data. Periksa koneksi internet.";
+      transcriptStatus.textContent = "Gagal memuat data. Cek koneksi.";
     }
   }
 
   function renderPage(data) {
     surahName.textContent = data.surahName;
     surahMeta.textContent = `Halaman ${data.page} | Juz ${data.juz} | ${data.origin}`;
-    pageNumCurrent.textContent = data.page;
-    pageNumNext.textContent = data.page + 1;
+    pageNumber.textContent = data.page;
 
     let htmlContent = '';
     data.verses.forEach((verse) => {
       const verseNum = verse.verse_key ? verse.verse_key.split(':')[1] : '';
       const arabicNum = convertToArabicNumbers(verseNum);
-
+      
       htmlContent += `<span class="verse-word">${verse.text_uthmani}</span> `;
       if (arabicNum) {
         htmlContent += `<span class="verse-num-symbol">﴿${arabicNum}﴾</span> `;
       }
     });
 
-    mushafCurrent.innerHTML = htmlContent;
-    mushafNext.innerHTML = htmlContent;
-    transcriptStatus.textContent = "Seret pinggir layar untuk membuka halaman...";
+    mushafPage.innerHTML = htmlContent;
+    transcriptStatus.textContent = "Geser layar ke kiri/kanan untuk buka halaman.";
   }
 
   function convertToArabicNumbers(num) {
@@ -125,12 +106,35 @@ document.addEventListener('DOMContentLoaded', () => {
     return num.toString().split('').map(d => arabicDigits[d]).join('');
   }
 
-  // 3. Mode Hafalan (Hide Teks)
+  // Deteksi Swipe Jari di Layar
+  document.addEventListener('touchstart', (e) => {
+    if (e.target.closest('.bottom-dock') || e.target.closest('.top-bar')) return;
+    touchStartX = e.changedTouches[0].screenX;
+  }, { passive: true });
+
+  document.addEventListener('touchend', (e) => {
+    if (e.target.closest('.bottom-dock') || e.target.closest('.top-bar')) return;
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+  }, { passive: true });
+
+  function handleSwipe() {
+    const threshold = 40; // Sensitivitas geseran
+    if (touchStartX - touchEndX > threshold) {
+      // Swipe ke Kiri -> Halaman Berikutnya
+      changePage(currentPage + 1, 'next');
+    } else if (touchEndX - touchStartX > threshold) {
+      // Swipe ke Kanan -> Halaman Sebelumnya
+      changePage(currentPage - 1, 'prev');
+    }
+  }
+
+  // Mode Hafalan
   btnToggleHide.addEventListener('click', () => {
-    mushafCurrent.classList.toggle('text-hidden');
+    mushafPage.classList.toggle('text-hidden');
   });
 
-  // 4. Web Speech API (Voice Recognition)
+  // Web Speech API
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   let recognition = null;
   let isListening = false;
@@ -181,6 +185,5 @@ document.addEventListener('DOMContentLoaded', () => {
     else recognition.start();
   });
 
-  initPageFlip();
   loadPageData(currentPage);
 });
