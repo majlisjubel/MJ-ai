@@ -1,12 +1,21 @@
-// State Aplikasi
+// ==========================================
+// CONFIG & STATE APLIKASI
+// ==========================================
+const GROQ_API_KEY = "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";
+
 let currentPage = 1;
 let mushafMode = "MDN"; // "MDN" = Madinah (15 baris), "AFR" = Afrika (18 baris)
 let isTextHidden = false;
 let currentVerseIndex = 0; // Pointer pelacak urutan AYAT yang harus dibaca
-let isMicActive = false; // State untuk mengontrol status mic manual
-let recognition = null;
 
-// DOM Elements
+// State Perekam Audio Groq
+let mediaRecorder = null;
+let audioChunks = [];
+let isMicActive = false;
+
+// ==========================================
+// DOM ELEMENTS
+// ==========================================
 const mushafPage = document.getElementById("mushafPage");
 const surahName = document.getElementById("surahName");
 const surahMeta = document.getElementById("surahMeta");
@@ -18,6 +27,10 @@ const btnToggleHide = document.getElementById("btnToggleHide");
 const mushafCard = document.getElementById("mushafCard");
 const btnMic = document.getElementById("btnMic");
 const transcriptStatus = document.getElementById("transcriptStatus");
+
+// ==========================================
+// HELPER & UTILS ARAB
+// ==========================================
 
 // Format Angka Arab
 function toArabicDigits(num) {
@@ -37,7 +50,7 @@ function resetMurojaahPointer() {
   currentVerseIndex = 0;
 }
 
-// Fungsi Pembersih Harakat & Tanda Baca Arab
+// Pembersih Harakat & Tanda Baca Arab
 function cleanArabicText(text) {
   if (!text) return "";
   return text
@@ -69,9 +82,9 @@ function getLetterSimilarity(str1, str2) {
     for (let i = 1; i <= s1.length; i += 1) {
       const indicator = s1[i - 1] === s2[j - 1] ? 0 : 1;
       track[j][i] = Math.min(
-        track[j][i - 1] + 1, // deletion
-        track[j - 1][i] + 1, // insertion
-        track[j - 1][i - 1] + indicator // substitution
+        track[j][i - 1] + 1,
+        track[j - 1][i] + 1,
+        track[j - 1][i - 1] + indicator
       );
     }
   }
@@ -81,7 +94,9 @@ function getLetterSimilarity(str1, str2) {
   return (maxLength - distance) / maxLength;
 }
 
-// Fetch Data Halaman Quran dari API
+// ==========================================
+// LOAD DATA MUSHAF & API QURAN
+// ==========================================
 async function loadQuranPage(page) {
   resetMurojaahPointer();
   try {
@@ -139,7 +154,6 @@ async function loadQuranPage(page) {
   }
 }
 
-// Fetch Metadata Surah
 async function fetchSurahInfo(surahId, page, juz) {
   try {
     const res = await fetch(`https://api.quran.com/api/v4/chapters/${surahId}`);
@@ -154,32 +168,36 @@ async function fetchSurahInfo(surahId, page, juz) {
   }
 }
 
-// Handler Toggle Mode Mushaf (MDN <-> AFR)
-btnMushafType.addEventListener("click", () => {
-  if (mushafMode === "MDN") {
-    mushafMode = "AFR";
-    mushafLabel.innerText = "AFR";
-  } else {
-    mushafMode = "MDN";
-    mushafLabel.innerText = "MDN";
-  }
-  currentPage = 1;
-  loadQuranPage(currentPage);
-});
+// ==========================================
+// EVENT HANDLERS (MODE & SWIPE)
+// ==========================================
+if (btnMushafType) {
+  btnMushafType.addEventListener("click", () => {
+    if (mushafMode === "MDN") {
+      mushafMode = "AFR";
+      mushafLabel.innerText = "AFR";
+    } else {
+      mushafMode = "MDN";
+      mushafLabel.innerText = "MDN";
+    }
+    currentPage = 1;
+    loadQuranPage(currentPage);
+  });
+}
 
-// Handler Toggle Sembunyikan Teks (Murojaah)
-btnToggleHide.addEventListener("click", () => {
-  isTextHidden = !isTextHidden;
-  if (isTextHidden) {
-    mushafPage.classList.add("text-hidden");
-    if (transcriptStatus) transcriptStatus.innerText = "Mode sembunyi aktif. Tekan Mic dan baca ayat!";
-  } else {
-    mushafPage.classList.remove("text-hidden");
-    if (transcriptStatus) transcriptStatus.innerText = "Geser atau tap sisi layar untuk mengganti halaman...";
-  }
-});
+if (btnToggleHide) {
+  btnToggleHide.addEventListener("click", () => {
+    isTextHidden = !isTextHidden;
+    if (isTextHidden) {
+      mushafPage.classList.add("text-hidden");
+      if (transcriptStatus) transcriptStatus.innerText = "Mode sembunyi aktif. Tekan Mic dan baca ayat!";
+    } else {
+      mushafPage.classList.remove("text-hidden");
+      if (transcriptStatus) transcriptStatus.innerText = "Geser atau tap sisi layar untuk mengganti halaman...";
+    }
+  });
+}
 
-// Navigasi Touch Swipe
 let touchStartX = 0;
 let touchStartY = 0;
 let touchEndX = 0;
@@ -217,161 +235,182 @@ function changePage(newPage, dir) {
 
   currentPage = newPage;
   
-  mushafCard.classList.add(dir === "next" ? "flip-next" : "flip-prev");
+  if (mushafCard) mushafCard.classList.add(dir === "next" ? "flip-next" : "flip-prev");
   setTimeout(() => {
     loadQuranPage(currentPage);
-    mushafCard.classList.remove("flip-next", "flip-prev");
+    if (mushafCard) mushafCard.classList.remove("flip-next", "flip-prev");
   }, 300);
 }
 
-// --- INISIALISASI SPEECH RECOGNITION (SEIMBANG & RESPONScalendar) ---
-function initSpeechRecognition() {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    alert("Browser ini tidak mendukung fitur pengenalan suara.");
-    return null;
-  }
+// ==========================================
+// GROQ WHISPER AI - AUDIO RECORDING & STT
+// ==========================================
 
-  const rec = new SpeechRecognition();
-  rec.lang = 'ar-SA';
-  rec.interimResults = true; 
-  rec.continuous = true;     
-  rec.maxAlternatives = 1;
-
-  rec.onstart = () => {
-    btnMic.classList.add("recording");
-    if (transcriptStatus) transcriptStatus.innerText = "Mendengarkan bacaan...";
-  };
-
-  rec.onresult = (event) => {
-    let interimTranscript = "";
-    let finalTranscript = "";
+async function startMurojaahMic() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     
-    for (let i = event.resultIndex; i < event.results.length; ++i) {
-      if (event.results[i].isFinal) {
-        finalTranscript += event.results[i][0].transcript + " ";
+    // Pilih mimeType audio yang didukung browser
+    let options = { mimeType: 'audio/webm' };
+    if (!MediaRecorder.isTypeSupported('audio/webm')) {
+      if (MediaRecorder.isTypeSupported('audio/mp4')) {
+        options = { mimeType: 'audio/mp4' };
       } else {
-        interimTranscript += event.results[i][0].transcript;
+        options = {};
       }
     }
 
-    const activeText = finalTranscript.trim() || interimTranscript.trim();
-    if (!activeText) return;
+    mediaRecorder = new MediaRecorder(stream, options);
+    audioChunks = [];
 
-    const cleanSpeech = cleanArabicText(activeText);
-    console.log("Suara Ditangkap:", activeText, "| Clean:", cleanSpeech);
+    mediaRecorder.ondataavailable = async (event) => {
+      if (event.data.size > 0) {
+        audioChunks.push(event.data);
+        const audioBlob = new Blob(audioChunks, { type: options.mimeType || 'audio/webm' });
+        audioChunks = []; // Reset memori chunk untuk interval berikutnya
 
-    if (transcriptStatus) {
-      transcriptStatus.innerText = "Suara: " + activeText;
-    }
-
-    if (isTextHidden) {
-      const verseElements = mushafPage.querySelectorAll('.verse-block');
-      if (verseElements.length === 0) return;
-
-      const targetVerse = verseElements[currentVerseIndex];
-      if (!targetVerse) {
-        if (transcriptStatus) transcriptStatus.innerText = "Halaman ini sudah selesai!";
-        return;
+        // Kirim audio ke Groq Whisper
+        await sendToGroqWhisper(audioBlob);
       }
+    };
 
-      // Ambil kata-kata dari ayat target saat ini
-      const wordNodes = targetVerse.querySelectorAll('.verse-word');
-      let targetWordsArray = [];
-      wordNodes.forEach(w => {
-        const cleanW = cleanArabicText(w.innerText);
-        if (cleanW.length > 0) targetWordsArray.push(cleanW);
-      });
+    // Rekam dan kirim potongan suara setiap 2 detik (2000 ms) secara otomatis/hands-free
+    mediaRecorder.start(2000);
+    isMicActive = true;
+    if (btnMic) btnMic.classList.add("recording");
+    if (transcriptStatus) transcriptStatus.innerText = "Mendengarkan bacaan (Groq AI)...";
 
-      const targetVerseClean = targetWordsArray.join(" ");
-      const speechWordsArray = cleanSpeech.split(" ").filter(w => w.length > 0);
-
-      // --- LOGIKA TOLERANSI SEIMBANG ---
-      let exactWordMatches = 0;
-      targetWordsArray.forEach(word => {
-        if (speechWordsArray.some(sWord => sWord.includes(word) || word.includes(sWord))) {
-          exactWordMatches++;
-        }
-      });
-
-      const letterSimilarity = getLetterSimilarity(cleanSpeech, targetVerseClean);
-      const wordMatchRatio = targetWordsArray.length > 0 ? (exactWordMatches / targetWordsArray.length) : 0;
-
-      // Syarat Benar: Cukup minimal 35% kata cocok ATAU kemiripan huruf minimal 50%
-      const isMatched = (wordMatchRatio >= 0.35) || (letterSimilarity >= 0.50);
-
-      console.log(`Target (Ayat ${currentVerseIndex + 1}): "${targetVerseClean}"`);
-      console.log(`Word Match: ${(wordMatchRatio * 100).toFixed(0)}% | Letter Match: ${(letterSimilarity * 100).toFixed(0)}%`);
-
-      if (isMatched) {
-        // BACAAN BENAR
-        targetVerse.classList.remove("verse-error");
-        targetVerse.classList.add("verse-revealed");
-        
-        currentVerseIndex++; // Pindah ke ayat selanjutnya
-
-        if (transcriptStatus) {
-          transcriptStatus.innerText = `Benar! Ayat ke-${currentVerseIndex} terbuka.`;
-        }
-      } else {
-        // BACAAN SALAH (Hanya jika melenceng jauh)
-        if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-
-        targetVerse.classList.add("verse-error");
-        setTimeout(() => {
-          targetVerse.classList.remove("verse-error");
-        }, 1500);
-
-        if (transcriptStatus) {
-          transcriptStatus.innerText = `Belum tepat (Cocok: ${(wordMatchRatio * 100).toFixed(0)}%), ulangi!`;
-        }
-      }
-    }
-  };
-
-  rec.onerror = (event) => {
-    console.error("Mic error:", event.error);
-    if (event.error === 'no-speech') return;
-    if (navigator.vibrate) navigator.vibrate(300);
-  };
-
-  rec.onend = () => {
-    if (isMicActive) {
-      try { rec.start(); } catch (e) {}
-    } else {
-      btnMic.classList.remove("recording");
-      if (transcriptStatus) transcriptStatus.innerText = "Mic dimatikan.";
-    }
-  };
-
-  return rec;
+  } catch (err) {
+    console.error("Gagal mengakses mic:", err);
+    alert("Izin mikrofon ditolak atau browser tidak mendukung perekaman audio.");
+  }
 }
 
-// Toggle Mic On/Off Manual
-if (btnMic) {
-  recognition = initSpeechRecognition();
+async function sendToGroqWhisper(audioBlob) {
+  const formData = new FormData();
+  formData.append("file", audioBlob, "speech.webm");
+  formData.append("model", "whisper-large-v3");
+  formData.append("language", "ar"); // Memaksa AI mengenali Bahasa Arab
 
+  try {
+    if (transcriptStatus) transcriptStatus.innerText = "Memproses suara ke AI...";
+
+    const response = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${GROQ_API_KEY}`
+      },
+      body: formData
+    });
+
+    const data = await response.json();
+
+    if (data.text && data.text.trim().length > 0) {
+      console.log("Transkrip Groq:", data.text);
+      if (transcriptStatus) transcriptStatus.innerText = "Suara: " + data.text;
+      
+      // Jalankan validasi pencocokan bacaan Murojaah
+      validateMurojaahVerse(data.text);
+    } else {
+      if (transcriptStatus) transcriptStatus.innerText = "Mendengarkan bacaan...";
+    }
+  } catch (error) {
+    console.error("Groq Whisper API Error:", error);
+    if (transcriptStatus) transcriptStatus.innerText = "Terjadi gangguan koneksi ke Groq API.";
+  }
+}
+
+function stopMurojaahMic() {
+  if (mediaRecorder && mediaRecorder.state !== "inactive") {
+    mediaRecorder.stop();
+    mediaRecorder.stream.getTracks().forEach(track => track.stop());
+  }
+  isMicActive = false;
+  if (btnMic) btnMic.classList.remove("recording");
+  if (transcriptStatus) transcriptStatus.innerText = "Mic dimatikan.";
+}
+
+// ==========================================
+// LOGIKA VALIDASI BACAAN AYAT
+// ==========================================
+function validateMurojaahVerse(spokenText) {
+  if (!isTextHidden) return; // Validasi hanya aktif saat mode sembunyi dibuka
+
+  const verseElements = mushafPage.querySelectorAll('.verse-block');
+  if (verseElements.length === 0) return;
+
+  const targetVerse = verseElements[currentVerseIndex];
+  if (!targetVerse) {
+    if (transcriptStatus) transcriptStatus.innerText = "Halaman ini sudah selesai dibaca!";
+    return;
+  }
+
+  // Ambil kata-kata dari ayat target saat ini
+  const wordNodes = targetVerse.querySelectorAll('.verse-word');
+  let targetWordsArray = [];
+  wordNodes.forEach(w => {
+    const cleanW = cleanArabicText(w.innerText);
+    if (cleanW.length > 0) targetWordsArray.push(cleanW);
+  });
+
+  const targetVerseClean = targetWordsArray.join(" ");
+  const speechWordsArray = cleanArabicText(spokenText).split(" ").filter(w => w.length > 0);
+
+  // Perhitungan Kecocokan
+  let exactWordMatches = 0;
+  targetWordsArray.forEach(word => {
+    if (speechWordsArray.some(sWord => sWord.includes(word) || word.includes(sWord))) {
+      exactWordMatches++;
+    }
+  });
+
+  const letterSimilarity = getLetterSimilarity(spokenText, targetVerseClean);
+  const wordMatchRatio = targetWordsArray.length > 0 ? (exactWordMatches / targetWordsArray.length) : 0;
+
+  // Syarat Lolos: Minimal 35% kata cocok ATAU kemiripan huruf minimal 50%
+  const isMatched = (wordMatchRatio >= 0.35) || (letterSimilarity >= 0.50);
+
+  console.log(`Target (Ayat ${currentVerseIndex + 1}): "${targetVerseClean}"`);
+  console.log(`Matching -> Word: ${(wordMatchRatio * 100).toFixed(0)}% | Letter: ${(letterSimilarity * 100).toFixed(0)}%`);
+
+  if (isMatched) {
+    // BACAAN BENAR
+    targetVerse.classList.remove("verse-error");
+    targetVerse.classList.add("verse-revealed");
+    
+    currentVerseIndex++; // Pindah ke target ayat berikutnya
+
+    if (transcriptStatus) {
+      transcriptStatus.innerText = `Benar! Ayat ke-${currentVerseIndex} terbuka.`;
+    }
+  } else {
+    // BACAAN SALAH
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+
+    targetVerse.classList.add("verse-error");
+    setTimeout(() => {
+      targetVerse.classList.remove("verse-error");
+    }, 1500);
+
+    if (transcriptStatus) {
+      transcriptStatus.innerText = `Belum tepat (Cocok: ${(wordMatchRatio * 100).toFixed(0)}%), coba ulangi!`;
+    }
+  }
+}
+
+// Handler Tombol Mic
+if (btnMic) {
   btnMic.addEventListener("click", (e) => {
     e.stopPropagation();
-    if (!recognition) return;
-
     if (isMicActive) {
-      // Matikan Mic
-      isMicActive = false;
-      recognition.stop();
+      stopMurojaahMic();
     } else {
-      // Jalankan Mic
-      isMicActive = true;
-      try {
-        recognition.start();
-      } catch (err) {
-        console.log("Mic already started:", err);
-      }
+      startMurojaahMic();
     }
   });
 }
 
-// Inisialisasi Pertama
+// Inisialisasi Pertama saat Halaman Dimuat
 document.addEventListener("DOMContentLoaded", () => {
   loadQuranPage(currentPage);
 });
