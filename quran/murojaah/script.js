@@ -224,7 +224,7 @@ function changePage(newPage, dir) {
   }, 300);
 }
 
-// --- INISIALISASI SPEECH RECOGNITION (KONTINU & KETAT) ---
+// --- INISIALISASI SPEECH RECOGNITION (KONTINU & FILTER KETAT) ---
 function initSpeechRecognition() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
@@ -244,13 +244,23 @@ function initSpeechRecognition() {
   };
 
   rec.onresult = (event) => {
-    let rawSpeech = "";
+    let finalTranscript = "";
+    
+    // Ambil HANYA ucapan final yang baru saja selesai diucapkan
     for (let i = event.resultIndex; i < event.results.length; ++i) {
-      rawSpeech += event.results[i][0].transcript;
+      if (event.results[i].isFinal) {
+        finalTranscript += event.results[i][0].transcript + " ";
+      }
     }
 
-    const cleanSpeech = cleanArabicText(rawSpeech);
-    if (transcriptStatus) transcriptStatus.innerText = "Suara: " + rawSpeech;
+    if (!finalTranscript.trim()) return;
+
+    const cleanSpeech = cleanArabicText(finalTranscript);
+    console.log("Suara Ditangkap (Final):", finalTranscript, "| Clean:", cleanSpeech);
+
+    if (transcriptStatus) {
+      transcriptStatus.innerText = "Suara: " + finalTranscript;
+    }
 
     if (isTextHidden) {
       const verseElements = mushafPage.querySelectorAll('.verse-block');
@@ -262,21 +272,39 @@ function initSpeechRecognition() {
         return;
       }
 
-      // Ambil teks asli ayat target
+      // Ambil kata-kata dari ayat target saat ini
       const wordNodes = targetVerse.querySelectorAll('.verse-word');
-      let fullVerseText = "";
+      let targetWordsArray = [];
       wordNodes.forEach(w => {
-        fullVerseText += w.innerText + " ";
+        const cleanW = cleanArabicText(w.innerText);
+        if (cleanW.length > 0) targetWordsArray.push(cleanW);
       });
 
-      const targetVerseClean = cleanArabicText(fullVerseText);
+      const targetVerseClean = targetWordsArray.join(" ");
+      const speechWordsArray = cleanSpeech.split(" ").filter(w => w.length > 0);
 
-      // --- HITUNG KEMIRIPAN HUKUM HURUF (PERSENTASE KETAT 88% - 90%) ---
-      const similarity = getLetterSimilarity(cleanSpeech, targetVerseClean);
-      console.log(`Target: "${targetVerseClean}" | Suara: "${cleanSpeech}" | Akurasi: ${(similarity * 100).toFixed(1)}%`);
+      // --- FILTER KETAT DUA LAPIS ---
+      
+      // 1. Hitung berapa KATA SPESIFIK yang benar-benar ada di ucapan
+      let exactWordMatches = 0;
+      targetWordsArray.forEach(word => {
+        if (speechWordsArray.includes(word)) {
+          exactWordMatches++;
+        }
+      });
 
-      // Hanya izinkan buka jika tingkat kemiripan huruf minimal 88% (hampir tidak boleh ada beda huruf)
-      if (similarity >= 0.88) {
+      // 2. Hitung Kemiripan Huruf (Levenshtein Distance)
+      const letterSimilarity = getLetterSimilarity(cleanSpeech, targetVerseClean);
+
+      const wordMatchRatio = targetWordsArray.length > 0 ? (exactWordMatches / targetWordsArray.length) : 0;
+      
+      // Syarat Benar: Minim 60% kata cocok DAN Kemiripan huruf minim 75%
+      const isMatched = (wordMatchRatio >= 0.6) && (letterSimilarity >= 0.75);
+
+      console.log(`Target (Ayat ${currentVerseIndex + 1}): "${targetVerseClean}"`);
+      console.log(`Word Match: ${(wordMatchRatio * 100).toFixed(0)}% | Letter Match: ${(letterSimilarity * 100).toFixed(0)}%`);
+
+      if (isMatched) {
         // BACAAN BENAR
         targetVerse.classList.remove("verse-error");
         targetVerse.classList.add("verse-revealed");
@@ -284,10 +312,10 @@ function initSpeechRecognition() {
         currentVerseIndex++; // Pindah ke ayat selanjutnya
 
         if (transcriptStatus) {
-          transcriptStatus.innerText = `Benar! Ayat ke-${currentVerseIndex} terbuka (${(similarity * 100).toFixed(0)}%).`;
+          transcriptStatus.innerText = `Benar! Ayat ke-${currentVerseIndex} terbuka.`;
         }
-      } else if (cleanSpeech.length >= targetVerseClean.length * 0.7) {
-        // BACAAN SALAH (Panjang suara sudah hampir sepanjang ayat tetapi akurasi < 88%)
+      } else {
+        // BACAAN SALAH (BACA KASIDAH / SALAH AYAT)
         if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
 
         targetVerse.classList.add("verse-error");
@@ -296,7 +324,7 @@ function initSpeechRecognition() {
         }, 1500);
 
         if (transcriptStatus) {
-          transcriptStatus.innerText = `Salah! Akurasi hanya ${(similarity * 100).toFixed(0)}% (Butuh >= 88%)`;
+          transcriptStatus.innerText = `Salah! Cocok: ${(wordMatchRatio * 100).toFixed(0)}% (Butuh >= 60%)`;
         }
       }
     }
@@ -308,7 +336,7 @@ function initSpeechRecognition() {
     if (navigator.vibrate) navigator.vibrate(300);
   };
 
-  // KUNCI CONTINUOUS MIC: Restart otomatis jika terhenti tetapi state mic masih aktif
+  // KUNCI CONTINUOUS MIC: Auto-restart jika terhenti padahal tombol mic masih ON
   rec.onend = () => {
     if (isMicActive) {
       console.log("Auto-restarting Mic...");
