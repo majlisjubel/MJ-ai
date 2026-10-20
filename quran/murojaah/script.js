@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return num.toString().split('').map(d => arabicDigits[d]).join('');
   }
 
-  // Deteksi Swipe Jari di Layar
+    // Deteksi Swipe Jari di Layar (Dibalik untuk Teks Arab / RTL)
   document.addEventListener('touchstart', (e) => {
     if (e.target.closest('.bottom-dock') || e.target.closest('.top-bar')) return;
     touchStartX = e.changedTouches[0].screenX;
@@ -120,11 +120,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function handleSwipe() {
     const threshold = 40; // Sensitivitas geseran
-    if (touchStartX - touchEndX > threshold) {
-      // Swipe ke Kiri -> Halaman Berikutnya
+    
+    if (touchEndX - touchStartX > threshold) {
+      // Geser ke KANAN -> Halaman Berikutnya (Bertambah, misal 77 -> 78)
       changePage(currentPage + 1, 'next');
-    } else if (touchEndX - touchStartX > threshold) {
-      // Swipe ke Kanan -> Halaman Sebelumnya
+    } else if (touchStartX - touchEndX > threshold) {
+      // Geser ke KIRI -> Halaman Sebelumnya (Berkurang, misal 78 -> 77)
       changePage(currentPage - 1, 'prev');
     }
   }
