@@ -3,125 +3,125 @@
     "surah": 1,
     "start_ayah": 1,
     "end_ayah": 7,
-    "start_word": "",
-    "end_word": ""
+    "start_word": "الحمد",
+    "end_word": "ولاالضالين"
   },
   "2": {
     "surah": 2,
     "start_ayah": 1,
     "end_ayah": 4,
-    "start_word": "",
-    "end_word": ""
+    "start_word": "الم",
+    "end_word": "يوقنون"
   },
   "3": {
     "surah": 2,
     "start_ayah": 5,
     "end_ayah": 18,
-    "start_word": "",
-    "end_word": ""
+    "start_word": "الئك",
+    "end_word": "يرجعون"
   },
   "4": {
     "surah": 2,
     "start_ayah": 19,
     "end_ayah": 26,
-    "start_word": "",
-    "end_word": ""
+    "start_word": "اوكصيب",
+    "end_word": "فسقين"
   },
   "5": {
     "surah": 2,
     "start_ayah": 27,
     "end_ayah": 36,
-    "start_word": "",
-    "end_word": ""
+    "start_word": "الذين",
+    "end_word": "حين"
   },
   "6": {
     "surah": 2,
     "start_ayah": 37,
     "end_ayah": 50,
-    "start_word": "",
-    "end_word": ""
+    "start_word": "فتلقى",
+    "end_word": "تنظرون"
   },
   "7": {
     "surah": 2,
     "start_ayah": 51,
     "end_ayah": 60,
-    "start_word": "",
-    "end_word": ""
+    "start_word": "واذ",
+    "end_word": "مفسدين"
   },
   "8": {
+    "surah": 2,
+    "start_ayah": 61,
+    "end_ayah": 68,
+    "start_word": "واذقلتم",
+    "end_word": "تؤمرون"
+  },
+  "9": {
+    "surah": 2,
+    "start_ayah": 69,
+    "end_ayah": 79,
+    "start_word": "قالوا",
+    "end_word": "يكسبون"
+  },
+  "10": {
+    "surah": 2,
+    "start_ayah": 80,
+    "end_ayah": 88,
+    "start_word": "وقالوا",
+    "end_word": "يؤمنون"
+  },
+  "11": {
+    "surah": 2,
+    "start_ayah": 89,
+    "end_ayah": 98,
+    "start_word": "ولما",
+    "end_word": "للكافرين"
+  },
+  "12": {
+    "surah": 2,
+    "start_ayah": 99,
+    "end_ayah": 108,
+    "start_word": "ولقد",
+    "end_word": "سبيل"
+  },
+  "13": {
+    "surah": 2,
+    "start_ayah": 109,
+    "end_ayah": 119,
+    "start_word": "ودّكثير",
+    "end_word": "الجحيم"
+  },
+  "14": {
+    "surah": 2,
+    "start_ayah": 120,
+    "end_ayah": 130,
+    "start_word": "ولن",
+    "end_word": "الصالحين"
+  },
+  "15": {
+    "surah": 2,
+    "start_ayah": 131,
+    "end_ayah": 141,
+    "start_word": "إذقال",
+    "end_word": "يعملون"
+  },
+  "16": {
+    "surah": 2,
+    "start_ayah": 142,
+    "end_ayah": null
+    "start_word": "سيقول",
+    "end_word": ""
+  },
+  "17": {
     "surah": 2,
     "start_ayah": 0,
     "end_ayah": 0,
     "start_word": "",
     "end_word": ""
   },
-  "9": {
-    "surah": 2,
-    "start_ayah": 61,
-    "end_ayah": 68,
-    "start_word": "",
-    "end_word": ""
-  },
-  "10": {
-    "surah": 2,
-    "start_ayah": 69,
-    "end_ayah": 79,
-    "start_word": "",
-    "end_word": ""
-  },
-  "11": {
-    "surah": 2,
-    "start_ayah": 80,
-    "end_ayah": 0,
-    "start_word": "",
-    "end_word": ""
-  },
-  "12": {
-    "surah": 2,
-    "start_ayah": 81,
-    "end_ayah": 88,
-    "start_word": "",
-    "end_word": ""
-  },
-  "13": {
-    "surah": 2,
-    "start_ayah": 89,
-    "end_ayah": 98,
-    "start_word": "",
-    "end_word": ""
-  },
-  "14": {
-    "surah": 2,
-    "start_ayah": 99,
-    "end_ayah": 108,
-    "start_word": "",
-    "end_word": ""
-  },
-  "15": {
-    "surah": 2,
-    "start_ayah": 109,
-    "end_ayah": 119,
-    "start_word": "",
-    "end_word": ""
-  },
-  "16": {
-    "surah": 2,
-    "start_ayah": 120,
-    "end_ayah": 130,
-    "start_word": "",
-    "end_word": ""
-  },
-  "17": {
-    "surah": 2,
-    "start_ayah": 131,
-    "end_ayah": 141,
-    "start_word": "",
-    "end_word": ""
-  },
   "18": {
     "surah": 2,
-    "start_ayah": 142,
-    "end_ayah": null
+    "start_ayah": 0,
+    "end_ayah": 0,
     "start_word": "",
     "end_word": ""
   }
