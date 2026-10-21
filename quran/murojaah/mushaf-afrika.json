@@ -138,100 +138,100 @@
       "surah": 9,
       "start_ayah": 123,
       "end_ayah": 129,
-      "start_word": "",
-      "end_word": ""
+      "start_word": "ياايّها",
+      "end_word": "العظيم"
     },
     {
       "surah": 10,
       "start_ayah": 1,
       "end_ayah": 2,
-      "start_word": "ياايّها",
-      "end_word": "العظيم"
+      "start_word": "الر",
+      "end_word": "مبين"
     }
   ],
   "166": {
     "surah": 10,
     "start_ayah": 3,
     "end_ayah": 11,
-    "start_word": "الر",
-    "end_word": "مبين"
+    "start_word": "إنّ",
+    "end_word": "يعمهون"
   },
   "167": {
     "surah": 10,
     "start_ayah": 12,
     "end_ayah": 20,
-    "start_word": "انّ",
-    "end_word": "يعمهون"
+    "start_word": "وإذا",
+    "end_word": "المنتظرين"
   },
   "168": {
     "surah": 10,
     "start_ayah": 21,
     "end_ayah": 26,
     "start_word": "وإذا",
-    "end_word": "المنتظرين"
+    "end_word": "خٰلدون"
   },
   "169": {
     "surah": 10,
     "start_ayah": 27,
     "end_ayah": 35,
-    "start_word": "وإذا",
-    "end_word": "خٰلدون"
+    "start_word": "والذين",
+    "end_word": "تحكمون"
   },
   "170": {
     "surah": 10,
     "start_ayah": 36,
     "end_ayah": 46,
-    "start_word": "والذين",
-    "end_word": "تحكمون"
+    "start_word": "وما",
+    "end_word": "يفعلون"
   },
   "171": {
     "surah": 10,
     "start_ayah": 47,
     "end_ayah": 59,
-    "start_word": "وما",
-    "end_word": "يفعلون"
+    "start_word": "ولكلّ",
+    "end_word": "تفترون"
   },
   "172": {
     "surah": 10,
     "start_ayah": 60,
     "end_ayah": 69,
-    "start_word": "ولكلّ",
-    "end_word": "تفترون"
+    "start_word": "وما",
+    "end_word": "يفلحون"
   },
   "173": {
     "surah": 10,
     "start_ayah": 70,
     "end_ayah": 79,
-    "start_word": "وما",
-    "end_word": "يفلحون"
+    "start_word": "متاع",
+    "end_word": "عليم"
   },
   "174": {
     "surah": 10,
     "start_ayah": 80,
     "end_ayah": 91,
-    "start_word": "متاع",
-    "end_word": "عليم"
+    "start_word": "فلما",
+    "end_word": "المفسدين"
   },
   "175": {
     "surah": 10,
     "start_ayah": 92,
     "end_ayah": 103,
-    "start_word": "فلمّا",
-    "end_word": "المفسدين"
+    "start_word": "فاليوم",
+    "end_word": "المؤمنين"
   },
   "176": [
     {
       "surah": 10,
       "start_ayah": 104,
       "end_ayah": 109,
-      "start_word": "فاليوم",
-      "end_word": "المؤمنين"
+      "start_word": "قل",
+      "end_word": "الحاكمين"
     },
     {
       "surah": 11,
       "start_ayah": 1,
       "end_ayah": 5,
-      "start_word": "",
-      "end_word": ""
+      "start_word": "الر",
+      "end_word": "الصدور"
     }
   ]
