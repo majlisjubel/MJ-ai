@@ -5,6 +5,7 @@ const MUROJAAH_WORKER_URL = "https://murojaah-proxy.rkidul416.workers.dev/";
 
 let currentPage = 1;
 let mushafMode = "MDN"; // "MDN" = Madinah (15 baris), "AFR" = Afrika (18 baris)
+let afrikaData = {};   // Menyimpan mapping custom dari mushaf-afrika.json
 let isTextHidden = false;
 let currentVerseIndex = 0; // Pointer pelacak urutan AYAT yang harus dibaca
 
@@ -61,12 +62,6 @@ function toArabicDigits(num) {
   return num.toString().split('').map(d => arabicDigits[d] || d).join('');
 }
 
-function getBasePageForAfrika(afrPage) {
-  if (afrPage <= 1) return 1;
-  if (afrPage >= 480) return 604;
-  return Math.floor(((afrPage - 1) / 479) * 603) + 1;
-}
-
 function resetMurojaahPointer() {
   currentVerseIndex = 0;
 }
@@ -116,31 +111,63 @@ function getLetterSimilarity(str1, str2) {
 // ==========================================
 // LOAD DATA MUSHAF & API QURAN
 // ==========================================
+
+// Load Data JSON Afrika saat inisialisasi awal
+async function loadAfrikaMapping() {
+  try {
+    const res = await fetch('mushaf-afrika.json');
+    afrikaData = await res.json();
+    console.log("Mapping Mushaf Afrika (18 Baris) Berhasil Dimuat.");
+  } catch (err) {
+    console.warn("Gagal memuat mushaf-afrika.json. Menggunakan mode standar.", err);
+  }
+}
+
 async function loadQuranPage(page) {
   resetMurojaahPointer();
   try {
     mushafPage.innerHTML = `<div style="text-align:center; padding: 40px; color: #888;">Memuat halaman...</div>`;
     
-    let actualFetchPage = page;
-    if (mushafMode === "AFR") {
-      actualFetchPage = getBasePageForAfrika(page);
+    let versesData = [];
+    
+    // LOGIKA AFRIKA (18 BARIS) vs MADINAH (15 BARIS)
+    if (mushafMode === "AFR" && afrikaData[page]) {
+      const cfg = afrikaData[page];
+      if (cfg.surah && cfg.start_ayah && cfg.end_ayah) {
+        const response = await fetch(
+          `https://api.quran.com/api/v4/verses/by_key/${cfg.surah}:${cfg.start_ayah}?words=true&word_fields=text_uthmani`
+        );
+        // Panggil rentang ayat berdasarkan mapping Afrika
+        const resRange = await fetch(
+          `https://api.quran.com/api/v4/verses/by_chapter/${cfg.surah}?words=true&word_fields=text_uthmani&page=1&per_page=300`
+        );
+        const dataRange = await resRange.json();
+        versesData = dataRange.verses.filter(v => {
+          const aNum = parseInt(v.verse_key.split(":")[1]);
+          return aNum >= cfg.start_ayah && aNum <= cfg.end_ayah;
+        });
+      }
     }
 
-    const response = await fetch(`https://api.quran.com/api/v4/verses/by_page/${actualFetchPage}?words=true&word_fields=text_uthmani`);
-    const data = await response.json();
+    // Fallback jika mode Madinah (MDN) atau data Afrika halaman tersebut belum ada
+    if (versesData.length === 0) {
+      const response = await fetch(`https://api.quran.com/api/v4/verses/by_page/${page}?words=true&word_fields=text_uthmani`);
+      const data = await response.json();
+      versesData = data.verses || [];
+    }
 
-    if (!data.verses || data.verses.length === 0) {
+    if (!versesData || versesData.length === 0) {
       mushafPage.innerHTML = `<div style="text-align:center; padding: 40px; color: #e74c3c;">Gagal memuat data ayat.</div>`;
       return;
     }
 
     let htmlContent = "";
-    let firstVerse = data.verses[0];
+    let firstVerse = versesData[0];
     const surahKey = firstVerse.verse_key.split(":")[0];
     
     fetchSurahInfo(surahKey, page, firstVerse.juz_number);
 
-    data.verses.forEach(verse => {
+    versesData.forEach(verse => {
       let verseHtml = `<span class="verse-block" data-verse-key="${verse.verse_key}">`;
       verse.words.forEach(word => {
         if (word.char_type_name === "word") {
@@ -153,7 +180,7 @@ async function loadQuranPage(page) {
     });
 
     mushafPage.innerHTML = htmlContent;
-    pageNumber.innerText = page;
+    if (pageNumber) pageNumber.innerText = page;
 
     if (mushafMode === "AFR") {
       mushafPage.className = "mushaf-text layout-18-lines";
@@ -180,10 +207,10 @@ async function fetchSurahInfo(surahId, page, juz) {
     const ch = data.chapter;
 
     if (surahName) surahName.innerText = ch.name_simple;
-    const revPlace = ch.revelation_place.toUpperCase();
-    if (surahMeta) surahMeta.innerHTML = `Halaman ${page} | Juz ${juz} | ${revPlace}`;
+    const revPlace = ch.revelation_place ? ch.revelation_place.toUpperCase() : "";
+    if (surahMeta) surahMeta.innerHTML = `Halaman ${page} | Juz ${juz || '-'} | ${revPlace}`;
   } catch (e) {
-    if (surahMeta) surahMeta.innerHTML = `Halaman ${page} | Juz ${juz}`;
+    if (surahMeta) surahMeta.innerHTML = `Halaman ${page} | Juz ${juz || '-'}`;
   }
 }
 
@@ -329,7 +356,7 @@ function handleSwipe() {
 }
 
 function changePage(newPage, dir) {
-  const maxPages = mushafMode === "AFR" ? 480 : 604;
+  const maxPages = mushafMode === "AFR" ? 522 : 604;
   if (newPage < 1 || newPage > maxPages) return;
 
   currentPage = newPage;
@@ -558,6 +585,7 @@ if (btnMic) {
 }
 
 // Inisialisasi Pertama
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  await loadAfrikaMapping();
   loadQuranPage(currentPage);
 });
