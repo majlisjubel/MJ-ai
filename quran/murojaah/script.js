@@ -133,16 +133,14 @@ async function loadQuranPage(page) {
     // LOGIKA AFRIKA (18 BARIS) vs MADINAH (15 BARIS)
     if (mushafMode === "AFR" && afrikaData[page]) {
       const cfg = afrikaData[page];
-      if (cfg.surah && cfg.start_ayah && cfg.end_ayah) {
-        const response = await fetch(
-          `https://api.quran.com/api/v4/verses/by_key/${cfg.surah}:${cfg.start_ayah}?words=true&word_fields=text_uthmani`
-        );
-        // Panggil rentang ayat berdasarkan mapping Afrika
+      
+      // Ambil ayat hanya berdasarkan angka surah, start_ayah, dan end_ayah
+      if (cfg.surah && cfg.start_ayah && cfg.end_ayah && cfg.start_ayah > 0) {
         const resRange = await fetch(
-          `https://api.quran.com/api/v4/verses/by_chapter/${cfg.surah}?words=true&word_fields=text_uthmani&page=1&per_page=300`
+          `https://api.quran.com/api/v4/verses/by_chapter/${cfg.surah}?words=true&word_fields=text_uthmani&per_page=300`
         );
         const dataRange = await resRange.json();
-        versesData = dataRange.verses.filter(v => {
+        versesData = (dataRange.verses || []).filter(v => {
           const aNum = parseInt(v.verse_key.split(":")[1]);
           return aNum >= cfg.start_ayah && aNum <= cfg.end_ayah;
         });
@@ -207,7 +205,9 @@ async function fetchSurahInfo(surahId, page, juz) {
     const ch = data.chapter;
 
     if (surahName) surahName.innerText = ch.name_simple;
-    const revPlace = ch.revelation_place ? ch.revelation_place.toUpperCase() : "";
+    
+    // Penjelasan tempat turunnya surah yang spesifik (Makkiyah / Madaniyah)
+    const revPlace = ch.revelation_place === "maddinah" ? "Madaniyah" : "Makkiyah";
     if (surahMeta) surahMeta.innerHTML = `Halaman ${page} | Juz ${juz || '-'} | ${revPlace}`;
   } catch (e) {
     if (surahMeta) surahMeta.innerHTML = `Halaman ${page} | Juz ${juz || '-'}`;
@@ -306,7 +306,6 @@ if (btnMushafType) {
       mushafMode = "MDN";
       if (mushafLabel) mushafLabel.innerText = "MDN";
     }
-    currentPage = 1;
     loadQuranPage(currentPage);
   });
 }
