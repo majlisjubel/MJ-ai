@@ -1,4 +1,4 @@
- // ==========================================
+// ==========================================
 // CONFIG & STATE APLIKASI
 // ==========================================
 const MUROJAAH_WORKER_URL = "https://murojaah-proxy.rkidul416.workers.dev/";
@@ -115,11 +115,27 @@ function getLetterSimilarity(str1, str2) {
 // Load Data JSON Afrika saat inisialisasi awal
 async function loadAfrikaMapping() {
   try {
-    const res = await fetch('mushaf-afrika.json');
+    const res = await fetch('mushaf-afrika.json?t=' + Date.now());
     afrikaData = await res.json();
     console.log("Mapping Mushaf Afrika (18 Baris) Berhasil Dimuat.");
   } catch (err) {
     console.warn("Gagal memuat mushaf-afrika.json. Menggunakan mode standar.", err);
+  }
+}
+
+async function fetchVersesForRange(surahId, startAyah, endAyah) {
+  try {
+    const resRange = await fetch(
+      `https://api.quran.com/api/v4/verses/by_chapter/${surahId}?words=true&word_fields=text_uthmani&per_page=300`
+    );
+    const dataRange = await resRange.json();
+    return (dataRange.verses || []).filter(v => {
+      const aNum = parseInt(v.verse_key.split(":")[1]);
+      return aNum >= startAyah && aNum <= endAyah;
+    });
+  } catch (e) {
+    console.error("Fetch Range Error:", e);
+    return [];
   }
 }
 
@@ -133,23 +149,23 @@ async function loadQuranPage(page) {
     // LOGIKA AFRIKA (18 BARIS) vs MADINAH (15 BARIS)
     if (mushafMode === "AFR" && afrikaData[page]) {
       const cfg = afrikaData[page];
-      if (cfg.surah && cfg.start_ayah && cfg.end_ayah) {
-        const response = await fetch(
-          `https://api.quran.com/api/v4/verses/by_key/${cfg.surah}:${cfg.start_ayah}?words=true&word_fields=text_uthmani`
-        );
-        // Panggil rentang ayat berdasarkan mapping Afrika
-        const resRange = await fetch(
-          `https://api.quran.com/api/v4/verses/by_chapter/${cfg.surah}?words=true&word_fields=text_uthmani&page=1&per_page=300`
-        );
-        const dataRange = await resRange.json();
-        versesData = dataRange.verses.filter(v => {
-          const aNum = parseInt(v.verse_key.split(":")[1]);
-          return aNum >= cfg.start_ayah && aNum <= cfg.end_ayah;
-        });
+      
+      // Jika halaman Afrika berisi > 1 Surah (Format Array [...])
+      if (Array.isArray(cfg)) {
+        for (const item of cfg) {
+          if (item.surah && item.start_ayah && item.end_ayah && item.start_ayah > 0) {
+            const subVerses = await fetchVersesForRange(item.surah, item.start_ayah, item.end_ayah);
+            versesData = versesData.concat(subVerses);
+          }
+        }
+      } 
+      // Jika halaman Afrika berisi 1 Surah (Format Objek {...})
+      else if (cfg.surah && cfg.start_ayah && cfg.end_ayah && cfg.start_ayah > 0) {
+        versesData = await fetchVersesForRange(cfg.surah, cfg.start_ayah, cfg.end_ayah);
       }
     }
 
-    // Fallback jika mode Madinah (MDN) atau data Afrika halaman tersebut belum ada
+    // Fallback jika mode Madinah (MDN) atau data Afrika belum diisi
     if (versesData.length === 0) {
       const response = await fetch(`https://api.quran.com/api/v4/verses/by_page/${page}?words=true&word_fields=text_uthmani`);
       const data = await response.json();
@@ -168,14 +184,49 @@ async function loadQuranPage(page) {
     fetchSurahInfo(surahKey, page, firstVerse.juz_number);
 
     versesData.forEach(verse => {
+      const [sIdStr, aIdStr] = verse.verse_key.split(":");
+      const sId = parseInt(sIdStr);
+      const aId = parseInt(aIdStr);
+
+      // --- LOGIKA HEADER SURAH & BISMILLAH / ISTI'ADZAH AT-TAUBAH ---
+      if (aId === 1) {
+        if (sId === 9) {
+          // Surah At-Taubah: Menggunakan Doa Isti'adzah Khusus At-Taubah
+          htmlContent += `
+            <div style="text-align: center; margin: 16px 0 10px 0; font-family: 'Amiri', serif; font-size: 0.95rem; color: #f39c12; line-height: 1.8; background: rgba(243, 156, 18, 0.08); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(243, 156, 18, 0.2);">
+              أَعُوذُ بِاللَّهِ السَّمِيعِ الْعَلِيمِ مِنَ النَّارِ، وَمِنْ شَرِّ الْكُفَّارِ، وَمِنْ غَضَبِ الْجَبَّارِ. الْعِزَّةُ لِلَّهِ وَلِرَسُولِهِ وَلِلْمُؤْمِنِينَ
+            </div>
+          `;
+        } else if (sId !== 1) {
+          // Surah Lain (Selain Al-Fatihah & At-Taubah): Gunakan Bismillah Standar
+          htmlContent += `
+            <div style="text-align: center; margin: 16px 0 10px 0; font-family: 'Amiri', serif; font-size: 1.15rem; color: #2ecc71; letter-spacing: 0.5px;">
+              بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+            </div>
+          `;
+        }
+      }
+
       let verseHtml = `<span class="verse-block" data-verse-key="${verse.verse_key}">`;
-      verse.words.forEach(word => {
+      
+      // Filter & Hapus Basmalah Tempelan dari API di Kata Pertama Ayat 1
+      verse.words.forEach((word, wIdx) => {
         if (word.char_type_name === "word") {
-          verseHtml += `<span class="verse-word">${word.text_uthmani}</span> `;
+          let wordText = word.text_uthmani;
+          
+          // Jika ini ayat 1 dan bukan surah Al-Fatihah, hapus Basmalah tempelan di kata pertama
+          if (aId === 1 && sId !== 1 && wIdx === 0) {
+            wordText = wordText.replace(/^بِسْمِ\s+اللَّهِ\s+الرَّحْمَٰنِ\s+الرَّحِيمِ\s*/g, "");
+            wordText = wordText.replace(/^بِسْمِ\s+ٱللَّهِ\s+ٱلرَّحْمَٰنِ\s+ٱلرَّحِيمِ\s*/g, "");
+          }
+
+          if (wordText.trim().length > 0) {
+            verseHtml += `<span class="verse-word">${wordText}</span> `;
+          }
         }
       });
-      const verseNum = verse.verse_key.split(":")[1];
-      verseHtml += `<span class="verse-num-symbol">﴿${toArabicDigits(verseNum)}﴾</span></span> `;
+
+      verseHtml += `<span class="verse-num-symbol">﴿${toArabicDigits(aId)}﴾</span></span> `;
       htmlContent += verseHtml;
     });
 
@@ -207,7 +258,8 @@ async function fetchSurahInfo(surahId, page, juz) {
     const ch = data.chapter;
 
     if (surahName) surahName.innerText = ch.name_simple;
-    const revPlace = ch.revelation_place ? ch.revelation_place.toUpperCase() : "";
+    
+    const revPlace = ch.revelation_place === "maddinah" ? "Madaniyah" : "Makkiyah";
     if (surahMeta) surahMeta.innerHTML = `Halaman ${page} | Juz ${juz || '-'} | ${revPlace}`;
   } catch (e) {
     if (surahMeta) surahMeta.innerHTML = `Halaman ${page} | Juz ${juz || '-'}`;
@@ -306,7 +358,6 @@ if (btnMushafType) {
       mushafMode = "MDN";
       if (mushafLabel) mushafLabel.innerText = "MDN";
     }
-    currentPage = 1;
     loadQuranPage(currentPage);
   });
 }
