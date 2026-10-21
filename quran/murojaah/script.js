@@ -24,8 +24,8 @@ let audioContext = null;
 let analyser = null;
 let microphone = null;
 let silenceTimer = null;
-const SILENCE_THRESHOLD = 25; // Dinaikkan dari 15 agar lebih tahan kebisingan HP
-const SILENCE_DURATION = 800;  // Waktu hening (ms) pemicu kirim ke AI (0.8 detik)
+const SILENCE_THRESHOLD = 15; // Ambang batas suara/kebisingan
+const SILENCE_DURATION = 900;  // Waktu hening (ms) pemicu kirim ke AI (0.9 detik)
 
 // ==========================================
 // DOM ELEMENTS
@@ -342,7 +342,7 @@ function changePage(newPage, dir) {
 }
 
 // ==========================================
-// CONTINUOUS AUDIO RECORDING & WORKER PROXY (PERBAIKAN FULL)
+// CONTINUOUS AUDIO RECORDING & WORKER PROXY
 // ==========================================
 
 async function startMurojaahMic() {
@@ -355,45 +355,33 @@ async function startMurojaahMic() {
     microphone.connect(analyser);
     analyser.fftSize = 512;
 
-    // Pilihan MIME Type HP yang aman
-    let options = {};
-    if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-      options = { mimeType: 'audio/webm;codecs=opus' };
-    } else if (MediaRecorder.isTypeSupported('audio/webm')) {
-      options = { mimeType: 'audio/webm' };
-    } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
-      options = { mimeType: 'audio/mp4' };
+    let options = { mimeType: 'audio/webm' };
+    if (!MediaRecorder.isTypeSupported('audio/webm')) {
+      options = MediaRecorder.isTypeSupported('audio/mp4') ? { mimeType: 'audio/mp4' } : {};
     }
 
     mediaRecorder = new MediaRecorder(stream, options);
     audioChunks = [];
 
     mediaRecorder.ondataavailable = (e) => {
-      if (e.data && e.data.size > 0) audioChunks.push(e.data);
+      if (e.data.size > 0) audioChunks.push(e.data);
     };
 
     mediaRecorder.onstop = async () => {
       const audioBlob = new Blob(audioChunks, { type: options.mimeType || 'audio/webm' });
       audioChunks = [];
 
-      if (audioBlob.size > 1200 && isMicActive && !isProcessing) {
+      if (audioBlob.size > 2000 && isMicActive && !isProcessing) {
         await sendToMurojaahProxy(audioBlob);
-      } else {
-        isProcessing = false;
       }
 
-      if (isMicActive && mediaRecorder && mediaRecorder.state === "inactive") {
-        try {
-          mediaRecorder.start();
-        } catch (err) {
-          console.error("Error restart recorder:", err);
-        }
+      if (isMicActive && mediaRecorder.state === "inactive") {
+        mediaRecorder.start();
       }
     };
 
     mediaRecorder.start();
     isMicActive = true;
-    isProcessing = false;
     if (btnMic) btnMic.classList.add("recording");
     if (transcriptStatus) transcriptStatus.innerText = "Mendengarkan... Silakan baca ayat!";
 
@@ -402,12 +390,11 @@ async function startMurojaahMic() {
   } catch (err) {
     console.error("Gagal mengakses mic:", err);
     alert("Izin mikrofon ditolak atau browser tidak mendukung perekaman audio.");
-    stopMurojaahMic();
   }
 }
 
 function detectSilence() {
-  if (!isMicActive || !analyser) return;
+  if (!isMicActive) return;
 
   const dataArray = new Uint8Array(analyser.frequencyBinCount);
   analyser.getByteFrequencyData(dataArray);
@@ -441,7 +428,7 @@ function detectSilence() {
 
 async function sendToMurojaahProxy(audioBlob) {
   if (isProcessing) return;
-  isProcessing = true; // Kunci proses
+  isProcessing = true;
 
   const formData = new FormData();
   formData.append("file", audioBlob, "speech.webm");
@@ -453,10 +440,6 @@ async function sendToMurojaahProxy(audioBlob) {
       method: "POST",
       body: formData
     });
-
-    if (!response.ok) {
-      throw new Error(`HTTP Error Status: ${response.status}`);
-    }
 
     const data = await response.json();
 
@@ -470,9 +453,8 @@ async function sendToMurojaahProxy(audioBlob) {
     }
   } catch (error) {
     console.error("Murojaah Proxy Error:", error);
-    if (transcriptStatus) transcriptStatus.innerText = "Gagal terhubung, mencoba lagi...";
+    if (transcriptStatus) transcriptStatus.innerText = "Gagal terhubung ke server Murojaah.";
   } finally {
-    // KUNCI UTAMA: Reset flag isProcessing agar siklus rekaman berikutnya tidak pernah terkunci
     isProcessing = false;
   }
 }
@@ -480,26 +462,14 @@ async function sendToMurojaahProxy(audioBlob) {
 function stopMurojaahMic() {
   isMicActive = false;
   isProcessing = false;
-  if (silenceTimer) {
-    clearTimeout(silenceTimer);
-    silenceTimer = null;
-  }
+  if (silenceTimer) clearTimeout(silenceTimer);
   
   if (mediaRecorder && mediaRecorder.state !== "inactive") {
-    try {
-      mediaRecorder.stop();
-    } catch (e) {}
-  }
-  
-  if (mediaRecorder && mediaRecorder.stream) {
+    mediaRecorder.stop();
     mediaRecorder.stream.getTracks().forEach(track => track.stop());
   }
   
-  if (audioContext && audioContext.state !== "closed") {
-    try {
-      audioContext.close();
-    } catch (e) {}
-  }
+  if (audioContext) audioContext.close();
   
   if (btnMic) btnMic.classList.remove("recording");
   if (transcriptStatus) transcriptStatus.innerText = "Mic dimatikan.";
