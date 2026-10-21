@@ -33,5 +33,40 @@
     "end_ayah": 26,
     "start_word": "أَوْ",
     "end_word": "الْفَاسِقِينَ"
+  },
+   "6": {
+    "surah": 2,
+    "start_ayah": 27,
+    "end_ayah": 36,
+    "start_word": "الَّذِينَ",
+    "end_word": "حِينٍ"
+  },
+  "7": {
+    "surah": 2,
+    "start_ayah": 37,
+    "end_ayah": 39,
+    "start_word": "فَتَلَقَّىٰ",
+    "end_word": "تنظرون"
+  },
+  "8": {
+    "surah": 2,
+    "start_ayah": 40,
+    "end_ayah": 48,
+    "start_word": "وَإِذْ",
+    "end_word": "مُفْسِدِينَ"
+  },
+  "9": {
+    "surah": 2,
+    "start_ayah": 49,
+    "end_ayah": 53,
+    "start_word": "وَإِذْ",
+    "end_word": "تؤمرون"
+  },
+  "10": {
+    "surah": 2,
+    "start_ayah": 54,
+    "end_ayah": 61,
+    "start_word": "قَالُوا",
+    "end_word": "يَكْسِبُونَ"
   }
 }
