@@ -1,1 +1,75 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#08080a">
+  <title>MJ Listening - Murottal Player</title>
+  <link rel="stylesheet" href="style.css?v=1">
+</head>
+<body>
+
+  <div class="player-wrapper">
+    <!-- Header -->
+    <header class="player-header">
+      <a href="../" class="btn-back">←</a>
+      <h2>Listening Murottal</h2>
+      <div style="width: 24px;"></div>
+    </header>
+
+    <!-- Kontrol Pilihan (Qari & Surah) -->
+    <div class="selector-container">
+      <div class="select-group">
+        <label>Pilih Syaikh / Qari</label>
+        <select id="reciterSelect">
+          <option value="7">Mishary Rashid Alafasy</option>
+          <option value="3">Abdul Rahman Al-Sudais</option>
+          <option value="4">Abu Bakr Al-Shatri</option>
+          <option value="1">Saad Al-Ghamdi</option>
+        </select>
+      </div>
+
+      <div class="select-group">
+        <label>Pilih Surah</label>
+        <select id="surahSelect">
+          <!-- Diisi otomatis oleh JavaScript -->
+        </select>
+      </div>
+    </div>
+
+    <!-- Piringan / Cover Visualizer -->
+    <div class="player-visual-card">
+      <div class="vinyl-disk" id="vinylDisk">
+        <div class="vinyl-center">🎧</div>
+      </div>
+      <h3 id="currentSurahTitle">Al-Fatihah</h3>
+      <p id="currentReciterName">Mishary Rashid Alafasy</p>
+    </div>
+
+    <!-- Audio Progress & Time -->
+    <div class="progress-container">
+      <span id="currentTime">00:00</span>
+      <input type="range" id="progressBar" value="0" min="0" max="100">
+      <span id="totalDuration">00:00</span>
+    </div>
+
+    <!-- Tombol Kontrol Player -->
+    <div class="player-controls">
+      <button class="control-btn" id="btnPrev">⏮</button>
+      <button class="control-btn play-main" id="btnPlay">▶</button>
+      <button class="control-btn" id="btnNext">⏭</button>
+    </div>
+
+    <!-- Kontrol Tambahan (Kecepatan & Volume) -->
+    <div class="extra-controls">
+      <button class="speed-btn" id="btnSpeed">1.0x</button>
+    </div>
+  </div>
+
+  <!-- Audio Element HTML5 -->
+  <audio id="audioPlayer"></audio>
+
+  <script src="script.js?v=1"></script>
+</body>
+  </html>
 
