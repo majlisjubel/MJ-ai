@@ -44,7 +44,7 @@ main {
   border: 1px solid rgba(255, 255, 255, 0.1);
   flex-shrink: 0;
   z-index: 20;
-  position: relative; /* Memastikan top bar berada di paling atas */
+  position: relative;
 }
 
 .vn-badge {
@@ -92,17 +92,17 @@ main {
 /* Area Chat / Dialog Melayang Transparan di atas Karakter */
 #chat-container {
   flex: 1;
-  max-height: calc(100vh - 130px);
+  max-height: calc(100vh - 140px);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   gap: 12px;
-  padding: 10px 8px;
+  padding: 20px 8px 15px 8px; /* Diberi padding atas 20px agar teks tidak lagi terpotong */
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
   z-index: 15;
-  margin-top: 55px; /* Diberi margin lebih luas dari top bar */
+  margin-top: 50px;
 }
 
 #chat-container::-webkit-scrollbar {
