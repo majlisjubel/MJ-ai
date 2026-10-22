@@ -25,19 +25,17 @@ async function loadReciters() {
     
     reciterSelect.innerHTML = "";
 
-    // 🌟 1. Tambahkan Syekh Saud Al-Jumaa di Paling Atas (Full 30 Juz)
+    // Tambahkan Syekh Saud Al-Jumaa di Paling Atas
     const optSaud = document.createElement("option");
     optSaud.value = "saud_jumaa";
     optSaud.textContent = "Saud Al-Jumaa (سعود آل جمعة) - Full 30 Juz";
     reciterSelect.appendChild(optSaud);
 
     if (data.recitations && data.recitations.length > 0) {
-      // Urutkan Qari API berdasarkan nama
       const sortedReciters = data.recitations.sort((a, b) => 
         (a.reciter_name || a.translated_name.name).localeCompare(b.reciter_name || b.translated_name.name)
       );
 
-      // 🌟 2. Masukkan Qari API (Termasuk Al-Juhany & Badr Al-Turki)
       sortedReciters.forEach(r => {
         const opt = document.createElement("option");
         opt.value = r.id;
@@ -56,7 +54,7 @@ async function loadReciters() {
   }
 }
 
-// 2. Ambil Daftar 114 Surah (Full 30 Juz)
+// 2. Ambil Daftar 114 Surah
 async function loadChapters() {
   try {
     const res = await fetch("https://api.quran.com/api/v4/chapters");
@@ -71,15 +69,14 @@ async function loadChapters() {
       surahSelect.appendChild(opt);
     });
 
-    // Otomatis load audio pertama kali
-    loadAudioSource();
+    loadAudioSource(false); // Jangan auto-play pas pertama kali render
   } catch (err) {
     console.error("Gagal memuat daftar surah:", err);
   }
 }
 
-// 3. Ambil Link Audio Berdasarkan Qari & Surah yang Dipilih
-async function loadAudioSource() {
+// 3. Ambil Link Audio Berdasarkan Qari & Surah
+async function loadAudioSource(autoPlay = true) {
   const surahId = surahSelect.value || 1;
   const reciterId = reciterSelect.value || "saud_jumaa";
 
@@ -88,17 +85,21 @@ async function loadAudioSource() {
     currentSurahTitle.textContent = currentChapter.name_simple;
   }
 
-  // 🔴 CASE KHUSUS: Syekh Saud Al-Jumaa (Custom Server mp3quran - 30 Juz)
+  // Reset audio player state
+  audioPlayer.pause();
+  audioPlayer.currentTime = 0;
+
+  // Syekh Saud Al-Jumaa Custom URL
   if (reciterId === "saud_jumaa") {
     const paddedSurah = String(surahId).padStart(3, '0');
     audioPlayer.src = `https://server11.mp3quran.net/saud_jumaa/${paddedSurah}.mp3`;
     currentReciterName.textContent = "Saud Al-Jumaa (سعود آل جمعة)";
 
-    if (isPlaying) audioPlayer.play();
+    if (autoPlay || isPlaying) playAudio();
     return;
   }
 
-  // 🟢 CASE UMUM: Qari dari API Quran.com
+  // Qari dari API Quran.com
   try {
     const res = await fetch(`https://api.quran.com/api/v4/chapter_recitations/${reciterId}/${surahId}`);
     const data = await res.json();
@@ -109,35 +110,52 @@ async function loadAudioSource() {
         currentReciterName.textContent = reciterSelect.options[reciterSelect.selectedIndex].text;
       }
 
-      if (isPlaying) audioPlayer.play();
+      if (autoPlay || isPlaying) playAudio();
     } else {
-      alert("Audio untuk Surah ini belum tersedia untuk Qari tersebut.");
+      alert("Audio tidak tersedia untuk Qari ini.");
     }
   } catch (e) {
     console.error("Gagal memuat audio murottal:", e);
   }
 }
 
-// 4. Kontrol Tombol Play / Pause
-function togglePlay() {
-  if (isPlaying) {
-    audioPlayer.pause();
-    isPlaying = false;
-    btnPlay.textContent = "▶";
-    if (vinylDisk) vinylDisk.classList.remove("spinning");
-  } else {
-    audioPlayer.play().then(() => {
+// 4. Logika Play & Pause yang Aman untuk Browser HP
+function playAudio() {
+  audioPlayer.playbackRate = currentPlaybackSpeed;
+  const playPromise = audioPlayer.play();
+  
+  if (playPromise !== undefined) {
+    playPromise.then(() => {
       isPlaying = true;
       btnPlay.textContent = "⏸";
       if (vinylDisk) vinylDisk.classList.add("spinning");
-    }).catch(err => {
-      console.error("Gagal memutar audio:", err);
+    }).catch(error => {
+      console.warn("Autoplay dicegat browser, menunggu klik pengguna:", error);
+      isPlaying = false;
+      btnPlay.textContent = "▶";
+      if (vinylDisk) vinylDisk.classList.remove("spinning");
     });
   }
 }
 
-// Format Waktu (detik ke mm:ss)
+function pauseAudio() {
+  audioPlayer.pause();
+  isPlaying = false;
+  btnPlay.textContent = "▶";
+  if (vinylDisk) vinylDisk.classList.remove("spinning");
+}
+
+function togglePlay() {
+  if (isPlaying) {
+    pauseAudio();
+  } else {
+    playAudio();
+  }
+}
+
+// Format Waktu mm:ss
 function formatTime(seconds) {
+  if (isNaN(seconds)) return "00:00";
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = Math.floor(seconds % 60);
   return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
@@ -147,16 +165,16 @@ function formatTime(seconds) {
 btnPlay.addEventListener("click", togglePlay);
 
 surahSelect.addEventListener("change", () => {
-  loadAudioSource();
+  loadAudioSource(isPlaying);
 });
 
 reciterSelect.addEventListener("change", () => {
-  loadAudioSource();
+  loadAudioSource(isPlaying);
 });
 
 // Update Progress Bar
 audioPlayer.addEventListener("timeupdate", () => {
-  if (!isNaN(audioPlayer.duration)) {
+  if (!isNaN(audioPlayer.duration) && audioPlayer.duration > 0) {
     const progressPercent = (audioPlayer.currentTime / audioPlayer.duration) * 100;
     progressBar.value = progressPercent;
     currentTimeEl.textContent = formatTime(audioPlayer.currentTime);
@@ -177,14 +195,14 @@ btnNext.addEventListener("click", () => {
   let nextId = parseInt(surahSelect.value) + 1;
   if (nextId > 114) nextId = 1;
   surahSelect.value = nextId;
-  loadAudioSource();
+  loadAudioSource(true);
 });
 
 btnPrev.addEventListener("click", () => {
   let prevId = parseInt(surahSelect.value) - 1;
   if (prevId < 1) prevId = 114;
   surahSelect.value = prevId;
-  loadAudioSource();
+  loadAudioSource(true);
 });
 
 // Kontrol Speed
@@ -198,12 +216,18 @@ btnSpeed.addEventListener("click", () => {
   btnSpeed.textContent = `${currentPlaybackSpeed}x`;
 });
 
-// Otomatis pindah ke surah berikutnya saat audio selesai
+// Auto-next saat audio selesai
 audioPlayer.addEventListener("ended", () => {
   btnNext.click();
 });
 
-// Inisialisasi awal saat web dibuka
+// Error Handling jika link audio gagal/gagal load
+audioPlayer.addEventListener("error", (e) => {
+  console.error("Error pada pemutaran audio:", e);
+  pauseAudio();
+});
+
+// Inisialisasi awal
 document.addEventListener("DOMContentLoaded", async () => {
   await loadReciters();
   await loadChapters();
