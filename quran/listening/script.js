@@ -16,7 +16,7 @@ let chaptersList = [];
 let isPlaying = false;
 let currentPlaybackSpeed = 1.0;
 
-// 1. Fetch Daftar Qari Lengkap dari API Quran.com
+// 1. Fetch Daftar Qari Lengkap & Tambahkan Qari Favorit Khusus
 async function loadReciters() {
   try {
     reciterSelect.innerHTML = `<option value="">Memuat daftar Qari...</option>`;
@@ -25,27 +25,59 @@ async function loadReciters() {
     
     if (data.recitations && data.recitations.length > 0) {
       reciterSelect.innerHTML = "";
-      
-      // Urutkan nama Qari sesuai abjad
+
+      // Urutkan nama Qari dari API sesuai abjad
       const sortedReciters = data.recitations.sort((a, b) => 
         (a.reciter_name || a.translated_name.name).localeCompare(b.reciter_name || b.translated_name.name)
       );
 
+      // Tambahkan Qari dari API ke dropdown
       sortedReciters.forEach(r => {
         const opt = document.createElement("option");
         opt.value = r.id;
         const style = r.style ? ` (${r.style})` : "";
         opt.textContent = `${r.reciter_name || r.translated_name.name}${style}`;
         
-        // Default set ke Mishary Rashid Alafasy jika ada
+        // Default set ke Mishary Rashid Alafasy
         if (r.id === 7) opt.selected = true;
         
         reciterSelect.appendChild(opt);
       });
+
+      // Pastikan Syeikh Al-Juhany & Badr Al-Turki terdaftar
+      checkAndAddCustomReciters(data.recitations);
     }
   } catch (err) {
     console.error("Gagal memuat daftar Qari:", err);
-    reciterSelect.innerHTML = `<option value="7">Mishary Rashid Alafasy</option>`;
+    reciterSelect.innerHTML = `
+      <option value="7" selected>Mishary Rashid Alafasy</option>
+      <option value="13">Abdullah Awad Al-Juhany</option>
+      <option value="161">Badr Al-Turki</option>
+    `;
+  }
+}
+
+// Fungsi pembantu untuk memastikan Syeikh Al-Juhany dan Badr Al-Turki ada di opsi
+function checkAndAddCustomReciters(recitationsList) {
+  // ID Qari di Quran.com API:
+  // Abdullah Awad Al-Juhany -> ID 13
+  // Badr Al-Turki -> ID 161 (atau dicari via nama)
+
+  const hasJuhany = recitationsList.some(r => r.id === 13 || (r.reciter_name && r.reciter_name.toLowerCase().includes("juhany")));
+  const hasTurki = recitationsList.some(r => r.id === 161 || (r.reciter_name && r.reciter_name.toLowerCase().includes("badr")));
+
+  if (!hasJuhany) {
+    const optJuhany = document.createElement("option");
+    optJuhany.value = "13";
+    optJuhany.textContent = "Abdullah Awad Al-Juhany";
+    reciterSelect.insertBefore(optJuhany, reciterSelect.firstChild);
+  }
+
+  if (!hasTurki) {
+    const optTurki = document.createElement("option");
+    optTurki.value = "161"; 
+    optTurki.textContent = "Badr Al-Turki";
+    reciterSelect.insertBefore(optTurki, reciterSelect.firstChild);
   }
 }
 
@@ -64,7 +96,7 @@ async function loadChapters() {
       surahSelect.appendChild(opt);
     });
 
-    // Load Audio pertama kali setelah Qari & Surah siap
+    // Load Audio pertama kali
     loadAudioSource();
   } catch (err) {
     console.error("Gagal memuat daftar surah:", err);
@@ -95,6 +127,9 @@ async function loadAudioSource() {
       if (isPlaying) {
         audioPlayer.play();
       }
+    } else {
+      // Fallback jika reciter belum punya rekaman full surah ini
+      alert("Audio untuk Qari ini pada surah tersebut tidak tersedia.");
     }
   } catch (e) {
     console.error("Gagal memuat audio murottal:", e);
@@ -193,6 +228,6 @@ audioPlayer.addEventListener("ended", () => {
 
 // Inisialisasi awal saat halaman dibuka
 document.addEventListener("DOMContentLoaded", async () => {
-  await loadReciters(); // Muat Qari lengkap dari API
-  await loadChapters(); // Muat daftar Surah
+  await loadReciters();
+  await loadChapters();
 });
