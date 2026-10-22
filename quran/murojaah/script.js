@@ -9,11 +9,17 @@ let afrikaData = {};   // Menyimpan mapping custom dari mushaf-afrika.json
 let isTextHidden = false;
 let currentVerseIndex = 0; // Pointer pelacak urutan AYAT yang harus dibaca
 
-// Mapping Halaman Awal Tiap Juz (Mushaf Madinah 1-604)
+// Mapping Halaman Awal Tiap Juz (Mushaf Madinah Standar 1-604)
 const JUZ_PAGE_MAP = {
   1: 1, 2: 22, 3: 42, 4: 62, 5: 82, 6: 102, 7: 122, 8: 142, 9: 162, 10: 182,
   11: 202, 12: 222, 13: 242, 14: 262, 15: 282, 16: 302, 17: 322, 18: 342, 19: 362, 20: 382,
   21: 402, 22: 422, 23: 442, 24: 462, 25: 482, 26: 502, 27: 522, 28: 542, 29: 562, 30: 582
+};
+
+// Mapping Halaman Awal Juz versi Mushaf Afrika (18 Baris)
+const JUZ_PAGE_MAP_AFRIKA = {
+  1: 1,
+  11: 161 // Juz 11 Mushaf Afrika dimulai dari Halaman 161
 };
 
 // State Perekam Audio & VAD
@@ -66,15 +72,17 @@ function resetMurojaahPointer() {
   currentVerseIndex = 0;
 }
 
+// Pembersihan Harakat & Normalisasi Karakter Uthmani Lengkap
 function cleanArabicText(text) {
   if (!text) return "";
   return text
-    .replace(/[\u064B-\u065F\u0670\u06D6-\u06DC\u06DF-\u06E8\u06EA-\u06ED]/g, "") // Hapus harakat & tajwid
+    // Hapus semua harakat, tajwid, shaddah, sukun, tanwin, alif khanjariah, & waqaf Uthmani
+    .replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06DC\u06DF-\u06E8\u06EA-\u06ED]/g, "")
     .replace(/[ٱإأآء]/g, "ا") // Normalisasi Alif
-    .replace(/ة/g, "ه")
-    .replace(/ى/g, "ي")
-    .replace(/[^\u0621-\u064A\s]/g, "") // Huruf Arab & spasi saja
-    .replace(/\s+/g, " ") // Rapikan spasi ganda
+    .replace(/ة/g, "ه")       // Normalisasi Ta Marbuthah
+    .replace(/ى/g, "ي")       // Normalisasi Alif Maqsurah
+    .replace(/[^\u0621-\u064A\s]/g, "") // Sisakan huruf Arab & spasi
+    .replace(/\s+/g, " ")     // Rapikan spasi ganda
     .trim()
     .toLowerCase();
 }
@@ -289,7 +297,12 @@ function renderJuzList() {
   if (!juzListContainer) return;
   let html = "";
   for (let i = 1; i <= 30; i++) {
-    const pageTarget = JUZ_PAGE_MAP[i] || 1;
+    // Pilih halaman target sesuai mode yang sedang aktif
+    let pageTarget = JUZ_PAGE_MAP[i] || 1;
+    if (mushafMode === "AFR" && JUZ_PAGE_MAP_AFRIKA[i]) {
+      pageTarget = JUZ_PAGE_MAP_AFRIKA[i];
+    }
+
     html += `
       <button class="list-item-btn" onclick="jumpToPage(${pageTarget})">
         <span>Juz ${i}</span>
@@ -585,7 +598,13 @@ function validateMurojaahVerse(spokenText) {
     if (wordNode.classList.contains('word-revealed')) {
       matchedCount++;
     } else {
-      const isWordMatch = speechWords.some(sWord => sWord === targetWord || (targetWord.length > 2 && sWord.includes(targetWord)));
+      const isWordMatch = speechWords.some(sWord => {
+        if (!sWord || !targetWord) return false;
+        if (sWord === targetWord) return true;
+        if (targetWord.length > 3 && (sWord.includes(targetWord) || targetWord.includes(sWord))) return true;
+        return getLetterSimilarity(sWord, targetWord) >= 0.80; // Ambang presisi 80% (Presisi aman & tidak kelonggaran)
+      });
+
       if (isWordMatch) {
         wordNode.classList.add('word-revealed'); // Terbuka hijau per kata/frasa
         matchedCount++;
