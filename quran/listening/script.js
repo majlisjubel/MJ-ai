@@ -16,7 +16,40 @@ let chaptersList = [];
 let isPlaying = false;
 let currentPlaybackSpeed = 1.0;
 
-// 1. Ambil Daftar Surah dari API Quran.com
+// 1. Fetch Daftar Qari Lengkap dari API Quran.com
+async function loadReciters() {
+  try {
+    reciterSelect.innerHTML = `<option value="">Memuat daftar Qari...</option>`;
+    const res = await fetch("https://api.quran.com/api/v4/resources/recitations");
+    const data = await res.json();
+    
+    if (data.recitations && data.recitations.length > 0) {
+      reciterSelect.innerHTML = "";
+      
+      // Urutkan nama Qari sesuai abjad
+      const sortedReciters = data.recitations.sort((a, b) => 
+        (a.reciter_name || a.translated_name.name).localeCompare(b.reciter_name || b.translated_name.name)
+      );
+
+      sortedReciters.forEach(r => {
+        const opt = document.createElement("option");
+        opt.value = r.id;
+        const style = r.style ? ` (${r.style})` : "";
+        opt.textContent = `${r.reciter_name || r.translated_name.name}${style}`;
+        
+        // Default set ke Mishary Rashid Alafasy jika ada
+        if (r.id === 7) opt.selected = true;
+        
+        reciterSelect.appendChild(opt);
+      });
+    }
+  } catch (err) {
+    console.error("Gagal memuat daftar Qari:", err);
+    reciterSelect.innerHTML = `<option value="7">Mishary Rashid Alafasy</option>`;
+  }
+}
+
+// 2. Ambil Daftar Surah dari API Quran.com
 async function loadChapters() {
   try {
     const res = await fetch("https://api.quran.com/api/v4/chapters");
@@ -31,32 +64,33 @@ async function loadChapters() {
       surahSelect.appendChild(opt);
     });
 
-    // Otomatis muat surah pertama (Al-Fatihah)
+    // Load Audio pertama kali setelah Qari & Surah siap
     loadAudioSource();
   } catch (err) {
     console.error("Gagal memuat daftar surah:", err);
   }
 }
 
-// 2. Ambil Link Audio Berdasarkan Qari & Surah yang Dipilih
+// 3. Ambil Link Audio Berdasarkan Qari & Surah yang Dipilih
 async function loadAudioSource() {
   const surahId = surahSelect.value || 1;
   const reciterId = reciterSelect.value || 7;
 
   try {
-    // API Chapter Recitations dari Quran.com
     const res = await fetch(`https://api.quran.com/api/v4/chapter_recitations/${reciterId}/${surahId}`);
     const data = await res.json();
 
     if (data.audio_file && data.audio_file.audio_url) {
       audioPlayer.src = data.audio_file.audio_url;
       
-      // Update Judul di Tampilan
+      // Update Judul & Qari di Tampilan
       const currentChapter = chaptersList.find(c => c.id == surahId);
       if (currentChapter) {
         currentSurahTitle.textContent = currentChapter.name_simple;
       }
-      currentReciterName.textContent = reciterSelect.options[reciterSelect.selectedIndex].text;
+      if (reciterSelect.options[reciterSelect.selectedIndex]) {
+        currentReciterName.textContent = reciterSelect.options[reciterSelect.selectedIndex].text;
+      }
 
       if (isPlaying) {
         audioPlayer.play();
@@ -67,18 +101,18 @@ async function loadAudioSource() {
   }
 }
 
-// 3. Kontrol Tombol Play / Pause
+// 4. Kontrol Tombol Play / Pause
 function togglePlay() {
   if (isPlaying) {
     audioPlayer.pause();
     isPlaying = false;
     btnPlay.textContent = "▶";
-    vinylDisk.classList.remove("spinning");
+    if (vinylDisk) vinylDisk.classList.remove("spinning");
   } else {
     audioPlayer.play();
     isPlaying = true;
     btnPlay.textContent = "⏸";
-    vinylDisk.classList.add("spinning");
+    if (vinylDisk) vinylDisk.classList.add("spinning");
   }
 }
 
@@ -152,13 +186,13 @@ btnSpeed.addEventListener("click", () => {
   btnSpeed.textContent = `${currentPlaybackSpeed}x`;
 });
 
-// Saat audio selesai, otomatis lanjut ke surah berikutnya
+// Otomatis lanjut ke surah berikutnya saat audio selesai
 audioPlayer.addEventListener("ended", () => {
   btnNext.click();
 });
 
 // Inisialisasi awal saat halaman dibuka
-document.addEventListener("DOMContentLoaded", () => {
-  loadChapters();
+document.addEventListener("DOMContentLoaded", async () => {
+  await loadReciters(); // Muat Qari lengkap dari API
+  await loadChapters(); // Muat daftar Surah
 });
-
