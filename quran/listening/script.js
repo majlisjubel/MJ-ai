@@ -16,72 +16,47 @@ let chaptersList = [];
 let isPlaying = false;
 let currentPlaybackSpeed = 1.0;
 
-// 1. Fetch Daftar Qari Lengkap & Tambahkan Qari Favorit Khusus
+// 1. Fetch Daftar Qari Lengkap & Sisipkan Syekh Saud Al-Jumaa
 async function loadReciters() {
   try {
     reciterSelect.innerHTML = `<option value="">Memuat daftar Qari...</option>`;
     const res = await fetch("https://api.quran.com/api/v4/resources/recitations");
     const data = await res.json();
     
-    if (data.recitations && data.recitations.length > 0) {
-      reciterSelect.innerHTML = "";
+    reciterSelect.innerHTML = "";
 
-      // Urutkan nama Qari dari API sesuai abjad
+    // 🌟 1. Tambahkan Syekh Saud Al-Jumaa di Paling Atas (Full 30 Juz)
+    const optSaud = document.createElement("option");
+    optSaud.value = "saud_jumaa";
+    optSaud.textContent = "Saud Al-Jumaa (سعود آل جمعة) - Full 30 Juz";
+    reciterSelect.appendChild(optSaud);
+
+    if (data.recitations && data.recitations.length > 0) {
+      // Urutkan Qari API berdasarkan nama
       const sortedReciters = data.recitations.sort((a, b) => 
         (a.reciter_name || a.translated_name.name).localeCompare(b.reciter_name || b.translated_name.name)
       );
 
-      // Tambahkan Qari dari API ke dropdown
+      // 🌟 2. Masukkan Qari API (Termasuk Al-Juhany & Badr Al-Turki)
       sortedReciters.forEach(r => {
         const opt = document.createElement("option");
         opt.value = r.id;
         const style = r.style ? ` (${r.style})` : "";
         opt.textContent = `${r.reciter_name || r.translated_name.name}${style}`;
-        
-        // Default set ke Mishary Rashid Alafasy
-        if (r.id === 7) opt.selected = true;
-        
         reciterSelect.appendChild(opt);
       });
-
-      // Pastikan Syeikh Al-Juhany & Badr Al-Turki terdaftar
-      checkAndAddCustomReciters(data.recitations);
     }
   } catch (err) {
-    console.error("Gagal memuat daftar Qari:", err);
+    console.error("Gagal memuat daftar Qari API:", err);
     reciterSelect.innerHTML = `
-      <option value="7" selected>Mishary Rashid Alafasy</option>
+      <option value="saud_jumaa">Saud Al-Jumaa (سعود آل جمعة)</option>
+      <option value="7">Mishary Rashid Alafasy</option>
       <option value="13">Abdullah Awad Al-Juhany</option>
-      <option value="161">Badr Al-Turki</option>
     `;
   }
 }
 
-// Fungsi pembantu untuk memastikan Syeikh Al-Juhany dan Badr Al-Turki ada di opsi
-function checkAndAddCustomReciters(recitationsList) {
-  // ID Qari di Quran.com API:
-  // Abdullah Awad Al-Juhany -> ID 13
-  // Badr Al-Turki -> ID 161 (atau dicari via nama)
-
-  const hasJuhany = recitationsList.some(r => r.id === 13 || (r.reciter_name && r.reciter_name.toLowerCase().includes("juhany")));
-  const hasTurki = recitationsList.some(r => r.id === 161 || (r.reciter_name && r.reciter_name.toLowerCase().includes("badr")));
-
-  if (!hasJuhany) {
-    const optJuhany = document.createElement("option");
-    optJuhany.value = "13";
-    optJuhany.textContent = "Abdullah Awad Al-Juhany";
-    reciterSelect.insertBefore(optJuhany, reciterSelect.firstChild);
-  }
-
-  if (!hasTurki) {
-    const optTurki = document.createElement("option");
-    optTurki.value = "161"; 
-    optTurki.textContent = "Badr Al-Turki";
-    reciterSelect.insertBefore(optTurki, reciterSelect.firstChild);
-  }
-}
-
-// 2. Ambil Daftar Surah dari API Quran.com
+// 2. Ambil Daftar 114 Surah (Full 30 Juz)
 async function loadChapters() {
   try {
     const res = await fetch("https://api.quran.com/api/v4/chapters");
@@ -96,7 +71,7 @@ async function loadChapters() {
       surahSelect.appendChild(opt);
     });
 
-    // Load Audio pertama kali
+    // Otomatis load audio pertama kali
     loadAudioSource();
   } catch (err) {
     console.error("Gagal memuat daftar surah:", err);
@@ -106,30 +81,37 @@ async function loadChapters() {
 // 3. Ambil Link Audio Berdasarkan Qari & Surah yang Dipilih
 async function loadAudioSource() {
   const surahId = surahSelect.value || 1;
-  const reciterId = reciterSelect.value || 7;
+  const reciterId = reciterSelect.value || "saud_jumaa";
 
+  const currentChapter = chaptersList.find(c => c.id == surahId);
+  if (currentChapter) {
+    currentSurahTitle.textContent = currentChapter.name_simple;
+  }
+
+  // 🔴 CASE KHUSUS: Syekh Saud Al-Jumaa (Custom Server mp3quran - 30 Juz)
+  if (reciterId === "saud_jumaa") {
+    const paddedSurah = String(surahId).padStart(3, '0');
+    audioPlayer.src = `https://server11.mp3quran.net/saud_jumaa/${paddedSurah}.mp3`;
+    currentReciterName.textContent = "Saud Al-Jumaa (سعود آل جمعة)";
+
+    if (isPlaying) audioPlayer.play();
+    return;
+  }
+
+  // 🟢 CASE UMUM: Qari dari API Quran.com
   try {
     const res = await fetch(`https://api.quran.com/api/v4/chapter_recitations/${reciterId}/${surahId}`);
     const data = await res.json();
 
     if (data.audio_file && data.audio_file.audio_url) {
       audioPlayer.src = data.audio_file.audio_url;
-      
-      // Update Judul & Qari di Tampilan
-      const currentChapter = chaptersList.find(c => c.id == surahId);
-      if (currentChapter) {
-        currentSurahTitle.textContent = currentChapter.name_simple;
-      }
       if (reciterSelect.options[reciterSelect.selectedIndex]) {
         currentReciterName.textContent = reciterSelect.options[reciterSelect.selectedIndex].text;
       }
 
-      if (isPlaying) {
-        audioPlayer.play();
-      }
+      if (isPlaying) audioPlayer.play();
     } else {
-      // Fallback jika reciter belum punya rekaman full surah ini
-      alert("Audio untuk Qari ini pada surah tersebut tidak tersedia.");
+      alert("Audio untuk Surah ini belum tersedia untuk Qari tersebut.");
     }
   } catch (e) {
     console.error("Gagal memuat audio murottal:", e);
@@ -144,31 +126,32 @@ function togglePlay() {
     btnPlay.textContent = "▶";
     if (vinylDisk) vinylDisk.classList.remove("spinning");
   } else {
-    audioPlayer.play();
-    isPlaying = true;
-    btnPlay.textContent = "⏸";
-    if (vinylDisk) vinylDisk.classList.add("spinning");
+    audioPlayer.play().then(() => {
+      isPlaying = true;
+      btnPlay.textContent = "⏸";
+      if (vinylDisk) vinylDisk.classList.add("spinning");
+    }).catch(err => {
+      console.error("Gagal memutar audio:", err);
+    });
   }
 }
 
-// Format Waktu Audio (detik ke mm:ss)
+// Format Waktu (detik ke mm:ss)
 function formatTime(seconds) {
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = Math.floor(seconds % 60);
   return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
 }
 
-// Event Listeners
+// Event Listeners Controls
 btnPlay.addEventListener("click", togglePlay);
 
 surahSelect.addEventListener("change", () => {
   loadAudioSource();
-  if (isPlaying) audioPlayer.play();
 });
 
 reciterSelect.addEventListener("change", () => {
   loadAudioSource();
-  if (isPlaying) audioPlayer.play();
 });
 
 // Update Progress Bar
@@ -181,7 +164,7 @@ audioPlayer.addEventListener("timeupdate", () => {
   }
 });
 
-// Geser Progress Bar
+// Seek Bar Control
 progressBar.addEventListener("input", () => {
   if (!isNaN(audioPlayer.duration)) {
     const seekTime = (progressBar.value / 100) * audioPlayer.duration;
@@ -189,13 +172,12 @@ progressBar.addEventListener("input", () => {
   }
 });
 
-// Tombol Next / Prev Surah
+// Tombol Next & Prev Surah
 btnNext.addEventListener("click", () => {
   let nextId = parseInt(surahSelect.value) + 1;
   if (nextId > 114) nextId = 1;
   surahSelect.value = nextId;
   loadAudioSource();
-  if (isPlaying) audioPlayer.play();
 });
 
 btnPrev.addEventListener("click", () => {
@@ -203,30 +185,25 @@ btnPrev.addEventListener("click", () => {
   if (prevId < 1) prevId = 114;
   surahSelect.value = prevId;
   loadAudioSource();
-  if (isPlaying) audioPlayer.play();
 });
 
-// Kontrol Kecepatan (Speed 1.0x -> 1.25x -> 1.5x -> 0.75x)
+// Kontrol Speed
 btnSpeed.addEventListener("click", () => {
-  if (currentPlaybackSpeed === 1.0) {
-    currentPlaybackSpeed = 1.25;
-  } else if (currentPlaybackSpeed === 1.25) {
-    currentPlaybackSpeed = 1.5;
-  } else if (currentPlaybackSpeed === 1.5) {
-    currentPlaybackSpeed = 0.75;
-  } else {
-    currentPlaybackSpeed = 1.0;
-  }
+  if (currentPlaybackSpeed === 1.0) currentPlaybackSpeed = 1.25;
+  else if (currentPlaybackSpeed === 1.25) currentPlaybackSpeed = 1.5;
+  else if (currentPlaybackSpeed === 1.5) currentPlaybackSpeed = 0.75;
+  else currentPlaybackSpeed = 1.0;
+
   audioPlayer.playbackRate = currentPlaybackSpeed;
   btnSpeed.textContent = `${currentPlaybackSpeed}x`;
 });
 
-// Otomatis lanjut ke surah berikutnya saat audio selesai
+// Otomatis pindah ke surah berikutnya saat audio selesai
 audioPlayer.addEventListener("ended", () => {
   btnNext.click();
 });
 
-// Inisialisasi awal saat halaman dibuka
+// Inisialisasi awal saat web dibuka
 document.addEventListener("DOMContentLoaded", async () => {
   await loadReciters();
   await loadChapters();
