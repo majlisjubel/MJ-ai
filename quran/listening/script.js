@@ -13,10 +13,34 @@ const currentReciterName = document.getElementById("currentReciterName");
 const vinylDisk = document.getElementById("vinylDisk");
 
 let chaptersList = [];
+let allVersesMapping = {}; // Untuk mapping juz ke surah
 let isPlaying = false;
 let currentPlaybackSpeed = 1.0;
 
-// 1. Fetch Daftar Qari
+// Buat elemen filter Juz secara dinamis di atas select surah
+function setupJuzFilterUI() {
+  const surahParent = surahSelect.parentElement;
+  
+  // Cek kalau elemen juz belum ada, kita buat
+  if (!document.getElementById("juzSelect")) {
+    const juzDiv = document.createElement("div");
+    juzDiv.style.marginBottom = "10px";
+    juzDiv.innerHTML = `
+      <label for="juzSelect" style="font-size: 0.75rem; color: #888; display: block; margin-bottom: 4px;">Pilih Juz:</label>
+      <select id="juzSelect" style="width: 100%; padding: 10px 14px; background: #1a1a20; border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 12px; font-size: 0.9rem; outline: none;">
+        <option value="all">Semua Juz (1 - 114)</option>
+        ${Array.from({length: 30}, (_, i) => `<option value="${i+1}">Juz ${i+1}</option>`).join('')}
+      </select>
+    `;
+    surahParent.insertBefore(juzDiv, surahSelect);
+
+    document.getElementById("juzSelect").addEventListener("change", (e) => {
+      filterSurahByJuz(e.target.value);
+    });
+  }
+}
+
+// 1. Load Daftar Qari
 async function loadReciters() {
   try {
     reciterSelect.innerHTML = `<option value="">Memuat daftar Qari...</option>`;
@@ -25,10 +49,9 @@ async function loadReciters() {
     
     reciterSelect.innerHTML = "";
 
-    // 🌟 Syekh Saud Al-Jumaa (Custom High-Speed CDN)
     const optSaud = document.createElement("option");
     optSaud.value = "saud_jumaa";
-    optSaud.textContent = "Saud Al-Jumaa (سعود آل جمعة) - Full 30 Juz";
+    optSaud.textContent = "Saud Al-Jumaa (Full 30 Juz)";
     reciterSelect.appendChild(optSaud);
 
     if (data.recitations && data.recitations.length > 0) {
@@ -45,38 +68,65 @@ async function loadReciters() {
       });
     }
   } catch (err) {
-    console.error("Gagal memuat daftar Qari API:", err);
-    reciterSelect.innerHTML = `
-      <option value="saud_jumaa">Saud Al-Jumaa (سعود آل جمعة)</option>
-      <option value="7">Mishary Rashid Alafasy</option>
-      <option value="13">Abdullah Awad Al-Juhany</option>
-    `;
+    console.error("Gagal memuat Qari:", err);
+    reciterSelect.innerHTML = `<option value="saud_jumaa">Saud Al-Jumaa</option><option value="7">Mishary Rashid Alafasy</option>`;
   }
 }
 
-// 2. Ambil Daftar Surah
+// 2. Load Daftar Surah (Simpel & Bahasa Indonesia / Tanpa Inggris)
 async function loadChapters() {
   try {
-    const res = await fetch("https://api.quran.com/api/v4/chapters");
+    setupJuzFilterUI();
+
+    const res = await fetch("https://api.quran.com/api/v4/chapters?language=id");
     const data = await res.json();
     chaptersList = data.chapters;
 
-    surahSelect.innerHTML = "";
-    chaptersList.forEach(ch => {
-      const opt = document.createElement("option");
-      opt.value = ch.id;
-      opt.textContent = `${ch.id}. ${ch.name_simple} (${ch.translated_name.name}) - ${ch.verses_count} Ayat`;
-      surahSelect.appendChild(opt);
-    });
-
+    renderSurahOptions(chaptersList);
     loadAudioSource(false);
   } catch (err) {
-    console.error("Gagal memuat daftar surah:", err);
+    console.error("Gagal memuat surah:", err);
   }
 }
 
-// 3. Ambil Audio Source (Fix CORS & HTTPS)
-async function loadAudioSource(autoPlay = true) {
+// Render option surah dengan teks bersih (contoh: "1. Al-Fatihah - 7 Ayat")
+function renderSurahOptions(list) {
+  surahSelect.innerHTML = "";
+  list.forEach(ch => {
+    const opt = document.createElement("option");
+    opt.value = ch.id;
+    // Menggunakan nama sederhana/terjemahan bahasa Indonesia tanpa teks inggris panjang
+    const namaSurah = ch.name_simple || ch.name_arabic;
+    opt.textContent = `${ch.id}. ${namaSurah} - ${ch.verses_count} Ayat`;
+    surahSelect.appendChild(opt);
+  });
+}
+
+// Filter surah berdasarkan pilihan Juz
+async function filterSurahByJuz(juzId) {
+  if (juzId === "all") {
+    renderSurahOptions(chaptersList);
+    loadAudioSource(true);
+    return;
+  }
+
+  try {
+    const res = await fetch(`https://api.quran.com/api/v4/juzs/${juzId}`);
+    const data = await res.json();
+    
+    // Ambil daftar ID surah yang ada di juz tersebut
+    const surahIdsInJuz = Object.keys(data.juz.verse_mapping).map(Number);
+    
+    const filteredList = chaptersList.filter(ch => surahIdsInJuz.includes(ch.id));
+    renderSurahOptions(filteredList);
+    loadAudioSource(true);
+  } catch (e) {
+    console.error("Gagal memfilter juz:", e);
+  }
+}
+
+// 3. Load Audio Source
+async function loadAudioSource(shouldPlay = true) {
   const surahId = surahSelect.value || 1;
   const reciterId = reciterSelect.value || "saud_jumaa";
 
@@ -85,53 +135,48 @@ async function loadAudioSource(autoPlay = true) {
     currentSurahTitle.textContent = currentChapter.name_simple;
   }
 
-  // Reset audio
   audioPlayer.pause();
   audioPlayer.currentTime = 0;
 
-  // 🟢 SYEKH SAUD AL-JUMAA (Menggunakan CDN HTTPS Resmi QuranCentral)
+  if (reciterSelect.options[reciterSelect.selectedIndex]) {
+    currentReciterName.textContent = reciterSelect.options[reciterSelect.selectedIndex].text;
+  }
+
   if (reciterId === "saud_jumaa") {
     const paddedSurah = String(surahId).padStart(3, '0');
-    // CDN ini dipastikan mendukung HTTPS & CORS dari semua domain web
-    audioPlayer.src = `https://download.quranicaudio.com/quran/saud_al-juma'ah/${paddedSurah}.mp3`;
-    currentReciterName.textContent = "Saud Al-Jumaa (سعود آل جمعة)";
+    audioPlayer.src = `https://server11.mp3quran.net/saud_jumaa/${paddedSurah}.mp3`;
+    audioPlayer.crossOrigin = "anonymous";
 
-    if (autoPlay || isPlaying) playAudio();
+    if (shouldPlay) playAudio();
     return;
   }
 
-  // 🟢 QARI LAIN DARI API QURAN.COM
   try {
     const res = await fetch(`https://api.quran.com/api/v4/chapter_recitations/${reciterId}/${surahId}`);
     const data = await res.json();
 
     if (data.audio_file && data.audio_file.audio_url) {
       audioPlayer.src = data.audio_file.audio_url;
-      if (reciterSelect.options[reciterSelect.selectedIndex]) {
-        currentReciterName.textContent = reciterSelect.options[reciterSelect.selectedIndex].text;
-      }
-
-      if (autoPlay || isPlaying) playAudio();
+      if (shouldPlay) playAudio();
     } else {
-      alert("Audio tidak tersedia untuk Qari ini.");
+      alert("Audio surah ini belum tersedia untuk Qari tersebut.");
     }
   } catch (e) {
-    console.error("Gagal memuat audio murottal:", e);
+    console.error("Gagal mengambil link audio:", e);
   }
 }
 
-// 4. Logika Play & Pause
+// 4. Controller Play & Pause
 function playAudio() {
   audioPlayer.playbackRate = currentPlaybackSpeed;
   const playPromise = audioPlayer.play();
-  
   if (playPromise !== undefined) {
     playPromise.then(() => {
       isPlaying = true;
       btnPlay.textContent = "⏸";
       if (vinylDisk) vinylDisk.classList.add("spinning");
     }).catch(error => {
-      console.warn("Menunggu interaksi klik tombol:", error);
+      console.warn("Butuh klik user:", error);
       isPlaying = false;
       btnPlay.textContent = "▶";
       if (vinylDisk) vinylDisk.classList.remove("spinning");
@@ -147,16 +192,12 @@ function pauseAudio() {
 }
 
 function togglePlay() {
-  if (isPlaying) {
-    pauseAudio();
-  } else {
-    playAudio();
-  }
+  if (isPlaying) pauseAudio();
+  else playAudio();
 }
 
-// Format Waktu mm:ss
 function formatTime(seconds) {
-  if (isNaN(seconds)) return "00:00";
+  if (isNaN(seconds) || !isFinite(seconds)) return "00:00";
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = Math.floor(seconds % 60);
   return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
@@ -173,7 +214,6 @@ reciterSelect.addEventListener("change", () => {
   loadAudioSource(isPlaying);
 });
 
-// Update Progress Bar
 audioPlayer.addEventListener("timeupdate", () => {
   if (!isNaN(audioPlayer.duration) && audioPlayer.duration > 0) {
     const progressPercent = (audioPlayer.currentTime / audioPlayer.duration) * 100;
@@ -191,16 +231,22 @@ progressBar.addEventListener("input", () => {
 });
 
 btnNext.addEventListener("click", () => {
-  let nextId = parseInt(surahSelect.value) + 1;
-  if (nextId > 114) nextId = 1;
-  surahSelect.value = nextId;
+  const currentIndex = surahSelect.selectedIndex;
+  if (currentIndex < surahSelect.options.length - 1) {
+    surahSelect.selectedIndex = currentIndex + 1;
+  } else {
+    surahSelect.selectedIndex = 0;
+  }
   loadAudioSource(true);
 });
 
 btnPrev.addEventListener("click", () => {
-  let prevId = parseInt(surahSelect.value) - 1;
-  if (prevId < 1) prevId = 114;
-  surahSelect.value = prevId;
+  const currentIndex = surahSelect.selectedIndex;
+  if (currentIndex > 0) {
+    surahSelect.selectedIndex = currentIndex - 1;
+  } else {
+    surahSelect.selectedIndex = surahSelect.options.length - 1;
+  }
   loadAudioSource(true);
 });
 
@@ -218,8 +264,7 @@ audioPlayer.addEventListener("ended", () => {
   btnNext.click();
 });
 
-audioPlayer.addEventListener("error", (e) => {
-  console.error("Gagal memuat file audio MP3:", e);
+audioPlayer.addEventListener("error", () => {
   pauseAudio();
 });
 
