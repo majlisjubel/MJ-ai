@@ -16,7 +16,7 @@ let chaptersList = [];
 let isPlaying = false;
 let currentPlaybackSpeed = 1.0;
 
-// 1. Fetch Daftar Qari Lengkap & Sisipkan Syekh Saud Al-Jumaa
+// 1. Fetch Daftar Qari
 async function loadReciters() {
   try {
     reciterSelect.innerHTML = `<option value="">Memuat daftar Qari...</option>`;
@@ -25,7 +25,7 @@ async function loadReciters() {
     
     reciterSelect.innerHTML = "";
 
-    // Tambahkan Syekh Saud Al-Jumaa di Paling Atas
+    // 🌟 Syekh Saud Al-Jumaa (Custom High-Speed CDN)
     const optSaud = document.createElement("option");
     optSaud.value = "saud_jumaa";
     optSaud.textContent = "Saud Al-Jumaa (سعود آل جمعة) - Full 30 Juz";
@@ -54,7 +54,7 @@ async function loadReciters() {
   }
 }
 
-// 2. Ambil Daftar 114 Surah
+// 2. Ambil Daftar Surah
 async function loadChapters() {
   try {
     const res = await fetch("https://api.quran.com/api/v4/chapters");
@@ -69,13 +69,13 @@ async function loadChapters() {
       surahSelect.appendChild(opt);
     });
 
-    loadAudioSource(false); // Jangan auto-play pas pertama kali render
+    loadAudioSource(false);
   } catch (err) {
     console.error("Gagal memuat daftar surah:", err);
   }
 }
 
-// 3. Ambil Link Audio Berdasarkan Qari & Surah
+// 3. Ambil Audio Source (Fix CORS & HTTPS)
 async function loadAudioSource(autoPlay = true) {
   const surahId = surahSelect.value || 1;
   const reciterId = reciterSelect.value || "saud_jumaa";
@@ -85,21 +85,22 @@ async function loadAudioSource(autoPlay = true) {
     currentSurahTitle.textContent = currentChapter.name_simple;
   }
 
-  // Reset audio player state
+  // Reset audio
   audioPlayer.pause();
   audioPlayer.currentTime = 0;
 
-  // Syekh Saud Al-Jumaa Custom URL
+  // 🟢 SYEKH SAUD AL-JUMAA (Menggunakan CDN HTTPS Resmi QuranCentral)
   if (reciterId === "saud_jumaa") {
     const paddedSurah = String(surahId).padStart(3, '0');
-    audioPlayer.src = `https://server11.mp3quran.net/saud_jumaa/${paddedSurah}.mp3`;
+    // CDN ini dipastikan mendukung HTTPS & CORS dari semua domain web
+    audioPlayer.src = `https://download.quranicaudio.com/quran/saud_al-juma'ah/${paddedSurah}.mp3`;
     currentReciterName.textContent = "Saud Al-Jumaa (سعود آل جمعة)";
 
     if (autoPlay || isPlaying) playAudio();
     return;
   }
 
-  // Qari dari API Quran.com
+  // 🟢 QARI LAIN DARI API QURAN.COM
   try {
     const res = await fetch(`https://api.quran.com/api/v4/chapter_recitations/${reciterId}/${surahId}`);
     const data = await res.json();
@@ -119,7 +120,7 @@ async function loadAudioSource(autoPlay = true) {
   }
 }
 
-// 4. Logika Play & Pause yang Aman untuk Browser HP
+// 4. Logika Play & Pause
 function playAudio() {
   audioPlayer.playbackRate = currentPlaybackSpeed;
   const playPromise = audioPlayer.play();
@@ -130,7 +131,7 @@ function playAudio() {
       btnPlay.textContent = "⏸";
       if (vinylDisk) vinylDisk.classList.add("spinning");
     }).catch(error => {
-      console.warn("Autoplay dicegat browser, menunggu klik pengguna:", error);
+      console.warn("Menunggu interaksi klik tombol:", error);
       isPlaying = false;
       btnPlay.textContent = "▶";
       if (vinylDisk) vinylDisk.classList.remove("spinning");
@@ -161,7 +162,7 @@ function formatTime(seconds) {
   return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
 }
 
-// Event Listeners Controls
+// Event Listeners
 btnPlay.addEventListener("click", togglePlay);
 
 surahSelect.addEventListener("change", () => {
@@ -182,7 +183,6 @@ audioPlayer.addEventListener("timeupdate", () => {
   }
 });
 
-// Seek Bar Control
 progressBar.addEventListener("input", () => {
   if (!isNaN(audioPlayer.duration)) {
     const seekTime = (progressBar.value / 100) * audioPlayer.duration;
@@ -190,7 +190,6 @@ progressBar.addEventListener("input", () => {
   }
 });
 
-// Tombol Next & Prev Surah
 btnNext.addEventListener("click", () => {
   let nextId = parseInt(surahSelect.value) + 1;
   if (nextId > 114) nextId = 1;
@@ -205,7 +204,6 @@ btnPrev.addEventListener("click", () => {
   loadAudioSource(true);
 });
 
-// Kontrol Speed
 btnSpeed.addEventListener("click", () => {
   if (currentPlaybackSpeed === 1.0) currentPlaybackSpeed = 1.25;
   else if (currentPlaybackSpeed === 1.25) currentPlaybackSpeed = 1.5;
@@ -216,18 +214,15 @@ btnSpeed.addEventListener("click", () => {
   btnSpeed.textContent = `${currentPlaybackSpeed}x`;
 });
 
-// Auto-next saat audio selesai
 audioPlayer.addEventListener("ended", () => {
   btnNext.click();
 });
 
-// Error Handling jika link audio gagal/gagal load
 audioPlayer.addEventListener("error", (e) => {
-  console.error("Error pada pemutaran audio:", e);
+  console.error("Gagal memuat file audio MP3:", e);
   pauseAudio();
 });
 
-// Inisialisasi awal
 document.addEventListener("DOMContentLoaded", async () => {
   await loadReciters();
   await loadChapters();
