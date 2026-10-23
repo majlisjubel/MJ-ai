@@ -229,20 +229,6 @@ const { error: insertError } = await supabase.from("profiles").insert({
   avatar_key: null,  
 });  
 
-if (insertError) {  
-  console.error("Gagal membuat profil:", insertError.message);  
-  showToast("Profil belum dibuat. Periksa kebijakan RLS tabel profiles.");  
-} else {  
-  player.rank_title = "ROOKIE";  
-  player.xp = 0;  
-  player.avatar_url = "";  
-  player.avatar_key = "";  
-  savePlayer();  
-  renderPlayer();  
-  renderAvatar();  
-}
-
-}
 
 async function syncProgressToSupabase() {
 // XP di frontend bukan sistem anti-cheat. Produksi sebaiknya memberi XP
@@ -394,29 +380,39 @@ renderAvatar();
 
 }
 
+
 function awardXP(amount) {
-const oldLevel = Math.floor(player.xp / 100) + 1;
-player.xp += amount;
-if (!player.completedDates.includes(today))
-player.completedDates.push(today);
-savePlayer();
-// XP sync client-side is not tamper-proof; see SQL/setup notes.
-if (currentUser && supabase) {
-supabase
-.from("profiles")
-.update({ exp: player.xp })
-.eq("id", currentUser.id)
-.then(({ error }) => {
-if (error) console.error("XP sync error:", error.message);
-});
-}
-renderPlayer();
-const newLevel = Math.floor(player.xp / 100) + 1;
-showToast(
-newLevel > oldLevel
-? LEVEL UP! Sekarang level ${newLevel}. Terus jaga hafalanmu!
-: +${amount} XP! Progres hafalanmu bertambah.
-);
+  const oldLevel = Math.floor(player.xp / 100) + 1;
+
+  player.xp += amount;
+
+  if (!player.completedDates.includes(today)) {
+    player.completedDates.push(today);
+  }
+
+  savePlayer();
+
+  if (currentUser && supabase) {
+    supabase
+      .from("profiles")
+      .update({ exp: player.xp })
+      .eq("id", currentUser.id)
+      .then(({ error }) => {
+        if (error) {
+          console.error("XP sync error:", error.message);
+        }
+      });
+  }
+
+  renderPlayer();
+
+  const newLevel = Math.floor(player.xp / 100) + 1;
+
+  showToast(
+    newLevel > oldLevel
+      ? `LEVEL UP! Sekarang level ${newLevel}. Terus jaga hafalanmu!`
+      : `+${amount} XP! Progres hafalanmu bertambah.`
+  );
 }
 
 function showToast(message) {
@@ -472,28 +468,41 @@ document.body.style.overflow = "hidden";
 
 }
 
+
 function checkAnswer(selectedIndex) {
-if (answered || !currentQuestion) return;
-answered = true;
-const correct = selectedIndex === currentQuestion.correct;
-$$("#answerList .answer-option").forEach((button, index) => {
-button.disabled = true;
-if (index === currentQuestion.correct) button.classList.add("correct");
-else if (index === selectedIndex && !correct)
-button.classList.add("wrong");
-});
-setText(
-"#answerFeedback",
-correct
-? ✓ ${currentQuestion.explanation} +25 XP
-: Belum tepat. ${currentQuestion.explanation}
-);
-if (correct) awardXP(25);
-const next = $("#continueButton");
-if (next) {
-next.hidden = false;
-next.textContent = "Kembali ke Arena →";
-}
+  if (answered || !currentQuestion) return;
+
+  answered = true;
+
+  const correct = selectedIndex === currentQuestion.correct;
+
+  $$("#answerList .answer-option").forEach((button, index) => {
+    button.disabled = true;
+
+    if (index === currentQuestion.correct) {
+      button.classList.add("correct");
+    } else if (index === selectedIndex && !correct) {
+      button.classList.add("wrong");
+    }
+  });
+
+  setText(
+    "#answerFeedback",
+    correct
+      ? `✓ ${currentQuestion.explanation} +25 XP`
+      : `Belum tepat. ${currentQuestion.explanation}`
+  );
+
+  if (correct) {
+    awardXP(25);
+  }
+
+  const next = $("#continueButton");
+
+  if (next) {
+    next.hidden = false;
+    next.textContent = "Kembali ke Arena →";
+  }
 }
 
 function closeModal() {
