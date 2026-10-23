@@ -204,3 +204,26 @@
     height: 25px !important;
   }
 }
+html,
+body {
+  background-color: #050908 !important;
+  color: #f6f8f7 !important;
+}
+
+.hub-wrapper {
+  background-color: #050908 !important;
+  color: #f6f8f7 !important;
+  min-height: 100vh;
+}
+
+.hub-wrapper .menu-card {
+  background-color: #0b1914 !important;
+}
+
+.hub-wrapper .card-body h3 {
+  color: #ffffff !important;
+}
+
+.hub-wrapper .card-body p {
+  color: #afc1bc !important;
+}
