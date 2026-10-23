@@ -115,7 +115,7 @@
       .from('profiles')
       .select('*')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
     if (data && !error) {
       player.username = data.username || player.username;
@@ -123,6 +123,14 @@
       player.xp = data.exp || player.xp;
       savePlayer();
       renderPlayer();
+    } else {
+      // Jika profil belum ada di tabel 'profiles', buat profil baru
+      await supabase.from('profiles').insert([{
+        id: userId,
+        username: player.username,
+        rank_title: player.rank_title,
+        exp: player.xp
+      }]);
     }
   }
 
@@ -130,11 +138,12 @@
     if (!supabase || !currentUser) return;
     await supabase
       .from('profiles')
-      .update({
+      .upsert({
+        id: currentUser.id,
+        username: player.username,
         exp: player.xp,
         rank_title: player.rank_title
-      })
-      .eq('id', currentUser.id);
+      });
   }
 
   async function fetchLeaderboard() {
@@ -339,7 +348,7 @@
       });
     }
 
-    // Handlers Kirim & Verifikasi OTP
+    // --- HANDLERS KIRIM & VERIFIKASI OTP ---
     const sendOtpBtn = $("#sendOtpBtn");
     if (sendOtpBtn) {
       sendOtpBtn.addEventListener("click", async () => {
@@ -347,15 +356,22 @@
         const email = emailInput ? emailInput.value.trim() : "";
         if (!email) return showToast("Masukkan email lo dulu!");
 
-        if ($("#authFeedback")) $("#authFeedback").textContent = "Mengirim kode OTP...";
+        if ($("#authFeedback")) $("#authFeedback").textContent = "Mengirim 6-digit OTP...";
         if (!supabase) return showToast("Supabase Client belum terpasang!");
 
-        const { error } = await supabase.auth.signInWithOtp({ email });
+        // PAKSA MENGGUNAKAN OTP FLOW
+        const { error } = await supabase.auth.signInWithOtp({
+          email: email,
+          options: {
+            shouldCreateUser: true
+          }
+        });
 
         if (error) {
           if ($("#authFeedback")) $("#authFeedback").textContent = "Gagal kirim: " + error.message;
         } else {
           if ($("#authFeedback")) $("#authFeedback").textContent = "";
+          showToast("Kode OTP terkirim! Periksa inbox/spam email lo.");
           if ($("#emailStep")) $("#emailStep").hidden = true;
           if ($("#otpStep")) $("#otpStep").hidden = false;
         }
@@ -372,15 +388,36 @@
 
         if (!token) return showToast("Masukkan 6-digit OTP!");
 
-        if ($("#authFeedback")) $("#authFeedback").textContent = "Memverifikasi...";
-        const { data, error } = await supabase.auth.verifyOtp({ email, token, type: 'email' });
+        if ($("#authFeedback")) $("#authFeedback").textContent = "Memverifikasi OTP...";
+        
+        // MENGGUNAKAN VERIFY OTP TIPE EMAIL
+        const { data, error } = await supabase.auth.verifyOtp({
+          email: email,
+          token: token,
+          type: 'email'
+        });
 
         if (error) {
-          if ($("#authFeedback")) $("#authFeedback").textContent = "OTP Salah: " + error.message;
+          // Jika gagal, coba fallback ke tipe 'signup'
+          const fallback = await supabase.auth.verifyOtp({
+            email: email,
+            token: token,
+            type: 'signup'
+          });
+
+          if (fallback.error) {
+            if ($("#authFeedback")) $("#authFeedback").textContent = "OTP Salah / Kedaluwarsa: " + fallback.error.message;
+            return;
+          } else {
+            currentUser = fallback.data.user;
+          }
         } else {
           currentUser = data.user;
-          showToast("Berhasil Login!");
-          closeAuthModal();
+        }
+
+        showToast("Berhasil Login! Sesi kamu aman tersimpan.");
+        closeAuthModal();
+        if (currentUser) {
           await fetchProfileFromSupabase(currentUser.id);
         }
       });
