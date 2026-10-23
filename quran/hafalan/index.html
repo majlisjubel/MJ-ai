@@ -1,1 +1,182 @@
 
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07110e">
+  <meta name="description" content="Qur'an Memory Arena — petualangan menguatkan hafalan Al-Qur'an bersama MJ.">
+  <title>Qur'an Memory Arena — MJ AI</title>
+  <link rel="stylesheet" href="./style.css?v=1">
+  <script src="./script.js?v=1" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="back-button" href="../" aria-label="Kembali ke Qur'an Hub">‹</a>
+      <a class="brand" href="./">
+        <span class="brand-icon">۞</span>
+        <span><strong>MJ <em>ARENA</em></strong><small>QUR'AN MEMORY RPG</small></span>
+      </a>
+      <button class="icon-button" id="soundButton" aria-label="Efek suara" title="Efek suara">♫</button>
+    </header>
+
+    <main>
+      <section class="welcome">
+        <div class="welcome-copy">
+          <div class="eyebrow"><span class="pulse-dot"></span> WORLD OF KNOWLEDGE</div>
+          <p class="greeting">Assalamu'alaikum, Petualang!</p>
+          <h1>Perkuat Hafalan.<br><span>Naikkan Levelmu.</span></h1>
+          <p class="welcome-description">Setiap ayat adalah perjalanan. Setiap murojaah adalah kemajuan.</p>
+        </div>
+        <div class="hero-character" aria-label="Lambang karakter petualang">
+          <div class="character-aura"></div>
+          <div class="character-orbit orbit-one"></div>
+          <div class="character-orbit orbit-two"></div>
+          <div class="character-emblem">۞</div>
+          <span class="character-star star-one">✦</span>
+          <span class="character-star star-two">✧</span>
+          <span class="character-label">HAFIZ PATH</span>
+        </div>
+      </section>
+
+      <section class="player-panel panel">
+        <div class="player-avatar"><span>م</span><i></i></div>
+        <div class="player-info">
+          <div class="player-name-row">
+            <h2>Petualang MJ</h2>
+            <span class="rank-tag">ROOKIE</span>
+          </div>
+          <p id="levelLabel">Level 1 · Pemula</p>
+          <div class="xp-track"><span id="xpBar"></span></div>
+          <div class="xp-label"><span id="xpLabel">0 / 100 XP</span><span id="xpPercent">0%</span></div>
+        </div>
+        <div class="level-badge"><span>LVL</span><strong id="levelNumber">01</strong></div>
+      </section>
+
+      <section class="daily-quest panel">
+        <div class="quest-icon">✦</div>
+        <div class="quest-copy">
+          <div class="section-kicker">DAILY QUEST</div>
+          <h2>Latihan Hari Ini</h2>
+          <p id="questDescription">Selesaikan satu tantangan untuk memperoleh 25 XP.</p>
+          <div class="quest-progress"><span id="questBar"></span></div>
+        </div>
+        <div class="quest-count" id="questCount">0/1</div>
+      </section>
+
+      <section class="game-section">
+        <div class="section-heading">
+          <div><span class="section-kicker">CHOOSE YOUR PATH</span><h2>Gerbang Petualangan</h2></div>
+          <span class="tiny-label">01 — MODES</span>
+        </div>
+
+        <div class="mode-grid">
+          <button class="mode-card mode-green" data-mode="continue">
+            <span class="mode-symbol">۞</span>
+            <span class="mode-number">MODE 01</span>
+            <strong>Sambung Ayat</strong>
+            <small>Lanjutkan ayat berikutnya</small>
+            <span class="mode-bottom"><span>LATIHAN</span><b>↗</b></span>
+          </button>
+
+          <button class="mode-card mode-purple" data-mode="guess">
+            <span class="mode-symbol">✧</span>
+            <span class="mode-number">MODE 02</span>
+            <strong>Tebak Ayat</strong>
+            <small>Uji ingatan dan ketelitian</small>
+            <span class="mode-bottom"><span>QUIZ</span><b>↗</b></span>
+          </button>
+
+          <button class="mode-card mode-blue" data-mode="previous">
+            <span class="mode-symbol">◈</span>
+            <span class="mode-number">MODE 03</span>
+            <strong>Ayat Sebelumnya</strong>
+            <small>Ingat ayat sebelum petunjuk</small>
+            <span class="mode-bottom"><span>MEMORI</span><b>↗</b></span>
+          </button>
+
+          <button class="mode-card mode-gold" data-mode="daily">
+            <span class="mode-symbol">♜</span>
+            <span class="mode-number">MODE 04</span>
+            <strong>Quest Harian</strong>
+            <small>Bangun konsistensi hafalan</small>
+            <span class="mode-bottom"><span>DAILY</span><b>↗</b></span>
+          </button>
+        </div>
+      </section>
+
+      <section class="game-section">
+        <div class="section-heading">
+          <div><span class="section-kicker">BATTLE DESTINATION</span><h2>Siap Bertanding?</h2></div>
+          <span class="tiny-label">02 — BATTLE</span>
+        </div>
+
+        <button class="battle-card battle-users" data-mode="duel-user">
+          <div class="battle-art"><span>⚔</span><i>VS</i><span>⚔</span></div>
+          <div class="battle-copy">
+            <span class="battle-kicker">MULTIPLAYER ARENA</span>
+            <h3>Duel Sesama User</h3>
+            <p>Tantang teman atau cari lawan untuk adu ketepatan hafalan.</p>
+            <span class="battle-action">JELAJAHI DUEL <b>→</b></span>
+          </div>
+          <span class="battle-status">ONLINE</span>
+        </button>
+
+        <button class="battle-card battle-mj" data-mode="duel-mj">
+          <div class="battle-art mj-art"><span>م</span><i>VS</i><span>✦</span></div>
+          <div class="battle-copy">
+            <span class="battle-kicker">AI CHALLENGE</span>
+            <h3>Tantang MJ</h3>
+            <p>Asah hafalanmu melawan MJ dalam tantangan berbasis ayat.</p>
+            <span class="battle-action">TANTANG MJ <b>→</b></span>
+          </div>
+          <span class="battle-status ai-status">AI</span>
+        </button>
+      </section>
+
+      <section class="leaderboard panel">
+        <div class="leader-heading">
+          <div><span class="section-kicker">HALL OF FAME</span><h2>Leaderboard</h2></div>
+          <span class="trophy">🏆</span>
+        </div>
+        <div class="leader-row">
+          <span class="leader-rank">01</span><span class="leader-avatar avatar-one">م</span>
+          <span class="leader-user"><strong>Para Penjaga Hafalan</strong><small>Leaderboard akan tersedia setelah backend terhubung</small></span>
+          <span class="leader-xp">— XP</span>
+        </div>
+        <p class="leader-note">Peringkat global belum aktif. XP saat ini disimpan secara lokal di perangkat ini.</p>
+      </section>
+
+      <footer class="footer">
+        <span>۞</span>
+        <p>Terus belajar, terus murojaah, terus bertumbuh.</p>
+        <small>MJ AI · QUR'AN MEMORY ARENA</small>
+      </footer>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Navigasi arena">
+      <a class="nav-item active" href="./"><span>⌂</span><small>Arena</small></a>
+      <button class="nav-item" data-mode="continue"><span>۞</span><small>Latihan</small></button>
+      <button class="nav-item" data-mode="duel-user"><span>⚔</span><small>Duel</small></button>
+      <button class="nav-item" data-mode="daily"><span>✦</span><small>Quest</small></button>
+    </nav>
+  </div>
+
+  <div class="modal-backdrop" id="gameModal" hidden>
+    <section class="game-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <button class="modal-close" id="closeModal" aria-label="Tutup">×</button>
+      <div class="section-kicker" id="modalKicker">ARENA CHALLENGE</div>
+      <h2 id="modalTitle">Sambung Ayat</h2>
+      <p class="modal-description" id="modalDescription"></p>
+      <div class="verse-box" id="verseBox" hidden></div>
+      <div class="answer-list" id="answerList"></div>
+      <p class="answer-feedback" id="answerFeedback" aria-live="polite"></p>
+      <button class="primary-button" id="continueButton" hidden>Lanjutkan <span>→</span></button>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+                                         </html>
+  
