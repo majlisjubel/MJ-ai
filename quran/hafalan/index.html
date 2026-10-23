@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -7,6 +6,10 @@
   <meta name="theme-color" content="#07110e">
   <meta name="description" content="Qur'an Memory Arena — petualangan menguatkan hafalan Al-Qur'an bersama MJ.">
   <title>Qur'an Memory Arena — MJ AI</title>
+  
+  <!-- Supabase JS Client SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
   <link rel="stylesheet" href="./style.css?v=1">
   <script src="./script.js?v=1" defer></script>
 </head>
@@ -18,6 +21,7 @@
         <span class="brand-icon">۞</span>
         <span><strong>MJ <em>ARENA</em></strong><small>QUR'AN MEMORY RPG</small></span>
       </a>
+      <button class="icon-button" id="authButton" aria-label="Akun / Login" title="Login / Profil">👤</button>
       <button class="icon-button" id="soundButton" aria-label="Efek suara" title="Efek suara">♫</button>
     </header>
 
@@ -25,7 +29,7 @@
       <section class="welcome">
         <div class="welcome-copy">
           <div class="eyebrow"><span class="pulse-dot"></span> WORLD OF KNOWLEDGE</div>
-          <p class="greeting">Assalamu'alaikum, Petualang!</p>
+          <p class="greeting" id="userGreeting">Assalamu'alaikum, Petualang!</p>
           <h1>Perkuat Hafalan.<br><span>Naikkan Levelmu.</span></h1>
           <p class="welcome-description">Setiap ayat adalah perjalanan. Setiap murojaah adalah kemajuan.</p>
         </div>
@@ -44,8 +48,8 @@
         <div class="player-avatar"><span>م</span><i></i></div>
         <div class="player-info">
           <div class="player-name-row">
-            <h2>Petualang MJ</h2>
-            <span class="rank-tag">ROOKIE</span>
+            <h2 id="playerName">Petualang MJ</h2>
+            <span class="rank-tag" id="playerRank">ROOKIE</span>
           </div>
           <p id="levelLabel">Level 1 · Pemula</p>
           <div class="xp-track"><span id="xpBar"></span></div>
@@ -140,12 +144,14 @@
           <div><span class="section-kicker">HALL OF FAME</span><h2>Leaderboard</h2></div>
           <span class="trophy">🏆</span>
         </div>
-        <div class="leader-row">
-          <span class="leader-rank">01</span><span class="leader-avatar avatar-one">م</span>
-          <span class="leader-user"><strong>Para Penjaga Hafalan</strong><small>Leaderboard akan tersedia setelah backend terhubung</small></span>
-          <span class="leader-xp">— XP</span>
+        <div id="leaderboardList">
+          <div class="leader-row">
+            <span class="leader-rank">01</span><span class="leader-avatar avatar-one">م</span>
+            <span class="leader-user"><strong>Para Penjaga Hafalan</strong><small>Leaderboard akan memuat data Supabase...</small></span>
+            <span class="leader-xp">— XP</span>
+          </div>
         </div>
-        <p class="leader-note">Peringkat global belum aktif. XP saat ini disimpan secara lokal di perangkat ini.</p>
+        <p class="leader-note" id="leaderNote">Peringkat terhubung langsung dengan Supabase Server.</p>
       </section>
 
       <footer class="footer">
@@ -163,6 +169,7 @@
     </nav>
   </div>
 
+  <!-- Game Modal -->
   <div class="modal-backdrop" id="gameModal" hidden>
     <section class="game-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <button class="modal-close" id="closeModal" aria-label="Tutup">×</button>
@@ -176,7 +183,31 @@
     </section>
   </div>
 
+  <!-- Auth / Login OTP Modal -->
+  <div class="modal-backdrop" id="authModal" hidden>
+    <section class="game-modal" role="dialog" aria-modal="true">
+      <button class="modal-close" id="closeAuthModal" aria-label="Tutup">×</button>
+      <div class="section-kicker">AKUN PETUALANG</div>
+      <h2>Masuk ke MJ Arena</h2>
+      <p class="modal-description">Masukkan email lo untuk menerima 6-digit kode OTP.</p>
+      
+      <!-- Step 1: Input Email -->
+      <div id="emailStep">
+        <input type="email" id="authEmail" placeholder="email@contoh.com" class="answer-option" style="margin-bottom: 12px; width: 100%;">
+        <button class="primary-button" id="sendOtpBtn">Kirim Kode OTP <span>→</span></button>
+      </div>
+
+      <!-- Step 2: Input OTP (Hidden by default) -->
+      <div id="otpStep" hidden>
+        <p class="modal-description" style="color: var(--green);">Kode OTP dikirim! Cek inbox/spam email lo.</p>
+        <input type="text" id="authOtp" placeholder="123456" maxlength="6" class="answer-option" style="margin-bottom: 12px; width: 100%; text-align: center; letter-spacing: 5px; font-size: 18px;">
+        <button class="primary-button" id="verifyOtpBtn">Verifikasi & Login <span>→</span></button>
+      </div>
+
+      <p class="answer-feedback" id="authFeedback" aria-live="polite"></p>
+    </section>
+  </div>
+
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </body>
-                                         </html>
-  
+</html>
