@@ -1,465 +1,197 @@
-
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#07110e">
-  <meta name="description" content="MJ Qur'an Memory Arena — arena murojaah, tes hafalan, dan perjalanan menjaga hafalan Al-Qur'an.">
-  <title>MJ Qur'an Memory Arena</title>
-
-  <link rel="stylesheet" href="./style.css?v=2">
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./script.js?v=4" defer></script>
-</head>
-
-<body>
-  <div class="app-shell">
-
-    <!-- HEADER -->
-    <header class="topbar">
-      <a class="brand" href="#" aria-label="MJ Qur'an Memory Arena">
-        <div class="brand-mark">MJ</div>
-        <div class="brand-copy">
-          <strong>MJ ARENA</strong>
-          <span>QUR'AN MEMORY</span>
-        </div>
-      </a>
-
-      <div class="header-actions">
-        <button
-          id="soundButton"
-          class="icon-button"
-          type="button"
-          aria-label="Aktifkan atau matikan suara"
-          title="Suara"
-        >🔊</button>
-
-        <button
-          id="authButton"
-          class="auth-button"
-          type="button"
-        >Masuk</button>
-      </div>
-    </header>
-
-    <main>
-
-      <!-- HERO -->
-      <section class="hero-section">
-        <div class="hero-content">
-          <span class="eyebrow">YOUR QUR'AN JOURNEY</span>
-
-          <h1>
-            Jaga Hafalan.<br>
-            <span>Naikkan Level.</span>
-          </h1>
-
-          <p>
-            Arena latihan hafalan Al-Qur'an untuk membangun
-            konsistensi murojaah setiap hari.
-          </p>
-
-          <div class="hero-decoration" aria-hidden="true">۞</div>
-        </div>
-      </section>
-
-      <!-- PLAYER PROFILE -->
-      <section class="player-card" aria-label="Profil pemain">
-        <div class="player-main">
-          <div class="avatar-wrapper">
-            <div id="playerAvatar" class="player-avatar">
-              <span>م</span>
-            </div>
-          </div>
-
-          <div class="player-info">
-            <p class="muted-label">PEMAIN</p>
-
-            <h2 id="playerName">Tamu</h2>
-
-            <p id="userGreeting" class="user-greeting">
-              Masuk untuk menyimpan progresmu.
-            </p>
-
-            <div class="rank-line">
-              <span id="playerRank" class="rank-badge">
-                Pemula
-              </span>
-
-              <span class="level-text">
-                Level <strong id="levelLabel">1</strong>
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div class="xp-section">
-          <div class="xp-heading">
-            <span>Pengalaman (XP)</span>
-            <strong id="xpLabel">0 / 100 XP</strong>
-          </div>
-
-          <div
-            class="progress-track"
-            role="progressbar"
-            aria-label="Progres XP"
-            aria-valuemin="0"
-            aria-valuemax="100"
-            aria-valuenow="0"
-          >
-            <div id="xpBar" class="progress-fill"></div>
-          </div>
-
-          <div class="xp-footer">
-            <span id="xpPercent">0%</span>
-            <span>Menuju level berikutnya</span>
-            <span>Lv. <strong id="levelNumber">1</strong></span>
-          </div>
-        </div>
-      </section>
-
-      <!-- DAILY QUEST -->
-      <section class="quest-card">
-        <div class="section-heading">
-          <div>
-            <span class="eyebrow">DAILY CHALLENGE</span>
-            <h2>Misi Hari Ini</h2>
-          </div>
-
-          <div class="quest-icon" aria-hidden="true">✦</div>
-        </div>
-
-        <p id="questDescription">
-          Selesaikan latihan untuk membangun kebiasaan murojaah.
-        </p>
-
-        <div
-          class="progress-track quest-progress"
-          role="progressbar"
-          aria-label="Progres misi harian"
-          aria-valuemin="0"
-          aria-valuemax="3"
-          aria-valuenow="0"
-        >
-          <div id="questBar" class="progress-fill"></div>
-        </div>
-
-        <div class="quest-footer">
-          <span>Progres misi</span>
-          <strong id="questCount">0/3</strong>
-        </div>
-      </section>
-
-      <!-- GAME MODES -->
-      <section class="modes-section">
-        <div class="section-heading">
-          <div>
-            <span class="eyebrow">CHOOSE YOUR TRAINING</span>
-            <h2>Mode Latihan</h2>
-          </div>
-        </div>
-
-        <div class="mode-grid">
-
-          <button
-            class="mode-card"
-            type="button"
-            data-mode="murojaah"
-          >
-            <span class="mode-icon" aria-hidden="true">📖</span>
-            <span class="mode-tag">REVIEW</span>
-            <strong>Murojaah</strong>
-            <span class="mode-description">
-              Ulangi hafalan agar semakin kuat dan terjaga.
-            </span>
-            <span class="mode-action">Mulai latihan <span aria-hidden="true">→</span></span>
-          </button>
-
-          <button
-            class="mode-card"
-            type="button"
-            data-mode="listening"
-          >
-            <span class="mode-icon" aria-hidden="true">🎧</span>
-            <span class="mode-tag">LISTEN</span>
-            <strong>Listening</strong>
-            <span class="mode-description">
-              Latih ingatan dengan mendengarkan ayat.
-            </span>
-            <span class="mode-action">Mulai latihan <span aria-hidden="true">→</span></span>
-          </button>
-
-          <button
-            class="mode-card"
-            type="button"
-            data-mode="quiz"
-          >
-            <span class="mode-icon" aria-hidden="true">🧠</span>
-            <span class="mode-tag">CHALLENGE</span>
-            <strong>Tes Hafalan</strong>
-            <span class="mode-description">
-              Uji ingatanmu melalui tantangan hafalan.
-            </span>
-            <span class="mode-action">Mulai tes <span aria-hidden="true">→</span></span>
-          </button>
-
-        </div>
-      </section>
-
-      <!-- LEADERBOARD -->
-      <section class="leaderboard-section">
-        <div class="section-heading">
-          <div>
-            <span class="eyebrow">ARENA RANKING</span>
-            <h2>Leaderboard</h2>
-          </div>
-
-          <span class="leaderboard-trophy" aria-hidden="true">🏆</span>
-        </div>
-
-        <div class="leaderboard-card">
-          <div class="leaderboard-heading">
-            <span>Peringkat pemain</span>
-            <span>XP</span>
-          </div>
-
-          <div id="leaderboardList" class="leaderboard-list">
-            <div class="leaderboard-empty">
-              Memuat leaderboard...
-            </div>
-          </div>
-
-          <p id="leaderNote" class="leader-note">
-            Peringkat diperbarui berdasarkan pengalaman pemain.
-          </p>
-        </div>
-      </section>
-
-      <!-- FOOTER -->
-      <footer class="app-footer">
-        <div class="footer-brand">MJ <span>QUR'AN MEMORY ARENA</span></div>
-        <p>Pelan-pelan, konsisten, dan terus menjaga hafalan.</p>
-        <p class="footer-copyright">© 2026 MJ Arena</p>
-      </footer>
-
-    </main>
-  </div>
-
-  <!-- GAME MODAL -->
-  <div
-    id="gameModal"
-    class="modal-overlay"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="modalTitle"
-    hidden
-  >
-    <div class="modal-card game-modal-card">
-      <button
-        id="closeModal"
-        class="modal-close"
-        type="button"
-        aria-label="Tutup latihan"
-      >×</button>
-
-      <span id="modalKicker" class="eyebrow">TRAINING MODE</span>
-
-      <h2 id="modalTitle">Latihan Hafalan</h2>
-
-      <p id="modalDescription">
-        Siap memulai latihan?
-      </p>
-
-      <div id="verseBox" class="verse-box">
-        <p>Ayat latihan akan muncul di sini.</p>
-      </div>
-
-      <div id="answerList" class="answer-list"></div>
-
-      <div
-        id="answerFeedback"
-        class="answer-feedback"
-        role="status"
-        aria-live="polite"
-      ></div>
-
-      <button
-        id="continueButton"
-        class="primary-button"
-        type="button"
-        hidden
-      >Lanjutkan</button>
-    </div>
-  </div>
-
-  <!-- AUTH / LOGIN / PROFILE MODAL -->
-  <div
-    id="authModal"
-    class="modal-overlay"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="authModalTitle"
-    hidden
-  >
-    <div class="modal-card auth-modal-card">
-
-      <button
-        id="closeAuthModal"
-        class="modal-close"
-        type="button"
-        aria-label="Tutup jendela akun"
-      >×</button>
-
-      <div class="auth-brand-mark">MJ</div>
-
-      <span class="eyebrow">YOUR ACCOUNT</span>
-
-      <h2 id="authModalTitle">Akun MJ Arena</h2>
-
-      <p class="auth-intro">
-        Masuk untuk menyimpan progres dan perjalanan hafalanmu.
-      </p>
-
-      <!-- STEP 1: EMAIL -->
-      <section id="emailStep" class="auth-step">
-        <label for="authEmail">Alamat email</label>
-
-        <input
-          id="authEmail"
-          name="email"
-          type="email"
-          placeholder="nama@email.com"
-          autocomplete="email"
-          inputmode="email"
-          required
-        >
-
-        <button
-          id="sendOtpBtn"
-          class="primary-button"
-          type="button"
-        >Kirim kode OTP</button>
-
-        <p class="form-hint">
-          Kami akan mengirim kode verifikasi ke email kamu.
-        </p>
-      </section>
-
-      <!-- STEP 2: OTP -->
-      <section id="otpStep" class="auth-step" hidden>
-        <label for="authOtp">Kode OTP</label>
-
-        <input
-          id="authOtp"
-          name="otp"
-          type="text"
-          placeholder="Masukkan kode OTP"
-          inputmode="numeric"
-          autocomplete="one-time-code"
-          maxlength="8"
-        >
-
-        <button
-          id="verifyOtpBtn"
-          class="primary-button"
-          type="button"
-        >Verifikasi dan masuk</button>
-
-        <button
-          id="backToEmailBtn"
-          class="text-button"
-          type="button"
-        >Kembali ke email</button>
-
-        <p class="form-hint">
-          Periksa kotak masuk dan folder spam email kamu.
-        </p>
-      </section>
-
-      <!-- STEP 3: PROFILE -->
-      <section id="profileStep" class="auth-step" hidden>
-        <div class="profile-avatar-editor">
-          <div id="profileAvatarPreview" class="profile-avatar-preview">
-            <span>م</span>
-          </div>
-
-          <label for="profileAvatarFile" class="avatar-upload-label">
-            Pilih foto profil
-          </label>
-
-          <input
-            id="profileAvatarFile"
-            name="avatar"
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-          >
-
-          <p class="form-hint">
-            Gunakan gambar JPG, PNG, atau WebP.
-          </p>
-        </div>
-
-        <label for="profileEmail">Email akun</label>
-
-        <input
-          id="profileEmail"
-          name="profileEmail"
-          type="email"
-          readonly
-          autocomplete="email"
-        >
-
-        <label for="profileUsername">Username pemain</label>
-
-        <input
-          id="profileUsername"
-          name="username"
-          type="text"
-          placeholder="contoh: hafiz_muda"
-          minlength="3"
-          maxlength="24"
-          autocomplete="nickname"
-        >
-
-        <button
-          id="saveProfileBtn"
-          class="primary-button"
-          type="button"
-        >Simpan profil</button>
-
-        <button
-          id="logoutBtn"
-          class="secondary-button"
-          type="button"
-        >Keluar dari akun</button>
-      </section>
-
-      <!-- AUTH FEEDBACK -->
-      <p
-        id="authFeedback"
-        class="auth-feedback"
-        role="status"
-        aria-live="polite"
-      ></p>
-
-      <p class="auth-terms">
-        Dengan masuk, kamu dapat menyimpan progres permainan
-        ke akun MJ Arena.
-      </p>
-
-    </div>
-  </div>
-
-  <!-- TOAST NOTIFICATION -->
-  <div
-    id="toast"
-    class="toast"
-    role="status"
-    aria-live="polite"
-    hidden
-  ></div>
-
-</body>
+<!DOCTYPE html>  <html lang="id">  
+<head>  
+  <meta charset="UTF-8">  
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">  
+  <meta name="theme-color" content="#07110e">  
+  <meta name="description" content="Qur'an Memory Arena — petualangan menguatkan hafalan Al-Qur'an bersama MJ.">  
+  <title>Qur'an Memory Arena — MJ AI</title>    <!-- Supabase JS Client SDK -->    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>    <link rel="stylesheet" href="./style.css?v=1">  
+  <script src="./script.js?v=3" defer></script>  
+</head>  
+<body>  
+  <div class="app-shell">  
+    <header class="topbar">  
+      <a class="back-button" href="../" aria-label="Kembali ke Qur'an Hub">‹</a>  
+      <a class="brand" href="./">  
+        <span class="brand-icon">۞</span>  
+        <span><strong>MJ <em>ARENA</em></strong><small>QUR'AN MEMORY RPG</small></span>  
+      </a>  
+      <button class="icon-button" id="authButton" aria-label="Akun / Login" title="Login / Profil">👤</button>  
+      <button class="icon-button" id="soundButton" aria-label="Efek suara" title="Efek suara">♫</button>  
+    </header>  <main>  
+  <section class="welcome">  
+    <div class="welcome-copy">  
+      <div class="eyebrow"><span class="pulse-dot"></span> WORLD OF KNOWLEDGE</div>  
+      <p class="greeting" id="userGreeting">Assalamu'alaikum, Petualang!</p>  
+      <h1>Perkuat Hafalan.<br><span>Naikkan Levelmu.</span></h1>  
+      <p class="welcome-description">Setiap ayat adalah perjalanan. Setiap murojaah adalah kemajuan.</p>  
+    </div>  
+    <div class="hero-character" aria-label="Lambang karakter petualang">  
+      <div class="character-aura"></div>  
+      <div class="character-orbit orbit-one"></div>  
+      <div class="character-orbit orbit-two"></div>  
+      <div class="character-emblem">۞</div>  
+      <span class="character-star star-one">✦</span>  
+      <span class="character-star star-two">✧</span>  
+      <span class="character-label">HAFIZ PATH</span>  
+    </div>  
+  </section>  
+
+  <section class="player-panel panel">  
+    <div class="player-avatar"><span>م</span><i></i></div>  
+    <div class="player-info">  
+      <div class="player-name-row">  
+        <h2 id="playerName">Petualang MJ</h2>  
+        <span class="rank-tag" id="playerRank">ROOKIE</span>  
+      </div>  
+      <p id="levelLabel">Level 1 · Pemula</p>  
+      <div class="xp-track"><span id="xpBar"></span></div>  
+      <div class="xp-label"><span id="xpLabel">0 / 100 XP</span><span id="xpPercent">0%</span></div>  
+    </div>  
+    <div class="level-badge"><span>LVL</span><strong id="levelNumber">01</strong></div>  
+  </section>  
+
+  <section class="daily-quest panel">  
+    <div class="quest-icon">✦</div>  
+    <div class="quest-copy">  
+      <div class="section-kicker">DAILY QUEST</div>  
+      <h2>Latihan Hari Ini</h2>  
+      <p id="questDescription">Selesaikan satu tantangan untuk memperoleh 25 XP.</p>  
+      <div class="quest-progress"><span id="questBar"></span></div>  
+    </div>  
+    <div class="quest-count" id="questCount">0/1</div>  
+  </section>  
+
+  <section class="game-section">  
+    <div class="section-heading">  
+      <div><span class="section-kicker">CHOOSE YOUR PATH</span><h2>Gerbang Petualangan</h2></div>  
+      <span class="tiny-label">01 — MODES</span>  
+    </div>  
+
+    <div class="mode-grid">  
+      <button class="mode-card mode-green" data-mode="continue">  
+        <span class="mode-symbol">۞</span>  
+        <span class="mode-number">MODE 01</span>  
+        <strong>Sambung Ayat</strong>  
+        <small>Lanjutkan ayat berikutnya</small>  
+        <span class="mode-bottom"><span>LATIHAN</span><b>↗</b></span>  
+      </button>  
+
+      <button class="mode-card mode-purple" data-mode="guess">  
+        <span class="mode-symbol">✧</span>  
+        <span class="mode-number">MODE 02</span>  
+        <strong>Tebak Ayat</strong>  
+        <small>Uji ingatan dan ketelitian</small>  
+        <span class="mode-bottom"><span>QUIZ</span><b>↗</b></span>  
+      </button>  
+
+      <button class="mode-card mode-blue" data-mode="previous">  
+        <span class="mode-symbol">◈</span>  
+        <span class="mode-number">MODE 03</span>  
+        <strong>Ayat Sebelumnya</strong>  
+        <small>Ingat ayat sebelum petunjuk</small>  
+        <span class="mode-bottom"><span>MEMORI</span><b>↗</b></span>  
+      </button>  
+
+      <button class="mode-card mode-gold" data-mode="daily">  
+        <span class="mode-symbol">♜</span>  
+        <span class="mode-number">MODE 04</span>  
+        <strong>Quest Harian</strong>  
+        <small>Bangun konsistensi hafalan</small>  
+        <span class="mode-bottom"><span>DAILY</span><b>↗</b></span>  
+      </button>  
+    </div>  
+  </section>  
+
+  <section class="game-section">  
+    <div class="section-heading">  
+      <div><span class="section-kicker">BATTLE DESTINATION</span><h2>Siap Bertanding?</h2></div>  
+      <span class="tiny-label">02 — BATTLE</span>  
+    </div>  
+
+    <button class="battle-card battle-users" data-mode="duel-user">  
+      <div class="battle-art"><span>⚔</span><i>VS</i><span>⚔</span></div>  
+      <div class="battle-copy">  
+        <span class="battle-kicker">MULTIPLAYER ARENA</span>  
+        <h3>Duel Sesama User</h3>  
+        <p>Tantang teman atau cari lawan untuk adu ketepatan hafalan.</p>  
+        <span class="battle-action">JELAJAHI DUEL <b>→</b></span>  
+      </div>  
+      <span class="battle-status">ONLINE</span>  
+    </button>  
+
+    <button class="battle-card battle-mj" data-mode="duel-mj">  
+      <div class="battle-art mj-art"><span>م</span><i>VS</i><span>✦</span></div>  
+      <div class="battle-copy">  
+        <span class="battle-kicker">AI CHALLENGE</span>  
+        <h3>Tantang MJ</h3>  
+        <p>Asah hafalanmu melawan MJ dalam tantangan berbasis ayat.</p>  
+        <span class="battle-action">TANTANG MJ <b>→</b></span>  
+      </div>  
+      <span class="battle-status ai-status">AI</span>  
+    </button>  
+  </section>  
+
+  <section class="leaderboard panel">  
+    <div class="leader-heading">  
+      <div><span class="section-kicker">HALL OF FAME</span><h2>Leaderboard</h2></div>  
+      <span class="trophy">🏆</span>  
+    </div>  
+    <div id="leaderboardList">  
+      <div class="leader-row">  
+        <span class="leader-rank">01</span><span class="leader-avatar avatar-one">م</span>  
+        <span class="leader-user"><strong>Para Penjaga Hafalan</strong><small>Leaderboard akan memuat data Supabase...</small></span>  
+        <span class="leader-xp">— XP</span>  
+      </div>  
+    </div>  
+    <p class="leader-note" id="leaderNote">Peringkat terhubung langsung dengan Supabase Server.</p>  
+  </section>  
+
+  <footer class="footer">  
+    <span>۞</span>  
+    <p>Terus belajar, terus murojaah, terus bertumbuh.</p>  
+    <small>MJ AI · QUR'AN MEMORY ARENA</small>  
+  </footer>  
+</main>  
+
+<nav class="bottom-nav" aria-label="Navigasi arena">  
+  <a class="nav-item active" href="./"><span>⌂</span><small>Arena</small></a>  
+  <button class="nav-item" data-mode="continue"><span>۞</span><small>Latihan</small></button>  
+  <button class="nav-item" data-mode="duel-user"><span>⚔</span><small>Duel</small></button>  
+  <button class="nav-item" data-mode="daily"><span>✦</span><small>Quest</small></button>  
+</nav>
+
+  </div>    <!-- Game Modal -->    <div class="modal-backdrop" id="gameModal" hidden>  
+    <section class="game-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">  
+      <button class="modal-close" id="closeModal" aria-label="Tutup">×</button>  
+      <div class="section-kicker" id="modalKicker">ARENA CHALLENGE</div>  
+      <h2 id="modalTitle">Sambung Ayat</h2>  
+      <p class="modal-description" id="modalDescription"></p>  
+      <div class="verse-box" id="verseBox" hidden></div>  
+      <div class="answer-list" id="answerList"></div>  
+      <p class="answer-feedback" id="answerFeedback" aria-live="polite"></p>  
+      <button class="primary-button" id="continueButton" hidden>Lanjutkan <span>→</span></button>  
+    </section>  
+  </div>    <!-- Auth / Login OTP Modal -->    <div class="modal-backdrop" id="authModal" hidden>  
+    <section class="game-modal" role="dialog" aria-modal="true">  
+      <button class="modal-close" id="closeAuthModal" aria-label="Tutup">×</button>  
+      <div class="section-kicker">AKUN PETUALANG</div>  
+      <h2>Masuk ke MJ Arena</h2>  
+      <p class="modal-description">Masukkan email lo untuk menerima 6-digit kode OTP.</p>  <!-- Step 1: Input Email -->  
+  <div id="emailStep">  
+    <input type="email" id="authEmail" placeholder="email@contoh.com" class="answer-option" style="margin-bottom: 12px; width: 100%;">  
+    <button class="primary-button" id="sendOtpBtn">Kirim Kode OTP <span>→</span></button>  
+  </div>  
+
+  <!-- Step 2: Input OTP (Hidden by default) -->  
+  <div id="otpStep" hidden>  
+    <p class="modal-description" style="color: var(--green);">Kode OTP dikirim! Cek inbox/spam email lo.</p>  
+    <input type="text" id="authOtp" placeholder="123456" maxlength="6" class="answer-option" style="margin-bottom: 12px; width: 100%; text-align: center; letter-spacing: 5px; font-size: 18px;">  
+    <button class="primary-button" id="verifyOtpBtn">Verifikasi & Login <span>→</span></button>  
+  </div>  
+
+  <p class="answer-feedback" id="authFeedback" aria-live="polite"></p>  
+</section>
+
+  </div>    <div class="toast" id="toast" role="status" aria-live="polite"></div>  
+</body>  
 </html>
