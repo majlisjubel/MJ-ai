@@ -1,58 +1,193 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#08080a">
-  <title>MJ AI - Al-Qur'an Hub</title>
-  <link rel="stylesheet" href="./style.css?v=7">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#050d0b">
+  <meta name="description" content="Jelajahi Murojaah, Listening, dan Qur'an Memory Arena bersama MJ.">
+  <title>MJ Qur'an — Qur'an Ecosystem</title>
+  <link rel="stylesheet" href="./style.css?v=8">
 </head>
 <body>
+  <main class="hub-wrapper">
 
-  <div class="hub-wrapper">
-    <!-- Header Presisi -->
+    <!-- HEADER -->
     <header class="hub-header">
-      <a href="../" class="btn-back">←</a>
-      <div class="header-title-placeholder"></div>
+      <a href="../" class="btn-back" aria-label="Kembali ke MJ AI">
+        <span aria-hidden="true">←</span>
+      </a>
+
+      <a href="./" class="brand" aria-label="MJ Qur'an beranda">
+        <span class="brand-mark">M</span>
+        <span class="brand-copy">
+          <strong>MJ AI</strong>
+          <small>QUR'AN ECOSYSTEM</small>
+        </span>
+      </a>
+
+      <span class="header-pill">
+        <span class="online-dot"></span>
+        Qur'an Hub
+      </span>
     </header>
 
-    <!-- Hero Slogan -->
+    <!-- HERO -->
     <section class="hub-hero">
-      <div class="badge-tag">✨ MJ QUR'AN ECOSYSTEM</div>
-      <h1>Lebih Dekat dengan Al-Qur'an Bersama MJ</h1>
-      <p>Pilih mode aktivitas Al-Qur'an kamu hari ini</p>
+      <div class="hero-decoration decoration-one"></div>
+      <div class="hero-decoration decoration-two"></div>
+
+      <div class="hero-content">
+        <div class="badge-tag">
+          <span class="sparkle">✦</span>
+          MJ QUR'AN ECOSYSTEM
+        </div>
+
+        <p class="hero-greeting">Assalamu'alaikum, Sahabat MJ</p>
+
+        <h1>
+          Saatnya Lebih Dekat
+          dengan <span>Al-Qur'an</span>
+        </h1>
+
+        <p class="hero-description">
+          Temani perjalananmu menghafal, memahami,
+          dan mengulang ayat Al-Qur'an bersama MJ.
+        </p>
+
+        <a href="#fitur" class="hero-cta">
+          <span aria-hidden="true">✦</span>
+          Yuk, pilih fitur favoritmu
+          <span class="cta-arrow" aria-hidden="true">›</span>
+        </a>
+      </div>
+
+      <div class="hero-emblem" aria-hidden="true">
+        <div class="emblem-ring">
+          <span class="emblem-crescent">☾</span>
+          <span class="emblem-book">۞</span>
+          <span class="emblem-caption">اقْرَأْ</span>
+        </div>
+      </div>
+
+      <div class="hero-bottom-glow"></div>
     </section>
 
-    <!-- Menu Grid -->
-    <nav class="hub-menu">
-      <a href="./murojaah/" class="menu-card card-murojaah">
-        <div class="card-icon">🎙️</div>
-        <div class="card-body">
-          <h3>Murojaah AI</h3>
-          <p>Koreksi bacaan & voice tracking</p>
+    <!-- FITUR UTAMA -->
+    <section class="features-section" id="fitur">
+      <div class="section-heading">
+        <div>
+          <span class="section-kicker">EXPLORE YOUR JOURNEY</span>
+          <h2><span class="heading-star">✦</span> Fitur Utama</h2>
         </div>
-        <div class="card-arrow">›</div>
-      </a>
+        <span class="section-note">Pilih perjalananmu</span>
+      </div>
 
-      <a href="./listening/" class="menu-card">
-        <div class="card-icon">🎧</div>
-        <div class="card-body">
-          <h3>Listening</h3>
-          <p>Lantunan murattal para masayikh pilihan</p>
+      <nav class="hub-menu" aria-label="Fitur Al-Qur'an">
+
+        <!-- MUROJAAH -->
+        <a href="./murojaah/" class="menu-card card-murojaah">
+          <div class="card-art art-murojaah" aria-hidden="true">
+            <span class="art-orbit"></span>
+            <span class="art-symbol">۞</span>
+            <span class="art-emoji">📖</span>
+          </div>
+
+          <div class="card-body">
+            <div class="card-title-row">
+              <h3>Murojaah AI</h3>
+              <span class="status-pill">Tersedia</span>
+            </div>
+
+            <p>Latihan membaca dan mengulang ayat Al-Qur'an dengan mudah.</p>
+
+            <div class="card-tags">
+              <span>♧ Teks Arab</span>
+              <span>♬ Audio</span>
+              <span>✧ Tajwid</span>
+            </div>
+          </div>
+
+          <span class="card-arrow" aria-hidden="true">›</span>
+        </a>
+
+        <!-- LISTENING -->
+        <a href="./listening/" class="menu-card card-listening">
+          <div class="card-art art-listening" aria-hidden="true">
+            <span class="art-orbit"></span>
+            <span class="art-emoji">🎧</span>
+            <span class="sound-wave">)))</span>
+          </div>
+
+          <div class="card-body">
+            <div class="card-title-row">
+              <h3>Listening</h3>
+              <span class="status-pill">Tersedia</span>
+            </div>
+
+            <p>Dengarkan lantunan murattal para qari pilihan dan latih pendengaranmu.</p>
+
+            <div class="card-tags">
+              <span>♬ Qari Pilihan</span>
+              <span>▷ Mode Latihan</span>
+            </div>
+          </div>
+
+          <span class="card-arrow" aria-hidden="true">›</span>
+        </a>
+
+        <!-- QUR'AN MEMORY ARENA -->
+        <a href="./hafalan/" class="menu-card card-arena">
+          <div class="arena-glow"></div>
+
+          <div class="card-art art-arena" aria-hidden="true">
+            <span class="art-orbit"></span>
+            <span class="art-emoji">🎮</span>
+            <span class="arena-star">✦</span>
+          </div>
+
+          <div class="card-body">
+            <div class="card-title-row arena-title-row">
+              <h3>Qur'an Memory Arena</h3>
+              <span class="game-pill">GAME</span>
+            </div>
+
+            <p>
+              Uji hafalanmu lewat berbagai tantangan,
+              sambung ayat, dan raih peringkat tertinggi!
+            </p>
+
+            <div class="card-tags arena-tags">
+              <span>▤ Sambung Ayat</span>
+              <span>◎ Tebak Ayat</span>
+              <span>⚔ Duel</span>
+              <span>🏆 Leaderboard</span>
+            </div>
+          </div>
+
+          <span class="card-arrow arena-arrow" aria-hidden="true">›</span>
+        </a>
+      </nav>
+
+      <!-- LEADERBOARD TEASER -->
+      <aside class="leaderboard-teaser">
+        <div class="trophy-icon" aria-hidden="true">🏆</div>
+
+        <div class="teaser-copy">
+          <h3>Tantang Dirimu, Raih Poin!</h3>
+          <p>Asah hafalanmu, selangkah demi selangkah.</p>
         </div>
-        <div class="card-arrow">›</div>
-      </a>
 
-      <a href="./hafalan/" class="menu-card">
-        <div class="card-icon">🧠</div>
-        <div class="card-body">
-          <h3>Tes Hafalan</h3>
-          <p>Uji retensi, kuis & sambung ayat</p>
-        </div>
-        <div class="card-arrow">›</div>
-      </a>
-    </nav>
-  </div>
+        <span class="coming-soon">SEGERA</span>
+      </aside>
+    </section>
 
+    <footer class="hub-footer">
+      <span class="footer-star">✦</span>
+      <p>Semoga setiap ayat mendekatkan kita pada kebaikan.</p>
+      <span class="footer-brand">MJ AI · QUR'AN</span>
+    </footer>
+
+  </main>
 </body>
 </html>
