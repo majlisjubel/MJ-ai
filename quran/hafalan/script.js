@@ -124,7 +124,7 @@
       savePlayer();
       renderPlayer();
     } else {
-      // Jika profil belum ada di tabel 'profiles', buat profil baru
+      // Jika profil belum ada di tabel 'profiles', buat profil baru secara otomatis
       await supabase.from('profiles').insert([{
         id: userId,
         username: player.username,
@@ -359,7 +359,6 @@
         if ($("#authFeedback")) $("#authFeedback").textContent = "Mengirim 6-digit OTP...";
         if (!supabase) return showToast("Supabase Client belum terpasang!");
 
-        // PAKSA MENGGUNAKAN OTP FLOW
         const { error } = await supabase.auth.signInWithOtp({
           email: email,
           options: {
@@ -390,35 +389,40 @@
 
         if ($("#authFeedback")) $("#authFeedback").textContent = "Memverifikasi OTP...";
         
-        // MENGGUNAKAN VERIFY OTP TIPE EMAIL
-        const { data, error } = await supabase.auth.verifyOtp({
+        // 1. Coba verifikasi dengan tipe 'email'
+        let res = await supabase.auth.verifyOtp({
           email: email,
           token: token,
           type: 'email'
         });
 
-        if (error) {
-          // Jika gagal, coba fallback ke tipe 'signup'
-          const fallback = await supabase.auth.verifyOtp({
+        // 2. Jika gagal, coba fallback ke tipe 'magiclink'
+        if (res.error) {
+          res = await supabase.auth.verifyOtp({
+            email: email,
+            token: token,
+            type: 'magiclink'
+          });
+        }
+
+        // 3. Jika masih gagal, coba fallback ke tipe 'signup'
+        if (res.error) {
+          res = await supabase.auth.verifyOtp({
             email: email,
             token: token,
             type: 'signup'
           });
-
-          if (fallback.error) {
-            if ($("#authFeedback")) $("#authFeedback").textContent = "OTP Salah / Kedaluwarsa: " + fallback.error.message;
-            return;
-          } else {
-            currentUser = fallback.data.user;
-          }
-        } else {
-          currentUser = data.user;
         }
 
-        showToast("Berhasil Login! Sesi kamu aman tersimpan.");
-        closeAuthModal();
-        if (currentUser) {
-          await fetchProfileFromSupabase(currentUser.id);
+        if (res.error) {
+          if ($("#authFeedback")) $("#authFeedback").textContent = "OTP Salah / Kedaluwarsa: " + res.error.message;
+        } else {
+          currentUser = res.data.user;
+          showToast("Berhasil Login! Sesi kamu aman tersimpan.");
+          closeAuthModal();
+          if (currentUser) {
+            await fetchProfileFromSupabase(currentUser.id);
+          }
         }
       });
     }
