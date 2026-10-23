@@ -9,7 +9,8 @@
     ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) 
     : null;
 
-  const $ = (selector) => document.querySelector(selector); const $$ = (selector) => document.querySelectorAll(selector);
+  const $ = (selector) => document.querySelector(selector);
+  const $$ = (selector) => document.querySelectorAll(selector);
 
   const STORAGE_KEY = "mj-quran-arena-player-v1";
   const today = new Date().toLocaleDateString("en-CA");
@@ -123,7 +124,6 @@
       savePlayer();
       renderPlayer();
     } else {
-      // Jika profil belum ada di tabel 'profiles', buat profil baru
       await supabase.from('profiles').insert([{
         id: userId,
         username: player.username,
@@ -279,7 +279,16 @@
       });
     }
 
-    if ($("#gameModal")) $("#gameModal").hidden = false; document.body.style.overflow = "hidden"; }    function checkAnswer(selectedIndex) { if (answered \vert{}\vert{} !currentQuestion) return; answered = true;      const isCorrect = selectedIndex === currentQuestion.correct; const buttons = $$("#answerList .answer-option");
+    if ($("#gameModal")) $("#gameModal").hidden = false;
+    document.body.style.overflow = "hidden";
+  }
+
+  function checkAnswer(selectedIndex) {
+    if (answered || !currentQuestion) return;
+    answered = true;
+
+    const isCorrect = selectedIndex === currentQuestion.correct;
+    const buttons = $$("#answerList .answer-option");
 
     buttons.forEach((button, index) => {
       button.disabled = true;
@@ -322,10 +331,10 @@
   }
 
   function openAuthModal() {
-    if ($("#authModal")) $("#authModal").hidden = false;
+    const authModal = $("#authModal");
+    if (authModal) authModal.hidden = false;
     document.body.style.overflow = "hidden";
 
-    // Jika user sudah terverifikasi login: tampilkan status email & tombol logout
     if (currentUser) {
       if ($("#emailStep")) $("#emailStep").hidden = true;
       if ($("#otpStep")) $("#otpStep").hidden = true;
@@ -352,5 +361,141 @@
         }
       }
     } else {
-      // Jika user belum login: reset form ke tampilan input email bersih
-      resetAuth
+      resetAuthModal();
+    }
+  }
+
+  function closeAuthModal() {
+    const authModal = $("#authModal");
+    if (authModal) authModal.hidden = true;
+    document.body.style.overflow = "";
+    resetAuthModal();
+  }
+
+  // --- EVENT LISTENERS & INITIALIZATION ---
+
+  document.addEventListener("DOMContentLoaded", () => {
+    // Tangkap tombol profil secara aman (mencegah null element)
+    const authBtn = $("#authButton");
+    if (authBtn) {
+      authBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        openAuthModal();
+      });
+    }
+
+    const closeAuthBtn = $("#closeAuthModal");
+    if (closeAuthBtn) closeAuthBtn.addEventListener("click", closeAuthModal);
+
+    const authModal = $("#authModal");
+    if (authModal) {
+      authModal.addEventListener("click", (e) => {
+        if (e.target === authModal) closeAuthModal();
+      });
+    }
+
+    // Handlers Kirim & Verifikasi OTP
+    const sendOtpBtn = $("#sendOtpBtn");
+    if (sendOtpBtn) {
+      sendOtpBtn.addEventListener("click", async () => {
+        const emailInput = $("#authEmail");
+        const email = emailInput ? emailInput.value.trim() : "";
+        if (!email) return showToast("Masukkan email lo dulu!");
+
+        if ($("#authFeedback")) $("#authFeedback").textContent = "Mengirim 6-digit OTP...";
+        if (!supabase) return showToast("Supabase Client belum terpasang!");
+
+        const { error } = await supabase.auth.signInWithOtp({
+          email: email,
+          options: { shouldCreateUser: true }
+        });
+
+        if (error) {
+          if ($("#authFeedback")) $("#authFeedback").textContent = "Gagal kirim: " + error.message;
+        } else {
+          if ($("#authFeedback")) $("#authFeedback").textContent = "";
+          showToast("Kode OTP terkirim! Periksa inbox/spam email lo.");
+          if ($("#emailStep")) $("#emailStep").hidden = true;
+          if ($("#otpStep")) $("#otpStep").hidden = false;
+        }
+      });
+    }
+
+    const verifyOtpBtn = $("#verifyOtpBtn");
+    if (verifyOtpBtn) {
+      verifyOtpBtn.addEventListener("click", async () => {
+        const emailInput = $("#authEmail");
+        const otpInput = $("#authOtp");
+        const email = emailInput ? emailInput.value.trim() : "";
+        const token = otpInput ? otpInput.value.trim() : "";
+
+        if (!token) return showToast("Masukkan 6-digit OTP!");
+
+        if ($("#authFeedback")) $("#authFeedback").textContent = "Memverifikasi OTP...";
+        
+        let res = await supabase.auth.verifyOtp({ email, token, type: 'email' });
+        if (res.error) {
+          res = await supabase.auth.verifyOtp({ email, token, type: 'magiclink' });
+        }
+        if (res.error) {
+          res = await supabase.auth.verifyOtp({ email, token, type: 'signup' });
+        }
+
+        if (res.error) {
+          if ($("#authFeedback")) $("#authFeedback").textContent = "OTP Salah / Kedaluwarsa: " + res.error.message;
+        } else {
+          currentUser = res.data.user;
+          showToast("Berhasil Login! Sesi kamu aman tersimpan.");
+          closeAuthModal();
+          if (currentUser) {
+            await fetchProfileFromSupabase(currentUser.id);
+          }
+        }
+      });
+    }
+
+    // Modal Game Event Handlers
+    $$("[data-mode]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const mode = button.dataset.mode;
+        if (modes[mode]) {
+          openModal(mode);
+        } else if (mode === "daily") {
+          if (player.completedDates.includes(today)) {
+            showToast("Quest hari ini sudah selesai. Mantap!");
+          } else {
+            showToast("Quest harian: selesaikan tantangan untuk +25 XP.");
+            openModal("continue");
+          }
+        } else if (mode === "duel-user") {
+          showToast("Multiplayer Arena: Mencari Room di Supabase...");
+        } else if (mode === "duel-mj") {
+          showToast("Tantang MJ: Bot AI siap diajak duel!");
+        } else {
+          showToast("Mode ini sedang disiapkan.");
+        }
+      });
+    });
+
+    if ($("#closeModal")) $("#closeModal").addEventListener("click", closeModal);
+    if ($("#gameModal")) {
+      $("#gameModal").addEventListener("click", (e) => {
+        if (e.target === $("#gameModal")) closeModal();
+      });
+    }
+    if ($("#continueButton")) $("#continueButton").addEventListener("click", closeModal);
+
+    const soundBtn = $("#soundButton");
+    if (soundBtn) {
+      soundBtn.addEventListener("click", () => {
+        soundEnabled = !soundEnabled;
+        soundBtn.textContent = soundEnabled ? "♫" : "♪";
+        showToast(soundEnabled ? "Efek suara diaktifkan." : "Efek suara dinonaktifkan.");
+      });
+    }
+
+    // Initial Execution
+    renderPlayer();
+    checkUserSession();
+  });
+})();
