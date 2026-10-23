@@ -579,10 +579,35 @@
 
   function bindEvents() {
     // Header profile: one listener only, with no duplicate const declarations.
-    $("#authButton")?.addEventListener("click", (event) => {
-      event.preventDefault();
-      openAuthModal();
-    });
+    $("#authButton")?.addEventListener("click", async (event) => {
+  event.preventDefault();
+
+  // Cek sesi login terbaru dari Supabase
+  if (supabase) {
+    const { data, error } = await supabase.auth.getSession();
+
+    if (!error && data.session?.user) {
+      currentUser = data.session.user;
+
+      // Sudah login: jangan tampilkan form OTP lagi
+      closeAuthModal();
+
+      const profileModal = $("#profileModal");
+
+      if (profileModal) {
+        profileModal.classList.add("is-open");
+        profileModal.setAttribute("aria-hidden", "false");
+      } else {
+        showToast("Lo sudah login ke MJ Arena!");
+      }
+
+      return;
+    }
+  }
+
+  // Belum login, tampilkan form OTP
+  openAuthModal();
+});
     $("#closeAuthModal")?.addEventListener("click", closeAuthModal);
     $("#authModal")?.addEventListener("click", (event) => {
       if (event.target === $("#authModal")) closeAuthModal();
