@@ -21,6 +21,7 @@
     completedDates: [],
     lastDate: today,
     avatar_url: "",
+    avatar_key: "",
   };
 
   let player = loadPlayer();
@@ -123,8 +124,8 @@
     if (!supabase || !userId) return;
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, username, rank_title, exp, avatar_url")
-      .eq("id", userId)
+      .select("uuid, display_name, rank_title, exp, avatar_key")
+      .eq("uuid", userId)
       .maybeSingle();
 
     if (error) {
@@ -134,12 +135,16 @@
     }
 
     if (data) {
-      player.username = data.username || player.username;
+      player.username = data.display_name || player.username;
       player.rank_title = data.rank_title || player.rank_title;
       player.xp = Number.isFinite(Number(data.exp))
         ? Math.max(0, Number(data.exp))
         : player.xp;
-      player.avatar_url = data.avatar_url || "";
+      player.avatar_key = data.avatar_key || "";
+      player.avatar_url = player.avatar_key
+        ? supabase.storage.from(AVATAR_BUCKET).getPublicUrl(player.avatar_key)
+            .data.publicUrl
+        : "";
       savePlayer();
       renderPlayer();
       renderAvatar();
@@ -148,11 +153,11 @@
 
     // Profil baru: insert hanya untuk user yang sedang login.
     const { error: insertError } = await supabase.from("profiles").insert({
-      id: userId,
-      username: player.username,
+      uuid: userId,
+      display_name: player.username,
       rank_title: "ROOKIE",
       exp: 0,
-      avatar_url: null,
+      avatar_key: null,
     });
 
     if (insertError) {
@@ -162,6 +167,7 @@
       player.rank_title = "ROOKIE";
       player.xp = 0;
       player.avatar_url = "";
+      player.avatar_key = "";
       savePlayer();
       renderPlayer();
       renderAvatar();
@@ -175,10 +181,10 @@
     const { error } = await supabase
       .from("profiles")
       .update({
-        username: player.username,
-        avatar_url: player.avatar_url || null,
+        display_name: player.username,
+        avatar_key: player.avatar_key || null,
       })
-      .eq("id", currentUser.id);
+      .eq("uuid", currentUser.id);
     if (error) console.error("Gagal sinkronisasi profil:", error.message);
   }
 
@@ -190,7 +196,7 @@
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("username, rank_title, exp, avatar_url")
+      .select("display_name, rank_title, exp, avatar_key")
       .order("exp", { ascending: false })
       .limit(5);
 
@@ -211,9 +217,11 @@
 
       const avatar = document.createElement("span");
       avatar.className = "leader-avatar";
-      if (item.avatar_url) {
+      if (item.avatar_key) {
         const img = document.createElement("img");
-        img.src = item.avatar_url;
+        img.src = supabase.storage
+          .from(AVATAR_BUCKET)
+          .getPublicUrl(item.avatar_key).data.publicUrl;
         img.alt = "";
         img.loading = "lazy";
         avatar.appendChild(img);
@@ -224,7 +232,7 @@
       const user = document.createElement("span");
       user.className = "leader-user";
       const name = document.createElement("strong");
-      name.textContent = item.username || "Petualang";
+      name.textContent = item.display_name || "Petualang";
       const rankTitle = document.createElement("small");
       rankTitle.textContent = item.rank_title || "ROOKIE";
       user.append(name, rankTitle);
@@ -324,7 +332,7 @@
       supabase
         .from("profiles")
         .update({ exp: player.xp })
-        .eq("id", currentUser.id)
+        .eq("uuid", currentUser.id)
         .then(({ error }) => {
           if (error) console.error("XP sync error:", error.message);
         });
@@ -492,6 +500,7 @@
     setAuthFeedback("Menyimpan profil...");
 
     try {
+      let avatarKey = player.avatar_key || null;
       let avatarUrl = player.avatar_url || null;
       const file = $("#profileAvatarFile")?.files?.[0] || null;
       if (file) {
@@ -520,20 +529,22 @@
         const { data: publicData } = supabase.storage
           .from(AVATAR_BUCKET)
           .getPublicUrl(path);
+        avatarKey = path;
         avatarUrl = publicData.publicUrl;
       }
 
       const { error } = await supabase
         .from("profiles")
         .update({
-          username,
-          avatar_url: avatarUrl,
+          display_name: username,
+          avatar_key: avatarKey,
         })
-        .eq("id", currentUser.id);
+        .eq("uuid", currentUser.id);
 
       if (error) throw new Error(`Gagal menyimpan profil: ${error.message}`);
 
       player.username = username;
+      player.avatar_key = avatarKey || "";
       player.avatar_url = avatarUrl || "";
       savePlayer();
       renderPlayer();
