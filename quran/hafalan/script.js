@@ -375,6 +375,17 @@
   // --- EVENT LISTENERS & INITIALIZATION ---
 
   document.addEventListener("DOMContentLoaded", () => {
+    console.log("MJ Arena JS aktif");
+
+const authBtn = document.querySelector("#authButton");
+
+if (authBtn) {
+  authBtn.addEventListener("click", () => {
+    alert("Tombol profil berhasil diklik!");
+  });
+} else {
+  console.error("Tombol authButton tidak ditemukan!");
+}
     // Tangkap tombol profil secara aman (mencegah null element)
     const authBtn = $("#authButton");
     if (authBtn) {
