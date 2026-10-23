@@ -5,7 +5,9 @@
   const SUPABASE_URL = 'https://rlvjdwxbnzylharbnufz.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJsdmpkd3hibnp5bGhhcmJudWZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NDA3MjUsImV4cCI6MjEwODMxNjcyNX0.5mW3due5VGuaFr26WpqlRigI7Qc7LMBOZFfJadsz6dY';
 
-  const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+  const supabase = (window.supabase && window.supabase.createClient) 
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) 
+    : null;
 
   const $ = (selector) => document.querySelector(selector);
   const $$ = (selector) => document.querySelectorAll(selector);
@@ -76,14 +78,8 @@
   function loadPlayer() {
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-      if (!saved || typeof saved.xp !== "number") {
-        return { ...defaultPlayer };
-      }
-      return {
-        ...defaultPlayer,
-        ...saved,
-        xp: Math.max(0, saved.xp)
-      };
+      if (!saved || typeof saved.xp !== "number") return { ...defaultPlayer };
+      return { ...defaultPlayer, ...saved, xp: Math.max(0, saved.xp) };
     } catch {
       return { ...defaultPlayer };
     }
@@ -101,12 +97,16 @@
 
   async function checkUserSession() {
     if (!supabase) return;
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-      currentUser = session.user;
-      await fetchProfileFromSupabase(currentUser.id);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        currentUser = session.user;
+        await fetchProfileFromSupabase(currentUser.id);
+      }
+      fetchLeaderboard();
+    } catch (err) {
+      console.log("Supabase Session Error:", err);
     }
-    fetchLeaderboard();
   }
 
   async function fetchProfileFromSupabase(userId) {
@@ -139,7 +139,7 @@
 
   async function fetchLeaderboard() {
     if (!supabase) return;
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('profiles')
       .select('username, rank_title, exp')
       .order('exp', { ascending: false })
@@ -147,23 +147,26 @@
 
     if (data && data.length > 0) {
       const listContainer = $("#leaderboardList");
-      listContainer.innerHTML = "";
-      data.forEach((item, index) => {
-        const row = document.createElement("div");
-        row.className = "leader-row";
-        row.innerHTML = `
-          <span class="leader-rank">${String(index + 1).padStart(2, "0")}</span>
-          <span class="leader-avatar">م</span>
-          <span class="leader-user"><strong>${item.username || "Petualang"}</strong><small>${item.rank_title || "ROOKIE"}</small></span>
-          <span class="leader-xp">${item.exp || 0} XP</span>
-        `;
-        listContainer.appendChild(row);
-      });
-      $("#leaderNote").textContent = "Peringkat Real-time dari Supabase Arena.";
+      if (listContainer) {
+        listContainer.innerHTML = "";
+        data.forEach((item, index) => {
+          const row = document.createElement("div");
+          row.className = "leader-row";
+          row.innerHTML = `
+            <span class="leader-rank">${String(index + 1).padStart(2, "0")}</span>
+            <span class="leader-avatar">م</span>
+            <span class="leader-user"><strong>${item.username || "Petualang"}</strong><small>${item.rank_title || "ROOKIE"}</small></span>
+            <span class="leader-xp">${item.exp || 0} XP</span>
+          `;
+          listContainer.appendChild(row);
+        });
+      }
+      const leaderNote = $("#leaderNote");
+      if (leaderNote) leaderNote.textContent = "Peringkat Real-time dari Supabase Arena.";
     }
   }
 
-  // --- SYSTEM RENDER & GAMEPLAY ---
+  // --- GAMEPLAY & UI RENDER ---
 
   function getLevel(xp) {
     return Math.floor(xp / 100) + 1;
@@ -174,21 +177,23 @@
     const currentLevelXP = player.xp % 100;
     const completedToday = player.completedDates.includes(today);
 
-    $("#playerName").textContent = player.username;
-    $("#playerRank").textContent = player.rank_title;
-    $("#levelNumber").textContent = String(level).padStart(2, "0");
-    $("#levelLabel").textContent = `Level ${level} · ${level === 1 ? "Pemula" : level < 5 ? "Penjelajah" : "Penjaga Hafalan"}`;
+    if ($("#playerName")) $("#playerName").textContent = player.username;
+    if ($("#playerRank")) $("#playerRank").textContent = player.rank_title;
+    if ($("#levelNumber")) $("#levelNumber").textContent = String(level).padStart(2, "0");
+    if ($("#levelLabel")) $("#levelLabel").textContent = `Level ${level} · ${level === 1 ? "Pemula" : level < 5 ? "Penjelajah" : "Penjaga Hafalan"}`;
 
-    $("#xpLabel").textContent = `${currentLevelXP} / 100 XP`;
-    $("#xpPercent").textContent = `${currentLevelXP}%`;
-    $("#xpBar").style.width = `${currentLevelXP}%`;
+    if ($("#xpLabel")) $("#xpLabel").textContent = `${currentLevelXP} / 100 XP`;
+    if ($("#xpPercent")) $("#xpPercent").textContent = `${currentLevelXP}%`;
+    if ($("#xpBar")) $("#xpBar").style.width = `${currentLevelXP}%`;
 
-    $("#questCount").textContent = completedToday ? "1/1" : "0/1";
-    $("#questBar").style.width = completedToday ? "100%" : "0%";
+    if ($("#questCount")) $("#questCount").textContent = completedToday ? "1/1" : "0/1";
+    if ($("#questBar")) $("#questBar").style.width = completedToday ? "100%" : "0%";
 
-    $("#questDescription").textContent = completedToday
-      ? "Quest hari ini selesai. Kembali besok untuk tantangan berikutnya."
-      : "Selesaikan satu tantangan untuk memperoleh 25 XP.";
+    if ($("#questDescription")) {
+      $("#questDescription").textContent = completedToday
+        ? "Quest hari ini selesai. Kembali besok untuk tantangan berikutnya."
+        : "Selesaikan satu tantangan untuk memperoleh 25 XP.";
+    }
   }
 
   function awardXP(amount) {
@@ -213,6 +218,7 @@
 
   function showToast(message) {
     const toast = $("#toast");
+    if (!toast) return;
     toast.textContent = message;
     toast.classList.add("show");
 
@@ -230,37 +236,42 @@
     currentQuestion = data;
     answered = false;
 
-    $("#modalKicker").textContent = data.kicker;
-    $("#modalTitle").textContent = data.title;
-    $("#modalDescription").textContent = data.description;
-    $("#verseBox").textContent = data.verse;
-    $("#verseBox").hidden = false;
-    $("#answerFeedback").textContent = "";
-    $("#continueButton").hidden = true;
-    $("#continueButton").textContent = "Lanjutkan →";
+    if ($("#modalKicker")) $("#modalKicker").textContent = data.kicker;
+    if ($("#modalTitle")) $("#modalTitle").textContent = data.title;
+    if ($("#modalDescription")) $("#modalDescription").textContent = data.description;
+    if ($("#verseBox")) {
+      $("#verseBox").textContent = data.verse;
+      $("#verseBox").hidden = false;
+    }
+    if ($("#answerFeedback")) $("#answerFeedback").textContent = "";
+    if ($("#continueButton")) {
+      $("#continueButton").hidden = true;
+      $("#continueButton").textContent = "Lanjutkan →";
+    }
 
     const list = $("#answerList");
-    list.replaceChildren();
+    if (list) {
+      list.replaceChildren();
+      data.answers.forEach((answer, index) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "answer-option";
+        button.textContent = answer;
+        button.dataset.index = String(index);
 
-    data.answers.forEach((answer, index) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "answer-option";
-      button.textContent = answer;
-      button.dataset.index = String(index);
+        if (mode === "continue" || mode === "previous") {
+          button.style.direction = "rtl";
+          button.style.textAlign = "center";
+          button.style.fontFamily = "Georgia, serif";
+          button.style.fontSize = "19px";
+        }
 
-      if (mode === "continue" || mode === "previous") {
-        button.style.direction = "rtl";
-        button.style.textAlign = "center";
-        button.style.fontFamily = "Georgia, serif";
-        button.style.fontSize = "19px";
-      }
+        button.addEventListener("click", () => checkAnswer(index));
+        list.appendChild(button);
+      });
+    }
 
-      button.addEventListener("click", () => checkAnswer(index));
-      list.appendChild(button);
-    });
-
-    $("#gameModal").hidden = false;
+    if ($("#gameModal")) $("#gameModal").hidden = false;
     document.body.style.overflow = "hidden";
   }
 
@@ -280,121 +291,143 @@
       }
     });
 
-    $("#answerFeedback").textContent = isCorrect
-      ? `✓ ${currentQuestion.explanation} +25 XP`
-      : `Belum tepat. ${currentQuestion.explanation}`;
-
-    if (isCorrect) {
-      awardXP(25);
+    if ($("#answerFeedback")) {
+      $("#answerFeedback").textContent = isCorrect
+        ? `✓ ${currentQuestion.explanation} +25 XP`
+        : `Belum tepat. ${currentQuestion.explanation}`;
     }
 
-    $("#continueButton").hidden = false;
-    $("#continueButton").textContent = "Kembali ke Arena →";
+    if (isCorrect) awardXP(25);
+
+    if ($("#continueButton")) {
+      $("#continueButton").hidden = false;
+      $("#continueButton").textContent = "Kembali ke Arena →";
+    }
   }
 
   function closeModal() {
-    $("#gameModal").hidden = true;
+    if ($("#gameModal")) $("#gameModal").hidden = true;
     document.body.style.overflow = "";
     currentMode = null;
     currentQuestion = null;
   }
 
-  // --- HANDLER LOGIN OTP ---
-
   function openAuthModal() {
-    $("#authModal").hidden = false;
+    if ($("#authModal")) $("#authModal").hidden = false;
     document.body.style.overflow = "hidden";
   }
 
   function closeAuthModal() {
-    $("#authModal").hidden = true;
+    if ($("#authModal")) $("#authModal").hidden = true;
     document.body.style.overflow = "";
   }
 
-  $("#sendOtpBtn")?.addEventListener("click", async () => {
-    const email = $("#authEmail").value.trim();
-    if (!email) return showToast("Masukkan email lo dulu!");
+  // --- EVENT LISTENERS & INITIALIZATION ---
 
-    $("#authFeedback").textContent = "Mengirim kode OTP...";
-    const { error } = await supabase.auth.signInWithOtp({ email });
+  document.addEventListener("DOMContentLoaded", () => {
+    // Tombol Profil / Login OTP
+    const authBtn = $("#authButton");
+    if (authBtn) authBtn.addEventListener("click", openAuthModal);
 
-    if (error) {
-      $("#authFeedback").textContent = "Gagal kirim OTP: " + error.message;
-    } else {
-      $("#authFeedback").textContent = "";
-      $("#emailStep").hidden = true;
-      $("#otpStep").hidden = false;
+    const closeAuthBtn = $("#closeAuthModal");
+    if (closeAuthBtn) closeAuthBtn.addEventListener("click", closeAuthModal);
+
+    const authModal = $("#authModal");
+    if (authModal) {
+      authModal.addEventListener("click", (e) => {
+        if (e.target === authModal) closeAuthModal();
+      });
     }
-  });
 
-  $("#verifyOtpBtn")?.addEventListener("click", async () => {
-    const email = $("#authEmail").value.trim();
-    const token = $("#authOtp").value.trim();
-    if (!token) return showToast("Masukkan 6-digit OTP!");
+    // Handlers Kirim & Verifikasi OTP
+    const sendOtpBtn = $("#sendOtpBtn");
+    if (sendOtpBtn) {
+      sendOtpBtn.addEventListener("click", async () => {
+        const emailInput = $("#authEmail");
+        const email = emailInput ? emailInput.value.trim() : "";
+        if (!email) return showToast("Masukkan email lo dulu!");
 
-    $("#authFeedback").textContent = "Memverifikasi...";
-    const { data, error } = await supabase.auth.verifyOtp({
-      email,
-      token,
-      type: 'email'
+        if ($("#authFeedback")) $("#authFeedback").textContent = "Mengirim kode OTP...";
+        if (!supabase) return showToast("Supabase Client belum terpasang!");
+
+        const { error } = await supabase.auth.signInWithOtp({ email });
+
+        if (error) {
+          if ($("#authFeedback")) $("#authFeedback").textContent = "Gagal kirim: " + error.message;
+        } else {
+          if ($("#authFeedback")) $("#authFeedback").textContent = "";
+          if ($("#emailStep")) $("#emailStep").hidden = true;
+          if ($("#otpStep")) $("#otpStep").hidden = false;
+        }
+      });
+    }
+
+    const verifyOtpBtn = $("#verifyOtpBtn");
+    if (verifyOtpBtn) {
+      verifyOtpBtn.addEventListener("click", async () => {
+        const emailInput = $("#authEmail");
+        const otpInput = $("#authOtp");
+        const email = emailInput ? emailInput.value.trim() : "";
+        const token = otpInput ? otpInput.value.trim() : "";
+
+        if (!token) return showToast("Masukkan 6-digit OTP!");
+
+        if ($("#authFeedback")) $("#authFeedback").textContent = "Memverifikasi...";
+        const { data, error } = await supabase.auth.verifyOtp({ email, token, type: 'email' });
+
+        if (error) {
+          if ($("#authFeedback")) $("#authFeedback").textContent = "OTP Salah: " + error.message;
+        } else {
+          currentUser = data.user;
+          showToast("Berhasil Login!");
+          closeAuthModal();
+          await fetchProfileFromSupabase(currentUser.id);
+        }
+      });
+    }
+
+    // Modal Game Event Handlers
+    $$("[data-mode]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const mode = button.dataset.mode;
+        if (modes[mode]) {
+          openModal(mode);
+        } else if (mode === "daily") {
+          if (player.completedDates.includes(today)) {
+            showToast("Quest hari ini sudah selesai. Mantap!");
+          } else {
+            showToast("Quest harian: selesaikan tantangan untuk +25 XP.");
+            openModal("continue");
+          }
+        } else if (mode === "duel-user") {
+          showToast("Multiplayer Arena: Mencari Room di Supabase...");
+        } else if (mode === "duel-mj") {
+          showToast("Tantang MJ: Bot AI siap diajak duel!");
+        } else {
+          showToast("Mode ini sedang disiapkan.");
+        }
+      });
     });
 
-    if (error) {
-      $("#authFeedback").textContent = "OTP Salah / Kadaluarsa: " + error.message;
-    } else {
-      currentUser = data.user;
-      showToast("Berhasil Login! Selamat datang di MJ Arena.");
-      closeAuthModal();
-      await fetchProfileFromSupabase(currentUser.id);
+    if ($("#closeModal")) $("#closeModal").addEventListener("click", closeModal);
+    if ($("#gameModal")) {
+      $("#gameModal").addEventListener("click", (e) => {
+        if (e.target === $("#gameModal")) closeModal();
+      });
     }
-  });
+    if ($("#continueButton")) $("#continueButton").addEventListener("click", closeModal);
 
-  // --- EVENT LISTENERS ---
-
-  $("#authButton").addEventListener("click", openAuthModal);
-  $("#closeAuthModal").addEventListener("click", closeAuthModal);
-
-  function handleMode(mode) {
-    if (modes[mode]) {
-      openModal(mode);
-      return;
+    const soundBtn = $("#soundButton");
+    if (soundBtn) {
+      soundBtn.addEventListener("click", () => {
+        soundEnabled = !soundEnabled;
+        soundBtn.textContent = soundEnabled ? "♫" : "♪";
+        showToast(soundEnabled ? "Efek suara diaktifkan." : "Efek suara dinonaktifkan.");
+      });
     }
 
-    switch (mode) {
-      case "daily":
-        if (player.completedDates.includes(today)) {
-          showToast("Quest hari ini sudah selesai. Mantap, cuy!");
-        } else {
-          showToast("Quest harian: selesaikan tantangan untuk +25 XP.");
-          openModal("continue");
-        }
-        break;
-      case "duel-user":
-        showToast("Multiplayer Arena: Mencari Room di Supabase...");
-        break;
-      case "duel-mj":
-        showToast("Tantang MJ: Bot AI siap diajak duel!");
-        break;
-      default:
-        showToast("Mode ini sedang disiapkan.");
-    }
-  }
-
-  $$("[data-mode]").forEach((button) => {
-    button.addEventListener("click", () => handleMode(button.dataset.mode));
+    // Initial Execution
+    renderPlayer();
+    checkUserSession();
   });
-
-  $("#closeModal").addEventListener("click", closeModal);
-  $("#gameModal").addEventListener("click", (e) => { if (e.target === $("#gameModal")) closeModal(); });
-  $("#continueButton").addEventListener("click", closeModal);
-
-  $("#soundButton").addEventListener("click", () => {
-    soundEnabled = !soundEnabled;
-    $("#soundButton").textContent = soundEnabled ? "♫" : "♪";
-    showToast(soundEnabled ? "Efek suara diaktifkan." : "Efek suara dinonaktifkan.");
-  });
-
-  // Load awal
-  renderPlayer();
-  checkUserSession();
 })();
