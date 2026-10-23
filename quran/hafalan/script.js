@@ -135,13 +135,67 @@ delete button.dataset.originalText;
 }
 }
 
+
 async function fetchProfileFromSupabase(userId) {
-if (!supabase || !userId) return;
-const { data, error } = await supabase
-.from("profiles")
-.select("uuid, display_name, rank_title, exp, avatar_key")
-.eq("uuid", userId)
-.maybeSingle();
+  if (!supabase || !userId) return;
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, display_name, rank_title, exp, avatar_key")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Gagal membaca profil:", error.message);
+    showToast("Profil gagal dimuat. Periksa nama kolom dan RLS.");
+    return;
+  }
+
+  if (data) {
+    player.username = data.display_name || player.username;
+    player.rank_title = data.rank_title || player.rank_title;
+    player.xp = Number.isFinite(Number(data.exp))
+      ? Math.max(0, Number(data.exp))
+      : player.xp;
+
+    player.avatar_key = data.avatar_key || "";
+    player.avatar_url = player.avatar_key
+      ? supabase.storage
+          .from(AVATAR_BUCKET)
+          .getPublicUrl(player.avatar_key).data.publicUrl
+      : "";
+
+    savePlayer();
+    renderPlayer();
+    renderAvatar();
+    return;
+  }
+
+  const { error: insertError } = await supabase
+    .from("profiles")
+    .insert({
+      id: userId,
+      display_name: player.username,
+      rank_title: "ROOKIE",
+      exp: 0,
+      avatar_key: "",
+    });
+
+  if (insertError) {
+    console.error("Gagal membuat profil:", insertError.message);
+    showToast("Profil gagal dibuat. Periksa kolom dan izin RLS.");
+    return;
+  }
+
+  player.rank_title = "ROOKIE";
+  player.xp = 0;
+  player.avatar_key = "";
+  player.avatar_url = "";
+
+  savePlayer();
+  renderPlayer();
+  renderAvatar();
+}
 
 if (error) {  
   console.error("Gagal membaca profil:", error.message);  
@@ -198,7 +252,7 @@ const { error } = await supabase
 .from("profiles")
 .update({
 display_name: player.username,
-avatar_key: player.avatar_key || null,
+avatar_key: player.avatar_key || "",
 })
 .eq("id", currentUser.id);
 if (error) console.error("Gagal sinkronisasi profil:", error.message);
@@ -521,8 +575,8 @@ setButtonBusy(saveBtn, true, "Menyimpan...");
 setAuthFeedback("Menyimpan profil...");  
 
 try {  
-  let avatarKey = player.avatar_key || null;  
-  let avatarUrl = player.avatar_url || null;  
+  let avatarKey = player.avatar_key || "";  
+  let avatarUrl = player.avatar_url || "";  
   const file = $("#profileAvatarFile")?.files?.[0] || null;  
   if (file) {  
     const allowed = ["image/jpeg", "image/png", "image/webp"];  
