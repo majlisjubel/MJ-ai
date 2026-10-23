@@ -199,7 +199,7 @@
         display_name: player.username,
         avatar_key: player.avatar_key || null,
       })
-      .eq("uuid", currentUser.id);
+      .eq("id", currentUser.id);
     if (error) console.error("Gagal sinkronisasi profil:", error.message);
   }
 
@@ -347,7 +347,7 @@
       supabase
         .from("profiles")
         .update({ exp: player.xp })
-        .eq("uuid", currentUser.id)
+        .eq("id", currentUser.id)
         .then(({ error }) => {
           if (error) console.error("XP sync error:", error.message);
         });
@@ -554,7 +554,7 @@
           display_name: username,
           avatar_key: avatarKey,
         })
-        .eq("uuid", currentUser.id);
+        .eq("id", currentUser.id);
 
       if (error) throw new Error(`Gagal menyimpan profil: ${error.message}`);
 
@@ -579,35 +579,32 @@
 
   function bindEvents() {
     // Header profile: one listener only, with no duplicate const declarations.
-    $("#authButton")?.addEventListener("click", async (event) => {
+    
+$("#authButton")?.addEventListener("click", async (event) => {
   event.preventDefault();
 
-  // Cek sesi login terbaru dari Supabase
-  if (supabase) {
-    const { data, error } = await supabase.auth.getSession();
-
-    if (!error && data.session?.user) {
-      currentUser = data.session.user;
-
-      // Sudah login: jangan tampilkan form OTP lagi
-      closeAuthModal();
-
-      const profileModal = $("#profileModal");
-
-      if (profileModal) {
-        profileModal.classList.add("is-open");
-        profileModal.setAttribute("aria-hidden", "false");
-      } else {
-        showToast("Lo sudah login ke MJ Arena!");
-      }
-
-      return;
-    }
+  if (!supabase) {
+    showToast("Supabase belum termuat.");
+    return;
   }
 
-  // Belum login, tampilkan form OTP
+  const { data, error } = await supabase.auth.getSession();
+
+  if (error) {
+    showToast("Gagal memeriksa sesi login.");
+    console.error("Session error:", error.message);
+    return;
+  }
+
+  currentUser = data.session?.user || null;
+
+  if (currentUser) {
+    await fetchProfileFromSupabase(currentUser.id);
+  }
+
   openAuthModal();
 });
+
     $("#closeAuthModal")?.addEventListener("click", closeAuthModal);
     $("#authModal")?.addEventListener("click", (event) => {
       if (event.target === $("#authModal")) closeAuthModal();
