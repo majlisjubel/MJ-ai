@@ -9,8 +9,7 @@
     ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) 
     : null;
 
-  const $ = (selector) => document.querySelector(selector);
-  const $$ = (selector) => document.querySelectorAll(selector);
+  const $ = (selector) => document.querySelector(selector); const $$ = (selector) => document.querySelectorAll(selector);
 
   const STORAGE_KEY = "mj-quran-arena-player-v1";
   const today = new Date().toLocaleDateString("en-CA");
@@ -124,7 +123,7 @@
       savePlayer();
       renderPlayer();
     } else {
-      // Jika profil belum ada di tabel 'profiles', buat profil baru secara otomatis
+      // Jika profil belum ada di tabel 'profiles', buat profil baru
       await supabase.from('profiles').insert([{
         id: userId,
         username: player.username,
@@ -280,16 +279,7 @@
       });
     }
 
-    if ($("#gameModal")) $("#gameModal").hidden = false;
-    document.body.style.overflow = "hidden";
-  }
-
-  function checkAnswer(selectedIndex) {
-    if (answered || !currentQuestion) return;
-    answered = true;
-
-    const isCorrect = selectedIndex === currentQuestion.correct;
-    const buttons = $$("#answerList .answer-option");
+    if ($("#gameModal")) $("#gameModal").hidden = false; document.body.style.overflow = "hidden"; }    function checkAnswer(selectedIndex) { if (answered \vert{}\vert{} !currentQuestion) return; answered = true;      const isCorrect = selectedIndex === currentQuestion.correct; const buttons = $$("#answerList .answer-option");
 
     buttons.forEach((button, index) => {
       button.disabled = true;
@@ -321,154 +311,46 @@
     currentQuestion = null;
   }
 
+  // --- RENDERING & RESET MODAL AUTH ---
+
+  function resetAuthModal() {
+    if ($("#emailStep")) $("#emailStep").hidden = false;
+    if ($("#otpStep")) $("#otpStep").hidden = true;
+    if ($("#authFeedback")) $("#authFeedback").textContent = "";
+    if ($("#authEmail")) $("#authEmail").value = "";
+    if ($("#authOtp")) $("#authOtp").value = "";
+  }
+
   function openAuthModal() {
     if ($("#authModal")) $("#authModal").hidden = false;
     document.body.style.overflow = "hidden";
-  }
 
-  function closeAuthModal() {
-    if ($("#authModal")) $("#authModal").hidden = true;
-    document.body.style.overflow = "";
-  }
+    // Jika user sudah terverifikasi login: tampilkan status email & tombol logout
+    if (currentUser) {
+      if ($("#emailStep")) $("#emailStep").hidden = true;
+      if ($("#otpStep")) $("#otpStep").hidden = true;
+      if ($("#authFeedback")) {
+        $("#authFeedback").innerHTML = `
+          <div style="text-align: center; padding: 10px 0;">
+            <p style="color: #42e0a4; font-weight: bold; margin-bottom: 5px;">✓ Terhubung sebagai:</p>
+            <p style="font-size: 14px; color: #fff; word-break: break-all;">${currentUser.email}</p>
+            <button id="logoutBtn" type="button" style="margin-top: 15px; background: #ef4444; color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%;">
+              Keluar / Logout
+            </button>
+          </div>
+        `;
 
-  // --- EVENT LISTENERS & INITIALIZATION ---
-
-  document.addEventListener("DOMContentLoaded", () => {
-    // Tombol Profil / Login OTP
-    const authBtn = $("#authButton");
-    if (authBtn) authBtn.addEventListener("click", openAuthModal);
-
-    const closeAuthBtn = $("#closeAuthModal");
-    if (closeAuthBtn) closeAuthBtn.addEventListener("click", closeAuthModal);
-
-    const authModal = $("#authModal");
-    if (authModal) {
-      authModal.addEventListener("click", (e) => {
-        if (e.target === authModal) closeAuthModal();
-      });
-    }
-
-    // --- HANDLERS KIRIM & VERIFIKASI OTP ---
-    const sendOtpBtn = $("#sendOtpBtn");
-    if (sendOtpBtn) {
-      sendOtpBtn.addEventListener("click", async () => {
-        const emailInput = $("#authEmail");
-        const email = emailInput ? emailInput.value.trim() : "";
-        if (!email) return showToast("Masukkan email lo dulu!");
-
-        if ($("#authFeedback")) $("#authFeedback").textContent = "Mengirim 6-digit OTP...";
-        if (!supabase) return showToast("Supabase Client belum terpasang!");
-
-        const { error } = await supabase.auth.signInWithOtp({
-          email: email,
-          options: {
-            shouldCreateUser: true
-          }
-        });
-
-        if (error) {
-          if ($("#authFeedback")) $("#authFeedback").textContent = "Gagal kirim: " + error.message;
-        } else {
-          if ($("#authFeedback")) $("#authFeedback").textContent = "";
-          showToast("Kode OTP terkirim! Periksa inbox/spam email lo.");
-          if ($("#emailStep")) $("#emailStep").hidden = true;
-          if ($("#otpStep")) $("#otpStep").hidden = false;
-        }
-      });
-    }
-
-    const verifyOtpBtn = $("#verifyOtpBtn");
-    if (verifyOtpBtn) {
-      verifyOtpBtn.addEventListener("click", async () => {
-        const emailInput = $("#authEmail");
-        const otpInput = $("#authOtp");
-        const email = emailInput ? emailInput.value.trim() : "";
-        const token = otpInput ? otpInput.value.trim() : "";
-
-        if (!token) return showToast("Masukkan 6-digit OTP!");
-
-        if ($("#authFeedback")) $("#authFeedback").textContent = "Memverifikasi OTP...";
-        
-        // 1. Coba verifikasi dengan tipe 'email'
-        let res = await supabase.auth.verifyOtp({
-          email: email,
-          token: token,
-          type: 'email'
-        });
-
-        // 2. Jika gagal, coba fallback ke tipe 'magiclink'
-        if (res.error) {
-          res = await supabase.auth.verifyOtp({
-            email: email,
-            token: token,
-            type: 'magiclink'
+        const logoutBtn = $("#logoutBtn");
+        if (logoutBtn) {
+          logoutBtn.addEventListener("click", async () => {
+            if (supabase) await supabase.auth.signOut();
+            currentUser = null;
+            showToast("Berhasil Logout!");
+            resetAuthModal();
+            closeAuthModal();
           });
         }
-
-        // 3. Jika masih gagal, coba fallback ke tipe 'signup'
-        if (res.error) {
-          res = await supabase.auth.verifyOtp({
-            email: email,
-            token: token,
-            type: 'signup'
-          });
-        }
-
-        if (res.error) {
-          if ($("#authFeedback")) $("#authFeedback").textContent = "OTP Salah / Kedaluwarsa: " + res.error.message;
-        } else {
-          currentUser = res.data.user;
-          showToast("Berhasil Login! Sesi kamu aman tersimpan.");
-          closeAuthModal();
-          if (currentUser) {
-            await fetchProfileFromSupabase(currentUser.id);
-          }
-        }
-      });
-    }
-
-    // Modal Game Event Handlers
-    $$("[data-mode]").forEach((button) => {
-      button.addEventListener("click", () => {
-        const mode = button.dataset.mode;
-        if (modes[mode]) {
-          openModal(mode);
-        } else if (mode === "daily") {
-          if (player.completedDates.includes(today)) {
-            showToast("Quest hari ini sudah selesai. Mantap!");
-          } else {
-            showToast("Quest harian: selesaikan tantangan untuk +25 XP.");
-            openModal("continue");
-          }
-        } else if (mode === "duel-user") {
-          showToast("Multiplayer Arena: Mencari Room di Supabase...");
-        } else if (mode === "duel-mj") {
-          showToast("Tantang MJ: Bot AI siap diajak duel!");
-        } else {
-          showToast("Mode ini sedang disiapkan.");
-        }
-      });
-    });
-
-    if ($("#closeModal")) $("#closeModal").addEventListener("click", closeModal);
-    if ($("#gameModal")) {
-      $("#gameModal").addEventListener("click", (e) => {
-        if (e.target === $("#gameModal")) closeModal();
-      });
-    }
-    if ($("#continueButton")) $("#continueButton").addEventListener("click", closeModal);
-
-    const soundBtn = $("#soundButton");
-    if (soundBtn) {
-      soundBtn.addEventListener("click", () => {
-        soundEnabled = !soundEnabled;
-        soundBtn.textContent = soundEnabled ? "♫" : "♪";
-        showToast(soundEnabled ? "Efek suara diaktifkan." : "Efek suara dinonaktifkan.");
-      });
-    }
-
-    // Initial Execution
-    renderPlayer();
-    checkUserSession();
-  });
-})();
+      }
+    } else {
+      // Jika user belum login: reset form ke tampilan input email bersih
+      resetAuth
