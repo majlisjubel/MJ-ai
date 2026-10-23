@@ -1,12 +1,27 @@
 (() => {
   "use strict";
 
-  const SUPABASE_URL = "https://rlvjdwxbnzylharbnufz.supabase.co";
+  // --- KONFIGURASI SUPABASE ---
+  const SUPABASE_URL =
+    "https://rlvjdwxbnzylharbnufz.supabase.co";
+
   const SUPABASE_ANON_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJsdmpkd3hibnp5bGhhcmJudWZ6Iiwicm9sZSI6IkFub24iLCJpYXQiOjE3OTI3NDA3MjUsImV4cCI6MjEwODMxNjcyNX0.5mW3due5VGuaFr26WpqlRigI7Qc7LMBOZFfJadsz6dY";
+    "sb_publishable_kNpC2N_taG7qJCuMdeBoNA_yLKSn2tx";
+
   const supabase = window.supabase?.createClient
-    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    ? window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      )
     : null;
+
+  if (!supabase) {
+    console.error(
+      "Supabase gagal dimuat. Periksa script CDN Supabase JS v2 di index.html."
+    );
+  }
+
+  // LANJUTKAN KODE LAMA LO DI BAWAH SINI
 
   const $ = (selector) => document.querySelector(selector);
   const $$ = (selector) => document.querySelectorAll(selector);
