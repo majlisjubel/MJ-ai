@@ -321,127 +321,157 @@ if (preview) {
 }
 
 function renderPlayer() {
-const level = Math.floor(player.xp / 100) + 1;
-const currentLevelXP = player.xp % 100;
-const completedToday = player.completedDates.includes(today);
+// ==========================================
+// 1. CALCULATE RANK (300 EXP / LEVEL)
+// ==========================================
+function calculateRank(xp) {
+  const currentXP = Math.max(0, Number(xp) || 0);
+  const level = Math.floor(currentXP / 300) + 1;
+  
+  let title = "QARI'";
+  if (level >= 26) {
+    title = "HAMILUL QUR'AN";
+  } else if (level >= 19) {
+    title = "AMIL";
+  } else if (level >= 13) {
+    title = "MUTQIN";
+  } else if (level >= 8) {
+    title = "HAFIDZ";
+  } else if (level >= 4) {
+    title = "MUKHLIS";
+  }
 
-setText("#playerName", player.username);  
-setText("#playerRank", player.rank_title);  
-setText("#levelNumber", String(level).padStart(2, "0"));  
-setText(  
-  "#levelLabel",  
-  `Level ${level} · ${ level === 1 ? "Pemula" : level < 5 ? "Penjelajah" : "Penjaga Hafalan" }`  
-);  
-setText("#xpLabel", `${currentLevelXP} / 100 XP`);  
-setText("#xpPercent", `${currentLevelXP}%`);  
-const xpBar = $("#xpBar");  
-if (xpBar) xpBar.style.width = `${currentLevelXP}%`;  
-setText("#questCount", completedToday ? "1/1" : "0/1");  
-const questBar = $("#questBar");  
-if (questBar) questBar.style.width = completedToday ? "100%" : "0%";  
-setText(  
-  "#questDescription",  
-  completedToday  
-    ? "Quest hari ini selesai. Kembali besok untuk tantangan berikutnya."  
-    : "Selesaikan satu tantangan untuk memperoleh 25 XP."  
-);  
-setText(  
-  "#userGreeting",  
-  currentUser  
-    ? `Assalamu'alaikum, ${player.username}!`  
-    : "Assalamu'alaikum, Petualang!"  
-);  
-renderAvatar();
-
+  return { level, title };
 }
 
+// ==========================================
+// 2. RENDER PLAYER (VERSI BARU)
+// ==========================================
+function renderPlayer() {
+  const rankInfo = calculateRank(player.xp);
+  const level = rankInfo.level;
+  player.rank_title = rankInfo.title;
 
-function awardXP(amount) {
-  const oldLevel = Math.floor(player.xp / 100) + 1;
+  const currentLevelXP = player.xp % 300;
+  const xpPercent = Math.floor((currentLevelXP / 300) * 100);
+  const completedToday = player.completedDates.includes(today);
 
+  setText("#playerName", player.username);  
+  setText("#playerRank", player.rank_title);  
+  setText("#levelNumber", String(level).padStart(2, "0"));  
+  setText(  
+    "#levelLabel",  
+    `Level ${level} · ${player.rank_title}`  
+  );  
+  setText("#xpLabel", `${currentLevelXP} / 300 XP`);  
+  setText("#xpPercent", `${xpPercent}%`);  
+  
+  const xpBar = $("#xpBar");  
+  if (xpBar) xpBar.style.width = `${xpPercent}%`;  
+  
+  setText("#questCount", completedToday ? "1/1" : "0/1");  
+  const questBar = $("#questBar");  
+  if (questBar) questBar.style.width = completedToday ? "100%" : "0%";  
+  
+  setText(  
+    "#questDescription",  
+    completedToday  
+      ? "Quest hari ini selesai. Kembali besok untuk tantangan berikutnya."  
+      : "Selesaikan satu tantangan untuk memperoleh 25 XP."  
+  );  
+  setText(  
+    "#userGreeting",  
+    currentUser  
+      ? `Assalamu'alaikum, ${player.username}!`  
+      : "Assalamu'alaikum, Petualang!"  
+  );  
+  renderAvatar();
+}
+
+// ==========================================
+// 3. AWARD XP (VERSI BARU)
+// ==========================================
+async function awardXP(amount) {
+  if (typeof amount !== "number" || amount <= 0) return;
+
+  const oldRank = calculateRank(player.xp);
   player.xp += amount;
+  const newRank = calculateRank(player.xp);
 
   if (!player.completedDates.includes(today)) {
     player.completedDates.push(today);
   }
 
   savePlayer();
-
-  if (currentUser && supabase) {
-    supabase
-      .from("profiles")
-      .update({ exp: player.xp })
-      .eq("id", currentUser.id)
-      .then(({ error }) => {
-        if (error) {
-          console.error("XP sync error:", error.message);
-        }
-      });
-  }
-
   renderPlayer();
 
-  const newLevel = Math.floor(player.xp / 100) + 1;
+  if (newRank.level > oldRank.level) {
+    showToast(`🎉 LEVEL UP! Sekarang Level ${newRank.level} (${newRank.title}). Terus jaga hafalanmu!`);
+  } else {
+    showToast(`+${amount} XP! Progres hafalanmu bertambah.`);
+  }
 
-  showToast(
-    newLevel > oldLevel
-      ? `LEVEL UP! Sekarang level ${newLevel}. Terus jaga hafalanmu!`
-      : `+${amount} XP! Progres hafalanmu bertambah.`
-  );
+  if (currentUser && supabase) {
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          exp: player.xp,
+          rank_title: newRank.title,
+        })
+        .eq("id", currentUser.id);
+
+      if (error) console.error("XP sync error:", error.message);
+    } catch (err) {
+      console.error("Error awardXP Supabase:", err);
+    }
+  }
 }
 
-function showToast(message) {
-const toast = $("#toast");
-if (!toast) return;
-toast.textContent = message;
-toast.classList.add("show");
-clearTimeout(toastTimer);
-toastTimer = setTimeout(() => toast.classList.remove("show"), 3200);
+
+
+function awardXP(amount) {
+async function awardXP(amount) {
+  if (typeof amount !== "number" || amount <= 0) return;
+
+  const oldRank = calculateRank(player.xp);
+  player.xp += amount;
+  const newRank = calculateRank(player.xp);
+
+  // Tandai quest harian selesai jika belum
+  if (!player.completedDates.includes(today)) {
+    player.completedDates.push(today);
+  }
+
+  // Simpan & render UI lokal
+  savePlayer();
+  renderPlayer();
+
+  // Tampilkan notifikasi naik level atau penambahan XP
+  if (newRank.level > oldRank.level) {
+    showToast(`🎉 LEVEL UP! Sekarang Level ${newRank.level} (${newRank.title}). Terus jaga hafalanmu!`);
+  } else {
+    showToast(`+${amount} XP! Progres hafalanmu bertambah.`);
+  }
+
+  // Sinkronisasi otomatis ke Supabase jika user sedang login
+  if (currentUser && supabase) {
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          exp: player.xp,
+          rank_title: newRank.title,
+        })
+        .eq("id", currentUser.id);
+
+      if (error) console.error("XP sync error:", error.message);
+    } catch (err) {
+      console.error("Error awardXP Supabase:", err);
+    }
+  }
 }
 
-function openModal(mode) {
-const data = modes[mode];
-if (!data) return;
-currentMode = mode;
-currentQuestion = data;
-answered = false;
-setText("#modalKicker", data.kicker);
-setText("#modalTitle", data.title);
-setText("#modalDescription", data.description);
-const verse = $("#verseBox");
-if (verse) {
-verse.textContent = data.verse;
-verse.hidden = false;
-}
-setText("#answerFeedback", "");
-const next = $("#continueButton");
-if (next) {
-next.hidden = true;
-next.textContent = "Lanjutkan →";
-}
-
-const list = $("#answerList");  
-if (list) {  
-  list.replaceChildren();  
-  data.answers.forEach((answer, index) => {  
-    const button = document.createElement("button");  
-    button.type = "button";  
-    button.className = "answer-option";  
-    button.textContent = answer;  
-    if (mode === "continue" || mode === "previous") {  
-      button.style.direction = "rtl";  
-      button.style.textAlign = "center";  
-      button.style.fontFamily = "Georgia, serif";  
-      button.style.fontSize = "19px";  
-    }  
-    button.addEventListener("click", () => checkAnswer(index));  
-    list.appendChild(button);  
-  });  
-}  
-if ($("#gameModal")) $("#gameModal").hidden = false;  
-document.body.style.overflow = "hidden";
-
-}
 
 
 function checkAnswer(selectedIndex) {
