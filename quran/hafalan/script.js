@@ -136,6 +136,7 @@ delete button.dataset.originalText;
 }
 
 
+
 async function fetchProfileFromSupabase(userId) {
   if (!supabase || !userId) return;
 
@@ -145,20 +146,24 @@ async function fetchProfileFromSupabase(userId) {
     .eq("id", userId)
     .maybeSingle();
 
+  // Gagal membaca profil
   if (error) {
     console.error("Gagal membaca profil:", error.message);
     showToast("Profil gagal dimuat. Periksa nama kolom dan RLS.");
     return;
   }
 
+  // Profil sudah ada
   if (data) {
     player.username = data.display_name || player.username;
     player.rank_title = data.rank_title || player.rank_title;
+
     player.xp = Number.isFinite(Number(data.exp))
       ? Math.max(0, Number(data.exp))
       : player.xp;
 
     player.avatar_key = data.avatar_key || "";
+
     player.avatar_url = player.avatar_key
       ? supabase.storage
           .from(AVATAR_BUCKET)
@@ -171,6 +176,7 @@ async function fetchProfileFromSupabase(userId) {
     return;
   }
 
+  // Profil belum ada: buat profil baru
   const { error: insertError } = await supabase
     .from("profiles")
     .insert({
@@ -187,6 +193,7 @@ async function fetchProfileFromSupabase(userId) {
     return;
   }
 
+  // Perbarui tampilan profil baru
   player.rank_title = "ROOKIE";
   player.xp = 0;
   player.avatar_key = "";
@@ -196,38 +203,6 @@ async function fetchProfileFromSupabase(userId) {
   renderPlayer();
   renderAvatar();
 }
-
-if (error) {  
-  console.error("Gagal membaca profil:", error.message);  
-  showToast("Profil belum bisa dimuat. Periksa izin tabel profiles.");  
-  return;  
-}  
-
-if (data) {  
-  player.username = data.display_name || player.username;  
-  player.rank_title = data.rank_title || player.rank_title;  
-  player.xp = Number.isFinite(Number(data.exp))  
-    ? Math.max(0, Number(data.exp))  
-    : player.xp;  
-  player.avatar_key = data.avatar_key || "";  
-  player.avatar_url = player.avatar_key  
-    ? supabase.storage.from(AVATAR_BUCKET).getPublicUrl(player.avatar_key)  
-        .data.publicUrl  
-    : "";  
-  savePlayer();  
-  renderPlayer();  
-  renderAvatar();  
-  return;  
-}  
-
-// Profil baru: insert hanya untuk user yang sedang login.  
-const { error: insertError } = await supabase.from("profiles").insert({  
-  uuid: userId,  
-  display_name: player.username,  
-  rank_title: "ROOKIE",  
-  exp: 0,  
-  avatar_key: null,  
-});  
 
 
 async function syncProgressToSupabase() {
