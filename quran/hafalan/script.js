@@ -162,9 +162,18 @@ async function fetchProfileFromSupabase(userId) {
       ? Math.max(0, Number(data.exp))
       : player.xp;
 
-    player.avatar_key = data.avatar_key || "";
+    
+player.avatar_key =
+  data.avatar_key && data.avatar_key !== "default"
+    ? data.avatar_key
+    : "";
 
-    player.avatar_url = player.avatar_key
+player.avatar_url = player.avatar_key
+  ? supabase.storage
+      .from(AVATAR_BUCKET)
+      .getPublicUrl(player.avatar_key).data.publicUrl
+  : "";
+
       ? supabase.storage
           .from(AVATAR_BUCKET)
           .getPublicUrl(player.avatar_key).data.publicUrl
