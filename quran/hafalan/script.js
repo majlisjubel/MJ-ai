@@ -135,8 +135,6 @@ delete button.dataset.originalText;
 }
 }
 
-
-
 async function fetchProfileFromSupabase(userId) {
   if (!supabase || !userId) return;
 
@@ -162,18 +160,12 @@ async function fetchProfileFromSupabase(userId) {
       ? Math.max(0, Number(data.exp))
       : player.xp;
 
-    
-player.avatar_key =
-  data.avatar_key && data.avatar_key !== "default"
-    ? data.avatar_key
-    : "";
+    player.avatar_key =
+      data.avatar_key && data.avatar_key !== "default"
+        ? data.avatar_key
+        : "";
 
-player.avatar_url = player.avatar_key
-  ? supabase.storage
-      .from(AVATAR_BUCKET)
-      .getPublicUrl(player.avatar_key).data.publicUrl
-  : "";
-
+    player.avatar_url = player.avatar_key
       ? supabase.storage
           .from(AVATAR_BUCKET)
           .getPublicUrl(player.avatar_key).data.publicUrl
@@ -212,7 +204,6 @@ player.avatar_url = player.avatar_key
   renderPlayer();
   renderAvatar();
 }
-
 
 async function syncProgressToSupabase() {
 // XP di frontend bukan sistem anti-cheat. Produksi sebaiknya memberi XP
