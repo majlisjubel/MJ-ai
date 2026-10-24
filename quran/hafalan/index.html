@@ -182,16 +182,97 @@
     <button class="primary-button" id="sendOtpBtn">Kirim Kode OTP <span>→</span></button>  
   </div>  
 
-  <!-- Step 2: Input OTP (Hidden by default) -->  
-  <div id="otpStep" hidden>  
-    <p class="modal-description" style="color: var(--green);">Kode OTP dikirim! Cek inbox/spam email lo.</p>  
-    <input type="text" id="authOtp" placeholder="123456" maxlength="6" class="answer-option" style="margin-bottom: 12px; width: 100%; text-align: center; letter-spacing: 5px; font-size: 18px;">  
-    <button class="primary-button" id="verifyOtpBtn">Verifikasi & Login <span>→</span></button>  
-  </div>  
+  
+<!-- Step 2: Input OTP -->
+<div id="otpStep" hidden>
+  <p class="modal-description" style="color: var(--green);">
+    Kode OTP dikirim! Cek inbox/spam email lo.
+  </p>
 
-  <p class="answer-feedback" id="authFeedback" aria-live="polite"></p>  
+  <input
+    type="text"
+    id="authOtp"
+    placeholder="123456"
+    maxlength="6"
+    inputmode="numeric"
+    autocomplete="one-time-code"
+    class="answer-option"
+    style="margin-bottom: 12px; width: 100%; text-align: center; letter-spacing: 5px; font-size: 18px;"
+  >
+
+  <button
+    type="button"
+    class="primary-button"
+    id="verifyOtpBtn"
+  >
+    Verifikasi &amp; Login <span>→</span>
+  </button>
+</div>
+
+<!-- Step 3: Profil pemain -->
+<div id="profileStep" hidden>
+  <p class="modal-description">Profil Petualang MJ</p>
+
+  <p>
+    <strong>Email:</strong>
+    <span id="profileEmail"></span>
+  </p>
+
+  <label for="profileUsername">Username</label>
+  <input
+    type="text"
+    id="profileUsername"
+    class="answer-option"
+    placeholder="Nama pemain"
+    maxlength="24"
+    autocomplete="nickname"
+    style="margin-bottom: 12px; width: 100%;"
+  >
+
+  <div class="profile-avatar-editor">
+    <div id="profileAvatarPreview" class="player-avatar">
+      م
+    </div>
+
+    <label for="profileAvatarFile">
+      Foto profil (JPG, PNG, WebP; maksimal 2 MB)
+    </label>
+
+    <input
+      type="file"
+      id="profileAvatarFile"
+      accept="image/jpeg,image/png,image/webp"
+    >
+  </div>
+
+  <button
+    type="button"
+    class="primary-button"
+    id="saveProfileBtn"
+  >
+    Simpan Profil →
+  </button>
+
+  <button
+    type="button"
+    class="primary-button"
+    id="logoutBtn"
+    style="margin-top: 10px;"
+  >
+    Keluar dari Akun
+  </button>
+</div>
+
+<!-- Pesan status login dan OTP: cukup satu -->
+<p
+  class="answer-feedback"
+  id="authFeedback"
+  aria-live="polite"
+></p>
 </section>
 
-  </div>    <div class="toast" id="toast" role="status" aria-live="polite"></div>  
-</body>  
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
 </html>
