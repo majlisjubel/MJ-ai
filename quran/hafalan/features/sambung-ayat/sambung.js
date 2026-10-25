@@ -1,9 +1,14 @@
-// --- KONFIGURASI WORKER ---
-// URL Cloudflare Worker milik lo yang aktif
+// --- KONFIGURASI WORKER & SUPABASE ---
 const WORKER_URL = "https://hafalan-voice-api.rkidul416.workers.dev";
 
+// Kredensial Supabase lo
+const SUPABASE_URL = "https://rlvjdwxbnzylharbnufz.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJsdmpkd3hibnp5bGhhcmJudWZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NDA3MjUsImV4cCI6MjEwODMxNjcyNX0.5mW3due5VGuaFr26WpqlRigI7Qc7LMBOZFfJadsz6dY";
+
+const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
 // Elemen DOM
-const verseBadge = document.getElementById("verseBadge");
+const surahInfo = document.getElementById("surahInfo");
 const versePrompt = document.getElementById("versePrompt");
 const verseTrans = document.getElementById("verseTrans");
 const micBtn = document.getElementById("micBtn");
@@ -12,14 +17,40 @@ const userTranscript = document.getElementById("userTranscript");
 const feedbackMsg = document.getElementById("feedbackMsg");
 const timerText = document.getElementById("timerText");
 const scoreText = document.getElementById("scoreText");
+const xpDisplay = document.getElementById("xpDisplay");
+const coinDisplay = document.getElementById("coinDisplay");
 const nextBtn = document.getElementById("nextBtn");
 
 let mediaRecorder;
 let audioChunks = [];
 let isRecording = false;
-let currentScore = 120;
-let timeLeft = 90; // 1 menit 30 detik
+let currentAnswerKey = ""; 
+let userTotalXP = 120;     
+let timeLeft = 90; 
 let timerInterval;
+
+// Ambil Data User yang Login dari Supabase
+async function loadUserData() {
+  if (!supabaseClient) return;
+  try {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (user) {
+      const { data: profile } = await supabaseClient
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      
+      if (profile) {
+        userTotalXP = profile.xp || 120;
+        scoreText.textContent = userTotalXP;
+        if (xpDisplay) xpDisplay.textContent = `⭐ ${userTotalXP} XP`;
+      }
+    }
+  } catch (err) {
+    console.log("Menggunakan data lokal sesi.");
+  }
+}
 
 // 1. Ambil Soal Baru dari Cloudflare Worker (GPT-OSS)
 async function loadNewQuestion() {
@@ -27,23 +58,26 @@ async function loadNewQuestion() {
   feedbackMsg.textContent = "";
   userTranscript.textContent = "-";
   nextBtn.style.display = "none";
+  currentAnswerKey = "";
 
   try {
-    const res = await fetch(`${WORKER_URL}/api/generate-question`);
+    const res = await fetch(`${WORKER_URL}/api/generate-question?mode=sambung`);
     const data = await res.json();
 
     if (data) {
-      verseBadge.textContent = `QS. ${data.surah_name} : Ayat ${data.verse_number}`;
+      surahInfo.textContent = `QS. ${data.surah_name} : Ayat ${data.verse_number}`;
       versePrompt.textContent = data.prompt_verse;
       verseTrans.textContent = `"${data.expected_continuation || 'Lanjutkan ayat berikutnya...'}"`;
+      currentAnswerKey = data.expected_continuation || ""; 
       statusBadge.textContent = "Tekan Tombol Mic untuk Mulai Merekam";
     }
   } catch (err) {
     console.error("Gagal ambil soal:", err);
-    // Fallback jika offline/gagal
-    verseBadge.textContent = "QS. Al-Baqarah : 183";
+    // Fallback demo
+    surahInfo.textContent = "QS. Al-Baqarah : 183";
     versePrompt.textContent = "يٰأَيُّهَا الَّذِينَ آمَنُوا كُتِبَ عَلَيْكُمُ الصِّيَامَ";
     verseTrans.textContent = `"Diwajibkan atas kamu berpuasa..."`;
+    currentAnswerKey = "كَمَا كُتِبَ عَلَى الَّذِينَ مِنْ قَبْلِكُمْ";
     statusBadge.textContent = "Mode Offline - Siap Merekam";
   }
 }
@@ -68,16 +102,13 @@ function startTimer() {
 // 3. Kontrol Rekaman Suara (Microphone)
 micBtn.addEventListener("click", async () => {
   if (!isRecording) {
-    // Mulai Rekam
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
       audioChunks = [];
 
       mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunks.push(event.data);
-        }
+        if (event.data.size > 0) audioChunks.push(event.data);
       };
 
       mediaRecorder.onstop = async () => {
@@ -91,11 +122,10 @@ micBtn.addEventListener("click", async () => {
       micBtn.textContent = "⏹️";
       statusBadge.textContent = "Mendengarkan bacaanmu... Baca dengan jelas!";
     } catch (err) {
-      alert("Gagal mengakses mikrofon. Pastikan izin mic aktif di browser HP lo!");
+      alert("Gagal mengakses mikrofon. Pastikan izin mic aktif!");
       console.error(err);
     }
   } else {
-    // Berhenti Rekam
     mediaRecorder.stop();
     isRecording = false;
     micBtn.classList.remove("recording");
@@ -116,39 +146,67 @@ async function sendAudioToWorker(audioBlob) {
     });
 
     const result = await response.json();
+    const transcribedText = result.text || "";
 
-    if (result && result.text) {
-      userTranscript.textContent = result.text;
-      statusBadge.textContent = "Suara berhasil divalidasi!";
-      feedbackMsg.style.color = "#4ade80";
-      feedbackMsg.textContent = "✨ MasyaAllah, bacaan tepat! +25 Poin";
-      
-      currentScore += 25;
-      scoreText.textContent = currentScore;
-      nextBtn.style.display = "block";
+    userTranscript.textContent = transcribedText;
+    
+    // Validasi ketat bacaan user vs kunci jawaban AI
+    validateAnswer(transcribedText);
 
-      // Sinkronisasi XP Supabase jika ada fungsi global
-      if (window.parent && window.parent.addXP) {
-        window.parent.addXP(25);
-      }
-    } else {
-      throw new Error("Gagal mengenali suara");
-    }
   } catch (err) {
     console.error("Error Whisper:", err);
     statusBadge.textContent = "Gagal memproses suara. Coba lagi!";
     feedbackMsg.style.color = "#f87171";
-    feedbackMsg.textContent = "❌ Suara kurang jelas atau koneksi bermasalah.";
+    feedbackMsg.textContent = "❌ Koneksi server bermasalah.";
   }
 }
 
-// Tombol Soal Berikutnya
+// 5. Fungsi Validasi Bacaan (Mencegah Jawab Asal Lolos)
+function validateAnswer(userText) {
+  const cleanUser = userText.replace(/[^\w\s\u0600-\u06FF]/g, "").trim();
+  const cleanKey = currentAnswerKey.replace(/[^\w\s\u0600-\u06FF]/g, "").trim();
+
+  const isMatch = cleanUser.length > 2 && (cleanUser.includes(cleanKey) || cleanKey.includes(cleanUser) || similarityCheck(cleanUser, cleanKey));
+
+  if (isMatch || (currentAnswerKey === "" && cleanUser.length > 3)) {
+    // BENAR
+    statusBadge.textContent = "Bacaan Tepat!";
+    feedbackMsg.style.color = "#4ade80";
+    feedbackMsg.textContent = "✨ MasyaAllah, bacaan benar! +25 XP";
+    
+    userTotalXP += 25;
+    scoreText.textContent = userTotalXP;
+    if (xpDisplay) xpDisplay.textContent = `⭐ ${userTotalXP} XP`;
+    nextBtn.style.display = "block";
+
+    // Sinkronisasi ke window parent jika ada fungsi global
+    if (window.parent && window.parent.addXP) {
+      window.parent.addXP(25);
+    }
+  } else {
+    // SALAH / JAWAB ASAL
+    statusBadge.textContent = "Lafal Belum Tepat";
+    feedbackMsg.style.color = "#f87171";
+    feedbackMsg.textContent = "❌ Bacaan belum sesuai ayat berikutnya. Coba ulangi!";
+  }
+}
+
+function similarityCheck(str1, str2) {
+  const words1 = str1.split(/\s+/);
+  const words2 = str2.split(/\s+/);
+  let matchCount = 0;
+  words1.forEach(w => {
+    if (words2.some(w2 => w2.includes(w) || w.includes(w2))) matchCount++;
+  });
+  return matchCount >= Math.min(2, words2.length);
+}
+
 nextBtn.addEventListener("click", () => {
   loadNewQuestion();
 });
 
-// Inisialisasi Saat Halaman Dibuka
 window.addEventListener("DOMContentLoaded", () => {
+  loadUserData();
   loadNewQuestion();
   startTimer();
 });
