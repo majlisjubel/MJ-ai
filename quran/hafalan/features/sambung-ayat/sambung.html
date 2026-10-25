@@ -4,303 +4,136 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Sambung Ayat - Qur'an Memory Arena</title>
+  <!-- Supabase JS Client SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="../../style.css">
   <style>
     :root {
       --gold: #facc15;
       --border-gold: #f59e0b;
     }
-
     body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Poppins', sans-serif;
-      /* Background pemandangan ala anime RPG masjid & perpustakaan */
+      margin: 0; padding: 0; font-family: 'Poppins', sans-serif;
       background: #061018 url('https://images.unsplash.com/photo-1564507592333-c60657eea523?q=80&w=1000') no-repeat center center fixed;
-      background-size: cover;
-      color: #fff;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      background-size: cover; color: #fff; min-height: 100vh;
+      display: flex; justify-content: center; align-items: center;
     }
-
     .arena-game-container {
-      width: 100%;
-      max-width: 480px;
-      min-height: 100vh;
+      width: 100%; max-width: 480px; min-height: 100vh;
       background: linear-gradient(to bottom, rgba(6, 16, 24, 0.85), rgba(4, 11, 18, 0.95));
-      backdrop-filter: blur(10px);
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 16px;
-      box-sizing: border-box;
-      box-shadow: 0 0 40px rgba(0,0,0,0.8);
-      position: relative;
+      backdrop-filter: blur(10px); display: flex; flex-direction: column;
+      justify-content: space-between; padding: 16px; box-sizing: border-box;
+      box-shadow: 0 0 40px rgba(0,0,0,0.8); position: relative;
     }
-
-    /* Top Status Bar */
     .top-status-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: rgba(15, 23, 42, 0.85);
-      border: 2px solid var(--border-gold);
-      border-radius: 16px;
-      padding: 8px 14px;
-      box-shadow: inset 0 1px 3px rgba(255,255,255,0.2);
+      display: flex; justify-content: space-between; align-items: center;
+      background: rgba(15, 23, 42, 0.85); border: 2px solid var(--border-gold);
+      border-radius: 16px; padding: 8px 14px;
     }
-
     .back-btn {
-      background: linear-gradient(135deg, #1e3a8a, #1d4ed8);
-      color: #fff;
-      border: 1px solid var(--gold);
-      padding: 6px 14px;
-      border-radius: 10px;
-      font-weight: bold;
-      cursor: pointer;
-      font-size: 0.8rem;
-      text-decoration: none;
-      box-shadow: 0 3px 10px rgba(29, 78, 216, 0.4);
+      background: linear-gradient(135deg, #1e3a8a, #1d4ed8); color: #fff;
+      border: 1px solid var(--gold); padding: 6px 14px; border-radius: 10px;
+      font-weight: bold; cursor: pointer; font-size: 0.8rem; text-decoration: none;
     }
-
-    .user-stats-mini {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
+    .user-stats-mini { display: flex; align-items: center; gap: 8px; }
     .stat-badge {
-      background: rgba(0, 0, 0, 0.6);
-      border: 1px solid var(--gold);
-      padding: 4px 10px;
-      border-radius: 10px;
-      color: var(--gold);
-      font-weight: 700;
-      font-size: 0.8rem;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+      background: rgba(0, 0, 0, 0.6); border: 1px solid var(--gold);
+      padding: 4px 10px; border-radius: 10px; color: var(--gold);
+      font-weight: 700; font-size: 0.8rem;
     }
-
-    /* Header Judul Mode Mewah */
     .mode-title-banner {
-      text-align: center;
-      background: linear-gradient(135deg, #065f46, #064e3b);
-      border: 2px solid var(--gold);
-      border-radius: 16px;
-      padding: 10px;
-      margin: 8px 0;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.5), inset 0 1px 3px rgba(255,255,255,0.2);
+      text-align: center; background: linear-gradient(135deg, #065f46, #064e3b);
+      border: 2px solid var(--gold); border-radius: 16px; padding: 10px; margin: 8px 0;
     }
-    .mode-title-banner h2 { margin: 0; font-size: 1.15rem; color: var(--gold); letter-spacing: 0.5px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-    .mode-title-banner p { margin: 3px 0 0; font-size: 0.75rem; color: #6ee7b7; font-weight: 500; }
-
-    /* Kotak Ayat Utama ala Kitab RPG */
+    .mode-title-banner h2 { margin: 0; font-size: 1.15rem; color: var(--gold); }
+    .mode-title-banner p { margin: 3px 0 0; font-size: 0.75rem; color: #6ee7b7; }
     .verse-frame {
-      background: linear-gradient(to bottom, #fffbeb, #fef3c7);
-      color: #0f172a;
-      border: 3px solid var(--border-gold);
-      border-radius: 20px;
-      padding: 16px;
-      text-align: center;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.6), inset 0 2px 5px rgba(255,255,255,0.8);
-      position: relative;
+      background: linear-gradient(to bottom, #fffbeb, #fef3c7); color: #0f172a;
+      border: 3px solid var(--border-gold); border-radius: 20px; padding: 16px; text-align: center;
     }
-
     .verse-badge {
-      background: #047857;
-      color: #fff;
-      font-size: 0.75rem;
-      padding: 4px 12px;
-      border-radius: 12px;
-      font-weight: bold;
-      display: inline-block;
-      margin-bottom: 8px;
-      box-shadow: 0 2px 6px rgba(4, 120, 87, 0.4);
+      background: #047857; color: #fff; font-size: 0.75rem; padding: 4px 12px;
+      border-radius: 12px; font-weight: bold; display: inline-block; margin-bottom: 8px;
     }
-
     .arabic-display {
-      font-family: 'Amiri', serif;
-      font-size: 1.8rem;
-      direction: rtl;
-      line-height: 1.8;
-      color: #0f172a;
-      margin-bottom: 6px;
-      font-weight: 700;
+      font-family: 'Amiri', serif; font-size: 1.8rem; direction: rtl; line-height: 1.8; color: #0f172a; margin-bottom: 6px; font-weight: 700;
     }
-
-    .translation-text {
-      font-size: 0.8rem;
-      color: #334155;
-      font-style: italic;
-      font-weight: 500;
-    }
-
-    /* Banner Instruksi Suara */
+    .translation-text { font-size: 0.8rem; color: #334155; font-style: italic; font-weight: 500; }
     .audio-prompt-banner {
-      background: linear-gradient(135deg, #1e3a8a, #1e40af);
-      border: 2px solid #93c5fd;
-      color: #fff;
-      text-align: center;
-      padding: 8px 12px;
-      border-radius: 14px;
-      font-size: 0.82rem;
-      margin: 8px 0;
-      font-weight: 600;
-      box-shadow: 0 4px 12px rgba(30, 58, 138, 0.5);
+      background: linear-gradient(135deg, #1e3a8a, #1e40af); border: 2px solid #93c5fd;
+      color: #fff; text-align: center; padding: 8px 12px; border-radius: 14px; font-size: 0.82rem; margin: 8px 0; font-weight: 600;
     }
-
-    /* Area Kontrol Mikrofon & Karakter Avatar */
-    .interaction-arena {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin: 4px 0;
-      padding: 0 10px;
-    }
-
+    .interaction-arena { display: flex; justify-content: space-between; align-items: center; margin: 4px 0; padding: 0 10px; }
     .anime-avatar-box {
-      width: 55px;
-      height: 55px;
-      background: rgba(15, 23, 42, 0.8);
-      border: 2px solid var(--gold);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.8rem;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      width: 55px; height: 55px; background: rgba(15, 23, 42, 0.8);
+      border: 2px solid var(--gold); border-radius: 50%; display: flex;
+      align-items: center; justify-content: center; font-size: 1.8rem;
     }
-
-    /* Tombol Mic Utama Bercahaya */
     .mic-main-btn {
-      width: 85px;
-      height: 85px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-      border: 4px solid var(--gold);
-      color: #fff;
-      font-size: 2.2rem;
-      cursor: pointer;
-      box-shadow: 0 0 25px rgba(59, 130, 246, 0.8), 0 5px 15px rgba(0,0,0,0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      width: 85px; height: 85px; border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8); border: 4px solid var(--gold);
+      color: #fff; font-size: 2.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
       transition: all 0.2s ease;
     }
-
-    .mic-main-btn:active {
-      transform: scale(0.95);
-    }
-
-    .mic-main-btn.recording {
-      background: linear-gradient(135deg, #ef4444, #991b1b);
-      border-color: #fca5a5;
-      animation: pulse-mic 1.2s infinite;
-    }
-
+    .mic-main-btn.recording { background: linear-gradient(135deg, #ef4444, #991b1b); border-color: #fca5a5; animation: pulse-mic 1.2s infinite; }
     @keyframes pulse-mic {
       0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
       70% { box-shadow: 0 0 0 22px rgba(239, 68, 68, 0); }
       100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
     }
-
-    .status-indicator {
-      text-align: center;
-      font-size: 0.78rem;
-      color: var(--gold);
-      font-weight: 600;
-      margin-bottom: 2px;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-    }
-
-    /* Transcript & Feedback Box */
+    .status-indicator { text-align: center; font-size: 0.78rem; color: var(--gold); font-weight: 600; margin-bottom: 2px; }
     .transcript-box {
-      background: rgba(15, 23, 42, 0.75);
-      border: 1px solid rgba(250, 204, 21, 0.3);
-      border-radius: 12px;
-      padding: 8px;
-      text-align: center;
-      min-height: 35px;
-      font-size: 0.85rem;
-      color: #38bdf8;
-      direction: rtl;
-      box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+      background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(250, 204, 21, 0.3);
+      border-radius: 12px; padding: 8px; text-align: center; min-height: 35px; font-size: 0.85rem; color: #38bdf8; direction: rtl;
     }
-
-    /* Footer Timer & Poin */
-    .footer-game-panel {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 6px;
-    }
-
+    .footer-game-panel { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
     .panel-box {
-      background: rgba(15, 23, 42, 0.9);
-      border: 2px solid var(--border-gold);
-      border-radius: 14px;
-      padding: 6px 14px;
-      font-size: 0.75rem;
-      text-align: center;
-      font-weight: 500;
-      color: #94a3b8;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+      background: rgba(15, 23, 42, 0.9); border: 2px solid var(--border-gold);
+      border-radius: 14px; padding: 6px 14px; font-size: 0.75rem; text-align: center; font-weight: 500; color: #94a3b8;
     }
-
     .panel-box span { display: block; color: var(--gold); font-weight: bold; font-size: 0.9rem; }
   </style>
 </head>
 <body>
-
   <div class="arena-game-container">
-    
-    <!-- Top Status Bar -->
     <div class="top-status-bar">
       <a href="../../index.html" class="back-btn">‹ Kembali</a>
       <div class="user-stats-mini">
-        <div class="stat-badge">🪙 1.250</div>
-        <div class="stat-badge">💎 85</div>
+        <div class="stat-badge" id="coinDisplay">🪙 1.250</div>
+        <div class="stat-badge" id="xpDisplay">⭐ 0 XP</div>
       </div>
     </div>
 
-    <!-- Mode Banner -->
     <div class="mode-title-banner">
       <h2>🎙️ SAMBUNG AYAT</h2>
       <p>Dengarkan • Ucapkan • Raih Poin</p>
     </div>
 
-    <!-- Kotak Ayat Utama -->
     <div class="verse-frame">
-      <div id="surahInfo" class="verse-badge">QS. Al-Baqarah : 183</div>
-      <div id="versePrompt" class="arabic-display">يٰأَيُّهَا الَّذِينَ آمَنُوا كُتِبَ عَلَيْكُمُ الصِّيَامَ</div>
-      <div class="translation-text" id="verseTrans">"Wahai orang-orang yang beriman! Diwajibkan atas kamu berpuasa..."</div>
+      <div id="surahInfo" class="verse-badge">Memuat Ayat...</div>
+      <div id="versePrompt" class="arabic-display">...</div>
+      <div class="translation-text" id="verseTrans">"Memuat terjemahan..."</div>
     </div>
 
-    <!-- Banner Instruksi Suara -->
     <div class="audio-prompt-banner">
       🔊 Lanjutkan ayat berikutnya dengan suara kamu...
     </div>
 
-    <!-- Status Teks -->
-    <div id="statusBadge" class="status-indicator">Tekan Tombol Mic untuk Mulai Merekam</div>
+    <div id="statusBadge" class="status-indicator">Memuat sistem...</div>
 
-    <!-- Perekam Suara & Karakter / Maskot -->
     <div class="interaction-arena">
-      <div class="anime-avatar-box" title="Petualang">👦</div>
+      <div class="anime-avatar-box" id="userAvatarIcon">👦</div>
       <button id="micBtn" class="mic-main-btn" title="Tekan untuk Rekam">🎙️</button>
-      <div class="anime-avatar-box" title="Maskot">🐱</div>
+      <div class="anime-avatar-box">🐱</div>
     </div>
 
-    <!-- Hasil Lafal Whisper AI -->
     <div class="transcript-box">
       <small style="display:block; color:#94a3b8; font-size: 0.65rem;">Hasil Lafal Suaramu (Whisper AI):</small>
       <span id="userTranscript">-</span>
     </div>
 
-    <div id="feedbackMsg" style="text-align:center; font-weight:bold; font-size:0.85rem; min-height: 18px; text-shadow: 0 2px 4px rgba(0,0,0,0.8);"></div>
+    <div id="feedbackMsg" style="text-align:center; font-weight:bold; font-size:0.85rem; min-height: 18px;"></div>
 
-    <!-- Footer Panel (Timer & Poin & Tombol Lanjut) -->
     <div class="footer-game-panel">
       <div class="panel-box">
         Sisa Waktu
@@ -308,11 +141,10 @@
       </div>
       <button id="nextBtn" style="display:none;" class="back-btn" style="background: linear-gradient(135deg, #059669, #047857);">Soal Berikutnya ➡️</button>
       <div class="panel-box">
-        Poin
-        <span id="scoreText">120</span>
+        Total XP
+        <span id="scoreText">0</span>
       </div>
     </div>
-
   </div>
 
   <script src="sambung.js"></script>
