@@ -1,5 +1,5 @@
 // Konfigurasi Cloudflare Worker Endpoint (Backend Groq)
-const WORKER_URL = "https://quran-worker.YOUR-SUBDOMAIN.workers.dev"; // Ganti dengan URL Worker lo nanti
+const WORKER_URL = "https://hafalan-voice-api.rkidul416.workers.dev/"; // Ganti dengan URL Worker lo nanti
 
 let mediaRecorder;
 let audioChunks = [];
