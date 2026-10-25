@@ -25,30 +25,45 @@ let mediaRecorder;
 let audioChunks = [];
 let isRecording = false;
 let currentAnswerKey = ""; 
-let userTotalXP = 120;     
+let userTotalXP = 0;     
+let userCoins = 0;
 let timeLeft = 90; 
 let timerInterval;
 
-// Ambil Data User yang Login dari Supabase
+// Ambil Data Akun & Poin User yang Aktif
 async function loadUserData() {
   if (!supabaseClient) return;
   try {
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (user) {
+    // Cek sesi user aktif di Supabase
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session && session.user) {
       const { data: profile } = await supabaseClient
         .from('profiles')
         .select('*')
-        .eq('id', user.id)
+        .eq('id', session.user.id)
         .single();
       
       if (profile) {
-        userTotalXP = profile.xp || 120;
+        userTotalXP = profile.xp || 0;
+        userCoins = profile.coins || 1250;
+        
         scoreText.textContent = userTotalXP;
         if (xpDisplay) xpDisplay.textContent = `⭐ ${userTotalXP} XP`;
+        if (coinDisplay) coinDisplay.textContent = `🪙 ${userCoins}`;
       }
+    } else {
+      // Fallback ambil dari localStorage jika disimpan lokal oleh halaman utama
+      const localXP = localStorage.getItem('user_xp');
+      const localCoins = localStorage.getItem('user_coins');
+      if (localXP) userTotalXP = parseInt(localXP);
+      if (localCoins) userCoins = parseInt(localCoins);
+      
+      scoreText.textContent = userTotalXP;
+      if (xpDisplay) xpDisplay.textContent = `⭐ ${userTotalXP} XP`;
+      if (coinDisplay) coinDisplay.textContent = `🪙 ${userCoins}`;
     }
   } catch (err) {
-    console.log("Menggunakan data lokal sesi.");
+    console.log("Error mengambil data user:", err);
   }
 }
 
@@ -66,18 +81,23 @@ async function loadNewQuestion() {
 
     if (data) {
       surahInfo.textContent = `QS. ${data.surah_name} : Ayat ${data.verse_number}`;
-      versePrompt.textContent = data.prompt_verse;
-      verseTrans.textContent = `"${data.expected_continuation || 'Lanjutkan ayat berikutnya...'}"`;
+      
+      // TAMPILKAN AYAT FULL DI ATAS (Prompt Verse + Expected Continuation)
+      // Sesuai permintaan: ayat dibuat full, user tinggal lanjutkan
+      const fullAyatText = `${data.prompt_verse} ${data.expected_continuation || ''}`;
+      versePrompt.textContent = fullAyatText;
+      
+      verseTrans.textContent = `Lanjutkan bacaan ayat berikutnya dengan suara...`;
       currentAnswerKey = data.expected_continuation || ""; 
       statusBadge.textContent = "Tekan Tombol Mic untuk Mulai Merekam";
     }
   } catch (err) {
     console.error("Gagal ambil soal:", err);
     // Fallback demo
-    surahInfo.textContent = "QS. Al-Baqarah : 183";
-    versePrompt.textContent = "يٰأَيُّهَا الَّذِينَ آمَنُوا كُتِبَ عَلَيْكُمُ الصِّيَامَ";
-    verseTrans.textContent = `"Diwajibkan atas kamu berpuasa..."`;
-    currentAnswerKey = "كَمَا كُتِبَ عَلَى الَّذِينَ مِنْ قَبْلِكُمْ";
+    surahInfo.textContent = "QS. Al-Fatihah : Ayat 1-2";
+    versePrompt.textContent = "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ ٱلْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ";
+    verseTrans.textContent = "Lanjutkan bacaan ayat berikutnya...";
+    currentAnswerKey = "الرَّحْمَٰنِ الرَّحِيمِ";
     statusBadge.textContent = "Mode Offline - Siap Merekam";
   }
 }
@@ -149,8 +169,6 @@ async function sendAudioToWorker(audioBlob) {
     const transcribedText = result.text || "";
 
     userTranscript.textContent = transcribedText;
-    
-    // Validasi ketat bacaan user vs kunci jawaban AI
     validateAnswer(transcribedText);
 
   } catch (err) {
@@ -161,7 +179,7 @@ async function sendAudioToWorker(audioBlob) {
   }
 }
 
-// 5. Fungsi Validasi Bacaan (Mencegah Jawab Asal Lolos)
+// 5. Fungsi Validasi Bacaan (Anti-Asal)
 function validateAnswer(userText) {
   const cleanUser = userText.replace(/[^\w\s\u0600-\u06FF]/g, "").trim();
   const cleanKey = currentAnswerKey.replace(/[^\w\s\u0600-\u06FF]/g, "").trim();
@@ -179,7 +197,10 @@ function validateAnswer(userText) {
     if (xpDisplay) xpDisplay.textContent = `⭐ ${userTotalXP} XP`;
     nextBtn.style.display = "block";
 
-    // Sinkronisasi ke window parent jika ada fungsi global
+    // Simpan ke localStorage agar sinkron dengan halaman utama
+    localStorage.setItem('user_xp', userTotalXP);
+
+    // Sinkronisasi ke window parent jika ada
     if (window.parent && window.parent.addXP) {
       window.parent.addXP(25);
     }
