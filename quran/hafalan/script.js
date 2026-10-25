@@ -155,167 +155,167 @@ return t;
 // SISTEM RANK & LEVEL (300 EXP / LEVEL)
 // ==========================================
 function calculateRank(xp) {
-  const currentXP = Math.max(0, Number(xp) || 0);
-  const level = Math.floor(currentXP / 300) + 1;
-  
-  let title = "QARI'";
-  if (level >= 26) {
-    title = "HAMILUL QUR'AN";
-  } else if (level >= 19) {
-    title = "AMIL";
-  } else if (level >= 13) {
-    title = "MUTQIN";
-  } else if (level >= 8) {
-    title = "HAFIDZ";
-  } else if (level >= 4) {
-    title = "MUKHLIS";
-  }
+  const currentXP = Math.max(0, Number(xp) || 0);
+  const level = Math.floor(currentXP / 300) + 1;
+  
+  let title = "QARI'";
+  if (level >= 26) {
+    title = "HAMILUL QUR'AN";
+  } else if (level >= 19) {
+    title = "AMIL";
+  } else if (level >= 13) {
+    title = "MUTQIN";
+  } else if (level >= 8) {
+    title = "HAFIDZ";
+  } else if (level >= 4) {
+    title = "MUKHLIS";
+  }
 
-  return { level, title };
+  return { level, title };
 }
 
 function renderPlayer() {
-  const rankInfo = calculateRank(player.xp);
-  const level = rankInfo.level;
-  player.rank_title = rankInfo.title;
+  const rankInfo = calculateRank(player.xp);
+  const level = rankInfo.level;
+  player.rank_title = rankInfo.title;
 
-  const currentLevelXP = player.xp % 300;
-  const xpPercent = Math.floor((currentLevelXP / 300) * 100);
-  const completedToday = player.completedDates.includes(today);
+  const currentLevelXP = player.xp % 300;
+  const xpPercent = Math.floor((currentLevelXP / 300) * 100);
+  const completedToday = player.completedDates.includes(today);
 
-  setText("#playerName", player.username);  
-  setText("#playerRank", player.rank_title);  
-  setText("#levelNumber", String(level).padStart(2, "0"));  
-  setText(  
-    "#levelLabel",  
-    `Level ${level} · ${player.rank_title}`  
-  );  
-  setText("#xpLabel", `${currentLevelXP} / 300 XP`);  
-  setText("#xpPercent", `${xpPercent}%`);  
-  
-  const xpBar = $("#xpBar");  
-  if (xpBar) xpBar.style.width = `${xpPercent}%`;  
-  
-  setText("#questCount", completedToday ? "1/1" : "0/1");  
-  const questBar = $("#questBar");  
-  if (questBar) questBar.style.width = completedToday ? "100%" : "0%";  
-  
-  setText(  
-    "#questDescription",  
-    completedToday  
-      ? "Quest hari ini selesai. Kembali besok untuk tantangan berikutnya."  
-      : "Selesaikan satu tantangan untuk memperoleh 25 XP."  
-  );  
-  setText(  
-    "#userGreeting",  
-    currentUser  
-      ? `Assalamu'alaikum, ${player.username}!`  
-      : "Assalamu'alaikum, Petualang!"  
-  );  
-  renderAvatar();
+  setText("#playerName", player.username);  
+  setText("#playerRank", player.rank_title);  
+  setText("#levelNumber", String(level).padStart(2, "0"));  
+  setText(  
+    "#levelLabel",  
+    `Level ${level} · ${player.rank_title}`  
+  );  
+  setText("#xpLabel", `${currentLevelXP} / 300 XP`);  
+  setText("#xpPercent", `${xpPercent}%`);  
+  
+  const xpBar = $("#xpBar");  
+  if (xpBar) xpBar.style.width = `${xpPercent}%`;  
+  
+  setText("#questCount", completedToday ? "1/1" : "0/1");  
+  const questBar = $("#questBar");  
+  if (questBar) questBar.style.width = completedToday ? "100%" : "0%";  
+  
+  setText(  
+    "#questDescription",  
+    completedToday  
+      ? "Quest hari ini selesai. Kembali besok untuk tantangan berikutnya."  
+      : "Selesaikan satu tantangan untuk memperoleh 25 XP."  
+  );  
+  setText(  
+    "#userGreeting",  
+    currentUser  
+      ? `Assalamu'alaikum, ${player.username}!`  
+      : "Assalamu'alaikum, Petualang!"  
+  );  
+  renderAvatar();
 }
 
 async function awardXP(amount) {
-  if (typeof amount !== "number" || amount <= 0) return;
+  if (typeof amount !== "number" || amount <= 0) return;
 
-  const oldRank = calculateRank(player.xp);
-  player.xp += amount;
-  const newRank = calculateRank(player.xp);
+  const oldRank = calculateRank(player.xp);
+  player.xp += amount;
+  const newRank = calculateRank(player.xp);
 
-  if (!player.completedDates.includes(today)) {
-    player.completedDates.push(today);
-  }
+  if (!player.completedDates.includes(today)) {
+    player.completedDates.push(today);
+  }
 
-  savePlayer();
-  renderPlayer();
+  savePlayer();
+  renderPlayer();
 
-  if (newRank.level > oldRank.level) {
-    showToast(`🎉 LEVEL UP! Sekarang Level ${newRank.level} (${newRank.title}). Terus jaga hafalanmu!`);
-  } else {
-    showToast(`+${amount} XP! Progres hafalanmu bertambah.`);
-  }
+  if (newRank.level > oldRank.level) {
+    showToast(`🎉 LEVEL UP! Sekarang Level ${newRank.level} (${newRank.title}). Terus jaga hafalanmu!`);
+  } else {
+    showToast(`+${amount} XP! Progres hafalanmu bertambah.`);
+  }
 
-  if (currentUser && supabase) {
-    try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          exp: player.xp,
-          rank_title: newRank.title,
-        })
-        .eq("id", currentUser.id);
+  if (currentUser && supabase) {
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          exp: player.xp,
+          rank_title: newRank.title,
+        })
+        .eq("id", currentUser.id);
 
-      if (error) console.error("XP sync error:", error.message);
-    } catch (err) {
-      console.error("Error awardXP Supabase:", err);
-    }
-  }
+      if (error) console.error("XP sync error:", error.message);
+    } catch (err) {
+      console.error("Error awardXP Supabase:", err);
+    }
+  }
 }
 
 async function fetchProfileFromSupabase(userId) {
-  if (!supabase || !userId) return;
+  if (!supabase || !userId) return;
 
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("id, display_name, rank_title, exp, avatar_key")
-    .eq("id", userId)
-    .maybeSingle();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, display_name, rank_title, exp, avatar_key")
+    .eq("id", userId)
+    .maybeSingle();
 
-  if (error) {
-    console.error("Gagal membaca profil:", error.message);
-    showToast("Profil gagal dimuat. Periksa nama kolom dan RLS.");
-    return;
-  }
+  if (error) {
+    console.error("Gagal membaca profil:", error.message);
+    showToast("Profil gagal dimuat. Periksa nama kolom dan RLS.");
+    return;
+  }
 
-  if (data) {
-    player.username = data.display_name || player.username;
-    player.rank_title = data.rank_title || player.rank_title;
+  if (data) {
+    player.username = data.display_name || player.username;
+    player.rank_title = data.rank_title || player.rank_title;
 
-    player.xp = Number.isFinite(Number(data.exp))
-      ? Math.max(0, Number(data.exp))
-      : player.xp;
+    player.xp = Number.isFinite(Number(data.exp))
+      ? Math.max(0, Number(data.exp))
+      : player.xp;
 
-    player.avatar_key =
-      data.avatar_key && data.avatar_key !== "default"
-        ? data.avatar_key
-        : "";
+    player.avatar_key =
+      data.avatar_key && data.avatar_key !== "default"
+        ? data.avatar_key
+        : "";
 
-    player.avatar_url = player.avatar_key
-      ? supabase.storage
-          .from(AVATAR_BUCKET)
-          .getPublicUrl(player.avatar_key).data.publicUrl
-      : "";
+    player.avatar_url = player.avatar_key
+      ? supabase.storage
+          .from(AVATAR_BUCKET)
+          .getPublicUrl(player.avatar_key).data.publicUrl
+      : "";
 
-    savePlayer();
-    renderPlayer();
-    renderAvatar();
-    return;
-  }
+    savePlayer();
+    renderPlayer();
+    renderAvatar();
+    return;
+  }
 
-  const { error: insertError } = await supabase
-    .from("profiles")
-    .insert({
-      id: userId,
-      display_name: player.username,
-      rank_title: "QARI'",
-      exp: 0,
-      avatar_key: "",
-    });
+  const { error: insertError } = await supabase
+    .from("profiles")
+    .insert({
+      id: userId,
+      display_name: player.username,
+      rank_title: "QARI'",
+      exp: 0,
+      avatar_key: "",
+    });
 
-  if (insertError) {
-    console.error("Gagal membuat profil:", insertError.message);
-    showToast("Profil gagal dibuat. Periksa kolom dan izin RLS.");
-    return;
-  }
+  if (insertError) {
+    console.error("Gagal membuat profil:", insertError.message);
+    showToast("Profil gagal dibuat. Periksa kolom dan izin RLS.");
+    return;
+  }
 
-  player.rank_title = "QARI'";
-  player.xp = 0;
-  player.avatar_key = "";
-  player.avatar_url = "";
+  player.rank_title = "QARI'";
+  player.xp = 0;
+  player.avatar_key = "";
+  player.avatar_url = "";
 
-  savePlayer();
-  renderPlayer();
-  renderAvatar();
+  savePlayer();
+  renderPlayer();
+  renderAvatar();
 }
 
 async function fetchLeaderboard() {
@@ -324,62 +324,62 @@ const container = $("#leaderboardList");
 const note = $("#leaderNote");
 if (!container) return;
 
-const { data, error } = await supabase  
-  .from("profiles")  
-  .select("display_name, rank_title, exp, avatar_key")  
-  .order("exp", { ascending: false })  
-  .limit(5);  
+const { data, error } = await supabase  
+  .from("profiles")  
+  .select("display_name, rank_title, exp, avatar_key")  
+  .order("exp", { ascending: false })  
+  .limit(5);  
 
-if (error) {  
-  console.error("Leaderboard error:", error.message);  
-  if (note) note.textContent = "Leaderboard belum dapat dimuat.";  
-  return;  
-}  
+if (error) {  
+  console.error("Leaderboard error:", error.message);  
+  if (note) note.textContent = "Leaderboard belum dapat dimuat.";  
+  return;  
+}  
 
-container.replaceChildren();  
-(data || []).forEach((item, index) => {  
-  const row = document.createElement("div");  
-  row.className = "leader-row";  
+container.replaceChildren();  
+(data || []).forEach((item, index) => {  
+  const row = document.createElement("div");  
+  row.className = "leader-row";  
 
-  const rank = document.createElement("span");  
-  rank.className = "leader-rank";  
-  rank.textContent = String(index + 1).padStart(2, "0");  
+  const rank = document.createElement("span");  
+  rank.className = "leader-rank";  
+  rank.textContent = String(index + 1).padStart(2, "0");  
 
-  const avatar = document.createElement("span");  
-  avatar.className = "leader-avatar";  
-  if (item.avatar_key) {  
-    const img = document.createElement("img");  
-    img.src = supabase.storage  
-      .from(AVATAR_BUCKET)  
-      .getPublicUrl(item.avatar_key).data.publicUrl;  
-    img.alt = "";  
-    img.loading = "lazy";  
-    avatar.appendChild(img);  
-  } else {  
-    avatar.textContent = "م";  
-  }  
+  const avatar = document.createElement("span");  
+  avatar.className = "leader-avatar";  
+  if (item.avatar_key) {  
+    const img = document.createElement("img");  
+    img.src = supabase.storage  
+      .from(AVATAR_BUCKET)  
+      .getPublicUrl(item.avatar_key).data.publicUrl;  
+    img.alt = "";  
+    img.loading = "lazy";  
+    avatar.appendChild(img);  
+  } else {  
+    avatar.textContent = "م";  
+  }  
 
-  const user = document.createElement("span");  
-  user.className = "leader-user";  
-  const name = document.createElement("strong");  
-  name.textContent = item.display_name || "Petualang";  
-  const rankTitle = document.createElement("small");  
-  rankTitle.textContent = item.rank_title || calculateRank(item.exp).title;  
-  user.append(name, rankTitle);  
+  const user = document.createElement("span");  
+  user.className = "leader-user";  
+  const name = document.createElement("strong");  
+  name.textContent = item.display_name || "Petualang";  
+  const rankTitle = document.createElement("small");  
+  rankTitle.textContent = item.rank_title || calculateRank(item.exp).title;  
+  user.append(name, rankTitle);  
 
-  const xp = document.createElement("span");  
-  xp.className = "leader-xp";  
-  xp.textContent = `${Number(item.exp) || 0} XP`;  
-  row.append(rank, avatar, user, xp);  
-  container.appendChild(row);  
-});  
+  const xp = document.createElement("span");  
+  xp.className = "leader-xp";  
+  xp.textContent = `${Number(item.exp) || 0} XP`;  
+  row.append(rank, avatar, user, xp);  
+  container.appendChild(row);  
+});  
 
-if (note) note.textContent = "Peringkat dari data Supabase Arena.";  
-if (!data?.length) {  
-  const empty = document.createElement("p");  
-  empty.className = "leader-empty";  
-  empty.textContent = "Belum ada pemain di leaderboard.";  
-  container.appendChild(empty);  
+if (note) note.textContent = "Peringkat dari data Supabase Arena.";  
+if (!data?.length) {  
+  const empty = document.createElement("p");  
+  empty.className = "leader-empty";  
+  empty.textContent = "Belum ada pemain di leaderboard.";  
+  container.appendChild(empty);  
 }
 }
 
@@ -403,17 +403,17 @@ const dot = document.createElement("i");
 avatar.appendChild(dot);
 }
 
-const preview = $("#profileAvatarPreview");  
-if (preview) {  
-  preview.replaceChildren();  
-  if (url) {  
-    const img = document.createElement("img");  
-    img.src = url;  
-    img.alt = "Pratinjau foto profil";  
-    preview.appendChild(img);  
-  } else {  
-    preview.textContent = "م";  
-  }  
+const preview = $("#profileAvatarPreview");  
+if (preview) {  
+  preview.replaceChildren();  
+  if (url) {  
+    const img = document.createElement("img");  
+    img.src = url;  
+    img.alt = "Pratinjau foto profil";  
+    preview.appendChild(img);  
+  } else {  
+    preview.textContent = "م";  
+  }  
 }
 }
 
@@ -451,35 +451,35 @@ document.body.style.overflow = "hidden";
 }
 
 function checkAnswer(selectedIndex) {
-  if (answered || !currentQuestion) return;
-  answered = true;
-  const correct = selectedIndex === currentQuestion.correct;
+  if (answered || !currentQuestion) return;
+  answered = true;
+  const correct = selectedIndex === currentQuestion.correct;
 
-  $$("#answerList .answer-option").forEach((button, index) => {
-    button.disabled = true;
-    if (index === currentQuestion.correct) {
-      button.classList.add("correct");
-    } else if (index === selectedIndex && !correct) {
-      button.classList.add("wrong");
-    }
-  });
+  $$("#answerList .answer-option").forEach((button, index) => {
+    button.disabled = true;
+    if (index === currentQuestion.correct) {
+      button.classList.add("correct");
+    } else if (index === selectedIndex && !correct) {
+      button.classList.add("wrong");
+    }
+  });
 
-  setText(
-    "#answerFeedback",
-    correct
-      ? `✓ ${currentQuestion.explanation} +25 XP`
-      : `Belum tepat. ${currentQuestion.explanation}`
-  );
+  setText(
+    "#answerFeedback",
+    correct
+      ? `✓ ${currentQuestion.explanation} +25 XP`
+      : `Belum tepat. ${currentQuestion.explanation}`
+  );
 
-  if (correct) {
-    awardXP(25);
-  }
+  if (correct) {
+    awardXP(25);
+  }
 
-  const next = $("#continueButton");
-  if (next) {
-    next.hidden = false;
-    next.textContent = "Kembali ke Arena →";
-  }
+  const next = $("#continueButton");
+  if (next) {
+    next.hidden = false;
+    next.textContent = "Kembali ke Arena →";
+  }
 }
 
 function closeModal() {
@@ -504,18 +504,18 @@ return;
 modal.hidden = false;
 document.body.style.overflow = "hidden";
 
-if (currentUser) {  
-  showAuthStep("profile");  
-  setAuthFeedback("");  
-  setText("#profileEmail", currentUser.email || "Email tidak tersedia");  
-  const nameInput = $("#profileUsername");  
-  if (nameInput) nameInput.value = player.username;  
-  renderAvatar();  
-} else {  
-  showAuthStep("email");  
-  setAuthFeedback("");  
-  if ($("#authEmail")) $("#authEmail").value = "";  
-  if ($("#authOtp")) $("#authOtp").value = "";  
+if (currentUser) {  
+  showAuthStep("profile");  
+  setAuthFeedback("");  
+  setText("#profileEmail", currentUser.email || "Email tidak tersedia");  
+  const nameInput = $("#profileUsername");  
+  if (nameInput) nameInput.value = player.username;  
+  renderAvatar();  
+} else {  
+  showAuthStep("email");  
+  setAuthFeedback("");  
+  if ($("#authEmail")) $("#authEmail").value = "";  
+  if ($("#authOtp")) $("#authOtp").value = "";  
 }
 }
 
@@ -553,71 +553,71 @@ true
 return;
 }
 
-profileBusy = true;  
-const saveBtn = $("#saveProfileBtn");  
-setButtonBusy(saveBtn, true, "Menyimpan...");  
-setAuthFeedback("Menyimpan profil...");  
+profileBusy = true;  
+const saveBtn = $("#saveProfileBtn");  
+setButtonBusy(saveBtn, true, "Menyimpan...");  
+setAuthFeedback("Menyimpan profil...");  
 
-try {  
-  let avatarKey = player.avatar_key || "";  
-  let avatarUrl = player.avatar_url || "";  
-  const file = $("#profileAvatarFile")?.files?.[0] || null;  
-  if (file) {  
-    const allowed = ["image/jpeg", "image/png", "image/webp"];  
-    if (!allowed.includes(file.type))  
-      throw new Error("Gunakan foto JPG, PNG, atau WebP.");  
-    if (file.size > 2 * 1024 * 1024)  
-      throw new Error("Ukuran foto maksimal 2 MB.");  
+try {  
+  let avatarKey = player.avatar_key || "";  
+  let avatarUrl = player.avatar_url || "";  
+  const file = $("#profileAvatarFile")?.files?.[0] || null;  
+  if (file) {  
+    const allowed = ["image/jpeg", "image/png", "image/webp"];  
+    if (!allowed.includes(file.type))  
+      throw new Error("Gunakan foto JPG, PNG, atau WebP.");  
+    if (file.size > 2 * 1024 * 1024)  
+      throw new Error("Ukuran foto maksimal 2 MB.");  
 
-    const ext =  
-      file.type === "image/png"  
-        ? "png"  
-        : file.type === "image/webp"  
-        ? "webp"  
-        : "jpg";  
-    const path = `${currentUser.id}/avatar-${Date.now()}.${ext}`;  
-    const { error: uploadError } = await supabase.storage  
-      .from(AVATAR_BUCKET)  
-      .upload(path, file, {  
-        cacheControl: "3600",  
-        upsert: true,  
-        contentType: file.type,  
-      });  
-    if (uploadError)  
-      throw new Error(`Upload foto gagal: ${uploadError.message}`);  
-    const { data: publicData } = supabase.storage  
-      .from(AVATAR_BUCKET)  
-      .getPublicUrl(path);  
-    avatarKey = path;  
-    avatarUrl = publicData.publicUrl;  
-  }  
+    const ext =  
+      file.type === "image/png"  
+        ? "png"  
+        : file.type === "image/webp"  
+        ? "webp"  
+        : "jpg";  
+    const path = `${currentUser.id}/avatar-${Date.now()}.${ext}`;  
+    const { error: uploadError } = await supabase.storage  
+      .from(AVATAR_BUCKET)  
+      .upload(path, file, {  
+        cacheControl: "3600",  
+        upsert: true,  
+        contentType: file.type,  
+      });  
+    if (uploadError)  
+      throw new Error(`Upload foto gagal: ${uploadError.message}`);  
+    const { data: publicData } = supabase.storage  
+      .from(AVATAR_BUCKET)  
+      .getPublicUrl(path);  
+    avatarKey = path;  
+    avatarUrl = publicData.publicUrl;  
+  }  
 
-  const { error } = await supabase  
-    .from("profiles")  
-    .update({  
-      display_name: username,  
-      avatar_key: avatarKey || "",  
-    })  
-    .eq("id", currentUser.id);  
+  const { error } = await supabase  
+    .from("profiles")  
+    .update({  
+      display_name: username,  
+      avatar_key: avatarKey || "",  
+    })  
+    .eq("id", currentUser.id);  
 
-  if (error) throw new Error(`Gagal menyimpan profil: ${error.message}`);  
+  if (error) throw new Error(`Gagal menyimpan profil: ${error.message}`);  
 
-  player.username = username;  
-  player.avatar_key = avatarKey || "";  
-  player.avatar_url = avatarUrl || "";  
-  savePlayer();  
-  renderPlayer();  
-  renderAvatar();  
-  setAuthFeedback("Profil berhasil disimpan.");  
-  fetchLeaderboard();  
-  showToast("Profil MJ Arena berhasil diperbarui!");  
-  if ($("#profileAvatarFile")) $("#profileAvatarFile").value = "";  
-} catch (err) {  
-  console.error(err);  
-  setAuthFeedback(err.message || "Gagal menyimpan profil.", true);  
-} finally {  
-  profileBusy = false;  
-  setButtonBusy(saveBtn, false);  
+  player.username = username;  
+  player.avatar_key = avatarKey || "";  
+  player.avatar_url = avatarUrl || "";  
+  savePlayer();  
+  renderPlayer();  
+  renderAvatar();  
+  setAuthFeedback("Profil berhasil disimpan.");  
+  fetchLeaderboard();  
+  showToast("Profil MJ Arena berhasil diperbarui!");  
+  if ($("#profileAvatarFile")) $("#profileAvatarFile").value = "";  
+} catch (err) {  
+  console.error(err);  
+  setAuthFeedback(err.message || "Gagal menyimpan profil.", true);  
+} finally {  
+  profileBusy = false;  
+  setButtonBusy(saveBtn, false);  
 }
 }
 
@@ -641,141 +641,141 @@ await fetchProfileFromSupabase(currentUser.id);
 openAuthModal();
 });
 
-$("#closeAuthModal")?.addEventListener("click", closeAuthModal);  
-$("#authModal")?.addEventListener("click", (event) => {  
-  if (event.target === $("#authModal")) closeAuthModal();  
-});  
+$("#closeAuthModal")?.addEventListener("click", closeAuthModal);  
+$("#authModal")?.addEventListener("click", (event) => {  
+  if (event.target === $("#authModal")) closeAuthModal();  
+});  
 
-$("#sendOtpBtn")?.addEventListener("click", async () => {  
-  if (!supabase)  
-    return setAuthFeedback("Supabase SDK belum termuat.", true);  
-  const email = $("#authEmail")?.value.trim().toLowerCase() || "";  
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))  
-    return setAuthFeedback("Masukkan alamat email yang valid.", true);  
+$("#sendOtpBtn")?.addEventListener("click", async () => {  
+  if (!supabase)  
+    return setAuthFeedback("Supabase SDK belum termuat.", true);  
+  const email = $("#authEmail")?.value.trim().toLowerCase() || "";  
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))  
+    return setAuthFeedback("Masukkan alamat email yang valid.", true);  
 
-  const button = $("#sendOtpBtn");  
-  setButtonBusy(button, true, "Mengirim OTP...");  
-  setAuthFeedback("Mengirim kode OTP...");  
-  try {  
-    const { error } = await supabase.auth.signInWithOtp({  
-      email,  
-      options: { shouldCreateUser: true },  
-    });  
-    if (error) throw error;  
-    showAuthStep("otp");  
-    setAuthFeedback(`Kode dikirim ke ${email}. Gunakan kode terbaru.`);  
-    showToast("OTP terkirim. Periksa inbox dan spam.");  
-  } catch (err) {  
-    setAuthFeedback(`Gagal mengirim OTP: ${err.message}`, true);  
-  } finally {  
-    setButtonBusy(button, false);  
-  }  
-});  
+  const button = $("#sendOtpBtn");  
+  setButtonBusy(button, true, "Mengirim OTP...");  
+  setAuthFeedback("Mengirim kode OTP...");  
+  try {  
+    const { error } = await supabase.auth.signInWithOtp({  
+      email,  
+      options: { shouldCreateUser: true },  
+    });  
+    if (error) throw error;  
+    showAuthStep("otp");  
+    setAuthFeedback(`Kode dikirim ke ${email}. Gunakan kode terbaru.`);  
+    showToast("OTP terkirim. Periksa inbox dan spam.");  
+  } catch (err) {  
+    setAuthFeedback(`Gagal mengirim OTP: ${err.message}`, true);  
+  } finally {  
+    setButtonBusy(button, false);  
+  }  
+});  
 
-$("#verifyOtpBtn")?.addEventListener("click", async () => {  
-  if (!supabase)  
-    return setAuthFeedback("Supabase SDK belum termuat.", true);  
-  const email = $("#authEmail")?.value.trim().toLowerCase() || "";  
-  const token = $("#authOtp")?.value.trim() || "";  
-  if (!email)  
-    return setAuthFeedback("Email tidak ditemukan.", true);  
-  if (!/^\d{6}$/.test(token))  
-    return setAuthFeedback("Masukkan kode OTP 6 digit.", true);  
+$("#verifyOtpBtn")?.addEventListener("click", async () => {  
+  if (!supabase)  
+    return setAuthFeedback("Supabase SDK belum termuat.", true);  
+  const email = $("#authEmail")?.value.trim().toLowerCase() || "";  
+  const token = $("#authOtp")?.value.trim() || "";  
+  if (!email)  
+    return setAuthFeedback("Email tidak ditemukan.", true);  
+  if (!/^\d{6}$/.test(token))  
+    return setAuthFeedback("Masukkan kode OTP 6 digit.", true);  
 
-  const button = $("#verifyOtpBtn");  
-  setButtonBusy(button, true, "Memverifikasi...");  
-  setAuthFeedback("Memverifikasi kode...");  
-  try {  
-    const { data, error } = await supabase.auth.verifyOtp({  
-      email,  
-      token,  
-      type: "email",  
-    });  
-    if (error) throw error;  
-    currentUser = data.user || data.session?.user || null;  
-    if (!currentUser) throw new Error("Login belum menghasilkan sesi.");  
-    await fetchProfileFromSupabase(currentUser.id);  
-    renderPlayer();  
-    fetchLeaderboard();  
-    showAuthStep("profile");  
-    setText("#profileEmail", currentUser.email || email);  
-    if ($("#profileUsername"))  
-      $("#profileUsername").value = player.username;  
-    setAuthFeedback("Login berhasil.");  
-    showToast("Berhasil login ke MJ Arena!");  
-  } catch (err) {  
-    setAuthFeedback(`Verifikasi gagal: ${err.message}`, true);  
-  } finally {  
-    setButtonBusy(button, false);  
-  }  
-});  
+  const button = $("#verifyOtpBtn");  
+  setButtonBusy(button, true, "Memverifikasi...");  
+  setAuthFeedback("Memverifikasi kode...");  
+  try {  
+    const { data, error } = await supabase.auth.verifyOtp({  
+      email,  
+      token,  
+      type: "email",  
+    });  
+    if (error) throw error;  
+    currentUser = data.user || data.session?.user || null;  
+    if (!currentUser) throw new Error("Login belum menghasilkan sesi.");  
+    await fetchProfileFromSupabase(currentUser.id);  
+    renderPlayer();  
+    fetchLeaderboard();  
+    showAuthStep("profile");  
+    setText("#profileEmail", currentUser.email || email);  
+    if ($("#profileUsername"))  
+      $("#profileUsername").value = player.username;  
+    setAuthFeedback("Login berhasil.");  
+    showToast("Berhasil login ke MJ Arena!");  
+  } catch (err) {  
+    setAuthFeedback(`Verifikasi gagal: ${err.message}`, true);  
+  } finally {  
+    setButtonBusy(button, false);  
+  }  
+});  
 
-$("#backToEmailBtn")?.addEventListener("click", () => {  
-  showAuthStep("email");  
-  setAuthFeedback("");  
-});  
+$("#backToEmailBtn")?.addEventListener("click", () => {  
+  showAuthStep("email");  
+  setAuthFeedback("");  
+});  
 
-$("#saveProfileBtn")?.addEventListener("click", saveProfile);  
+$("#saveProfileBtn")?.addEventListener("click", saveProfile);  
 
-$("#profileAvatarFile")?.addEventListener("change", () => {  
-  const file = $("#profileAvatarFile")?.files?.[0];  
-  if (!file) return;  
-  if (file.size > 2 * 1024 * 1024) {  
-    $("#profileAvatarFile").value = "";  
-    setAuthFeedback("Ukuran foto maksimal 2 MB.", true);  
-    return;  
-  }  
-  const preview = $("#profileAvatarPreview");  
-  if (preview) {  
-    const url = URL.createObjectURL(file);  
-    preview.replaceChildren();  
-    const img = document.createElement("img");  
-    img.src = url;  
-    img.alt = "Pratinjau foto";  
-    preview.appendChild(img);  
-  }  
-});  
+$("#profileAvatarFile")?.addEventListener("change", () => {  
+  const file = $("#profileAvatarFile")?.files?.[0];  
+  if (!file) return;  
+  if (file.size > 2 * 1024 * 1024) {  
+    $("#profileAvatarFile").value = "";  
+    setAuthFeedback("Ukuran foto maksimal 2 MB.", true);  
+    return;  
+  }  
+  const preview = $("#profileAvatarPreview");  
+  if (preview) {  
+    const url = URL.createObjectURL(file);  
+    preview.replaceChildren();  
+    const img = document.createElement("img");  
+    img.src = url;  
+    img.alt = "Pratinjau foto";  
+    preview.appendChild(img);  
+  }  
+});  
 
-$("#logoutBtn")?.addEventListener("click", async () => {  
-  if (!supabase) return;  
-  const { error } = await supabase.auth.signOut();  
-  if (error) return setAuthFeedback(`Logout gagal: ${error.message}`, true);  
-  currentUser = null;  
-  showToast("Berhasil logout.");  
-  closeAuthModal();  
-  renderPlayer();  
-});  
+$("#logoutBtn")?.addEventListener("click", async () => {  
+  if (!supabase) return;  
+  const { error } = await supabase.auth.signOut();  
+  if (error) return setAuthFeedback(`Logout gagal: ${error.message}`, true);  
+  currentUser = null;  
+  showToast("Berhasil logout.");  
+  closeAuthModal();  
+  renderPlayer();  
+});  
 
-$$("[data-mode]").forEach((button) => {  
-  button.addEventListener("click", () => {  
-    const mode = button.dataset.mode;  
-    if (modes[mode]) openModal(mode);  
-    else if (mode === "daily") {  
-      if (player.completedDates.includes(today))  
-        showToast("Quest hari ini sudah selesai. Mantap!");  
-      else {  
-        showToast("Quest harian: selesaikan tantangan untuk +25 XP.");  
-        openModal("continue");  
-      }  
-    } else if (mode === "duel-user")  
-      showToast("Multiplayer Arena sedang disiapkan.");  
-    else if (mode === "duel-mj") showToast("Tantang MJ sedang disiapkan.");  
-    else showToast("Mode ini sedang disiapkan.");  
-  });  
-});  
+$$("[data-mode]").forEach((button) => {  
+  button.addEventListener("click", () => {  
+    const mode = button.dataset.mode;  
+    if (modes[mode]) openModal(mode);  
+    else if (mode === "daily") {  
+      if (player.completedDates.includes(today))  
+        showToast("Quest hari ini sudah selesai. Mantap!");  
+      else {  
+        showToast("Quest harian: selesaikan tantangan untuk +25 XP.");  
+        openModal("continue");  
+      }  
+    } else if (mode === "duel-user")  
+      showToast("Multiplayer Arena sedang disiapkan.");  
+    else if (mode === "duel-mj") showToast("Tantang MJ sedang disiapkan.");  
+    else showToast("Mode ini sedang disiapkan.");  
+  });  
+});  
 
-$("#closeModal")?.addEventListener("click", closeModal);  
-$("#gameModal")?.addEventListener("click", (event) => {  
-  if (event.target === $("#gameModal")) closeModal();  
-});  
-$("#continueButton")?.addEventListener("click", closeModal);  
+$("#closeModal")?.addEventListener("click", closeModal);  
+$("#gameModal")?.addEventListener("click", (event) => {  
+  if (event.target === $("#gameModal")) closeModal();  
+});  
+$("#continueButton")?.addEventListener("click", closeModal);  
 
-$("#soundButton")?.addEventListener("click", () => {  
-  soundEnabled = !soundEnabled;  
-  setText("#soundButton", soundEnabled ? "♫" : "♪");  
-  showToast(  
-    soundEnabled ? "Efek suara diaktifkan." : "Efek suara dinonaktifkan."  
-  );  
+$("#soundButton")?.addEventListener("click", () => {  
+  soundEnabled = !soundEnabled;  
+  setText("#soundButton", soundEnabled ? "♫" : "♪");  
+  showToast(  
+    soundEnabled ? "Efek suara diaktifkan." : "Efek suara dinonaktifkan."  
+  );  
 });
 }
 
@@ -789,13 +789,13 @@ showToast("Supabase belum termuat.");
 return;
 }
 
-supabase.auth.getSession().then(({ data, error }) => {  
-  if (error) console.error("Gagal membaca sesi:", error.message);  
-  handleAuthState(data?.session || null);  
-});  
+supabase.auth.getSession().then(({ data, error }) => {  
+  if (error) console.error("Gagal membaca sesi:", error.message);  
+  handleAuthState(data?.session || null);  
+});  
 
-supabase.auth.onAuthStateChange((_event, session) => {  
-  Promise.resolve().then(() => handleAuthState(session));  
+supabase.auth.onAuthStateChange((_event, session) => {  
+  Promise.resolve().then(() => handleAuthState(session));  
 });
 });
 
