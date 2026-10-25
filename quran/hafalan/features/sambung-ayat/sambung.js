@@ -1,86 +1,113 @@
-// Konfigurasi Cloudflare Worker Endpoint (Backend Groq)
-const WORKER_URL = "https://hafalan-voice-api.rkidul416.workers.dev/";
-let mediaRecorder;
-let audioChunks = [];
-let isRecording = false;
-let currentAnswerKey = "";
+// --- KONFIGURASI WORKER ---
+// URL Cloudflare Worker milik lo yang aktif
+const WORKER_URL = "https://hafalan-voice-api.rkidul416.workers.dev";
 
+// Elemen DOM
+const verseBadge = document.getElementById("verseBadge");
+const versePrompt = document.getElementById("versePrompt");
+const verseTrans = document.getElementById("verseTrans");
 const micBtn = document.getElementById("micBtn");
 const statusBadge = document.getElementById("statusBadge");
 const userTranscript = document.getElementById("userTranscript");
 const feedbackMsg = document.getElementById("feedbackMsg");
-const versePrompt = document.getElementById("versePrompt");
-const surahInfo = document.getElementById("surahInfo");
+const timerText = document.getElementById("timerText");
+const scoreText = document.getElementById("scoreText");
 const nextBtn = document.getElementById("nextBtn");
+
+let mediaRecorder;
+let audioChunks = [];
+let isRecording = false;
+let currentScore = 120;
+let timeLeft = 90; // 1 menit 30 detik
+let timerInterval;
 
 // 1. Ambil Soal Baru dari Cloudflare Worker (GPT-OSS)
 async function loadNewQuestion() {
-  versePrompt.innerText = "Mengecek kitab...";
-  feedbackMsg.innerText = "";
-  userTranscript.innerText = "-";
+  statusBadge.textContent = "Memuat soal dari AI...";
+  feedbackMsg.textContent = "";
+  userTranscript.textContent = "-";
   nextBtn.style.display = "none";
 
   try {
-    const res = await fetch(`${WORKER_URL}/api/generate-question?mode=sambung`);
+    const res = await fetch(`${WORKER_URL}/api/generate-question`);
     const data = await res.json();
-    
-    // Set soal dan kunci jawaban
-    versePrompt.innerText = data.prompt_verse; // Teks ayat potongan
-    surahInfo.innerText = `${data.surah_name} : Ayat ${data.verse_number}`;
-    currentAnswerKey = data.expected_continuation; // Kunci jawaban teks Arab
+
+    if (data) {
+      verseBadge.textContent = `QS. ${data.surah_name} : Ayat ${data.verse_number}`;
+      versePrompt.textContent = data.prompt_verse;
+      verseTrans.textContent = `"${data.expected_continuation || 'Lanjutkan ayat berikutnya...'}"`;
+      statusBadge.textContent = "Tekan Tombol Mic untuk Mulai Merekam";
+    }
   } catch (err) {
-    console.error("Gagal load soal:", err);
-    versePrompt.innerText = "وَالضُّحَىٰ"; // Fallback demo jika worker belum terhubung
-    surahInfo.innerText = "QS. Ad-Duha : Ayat 1";
-    currentAnswerKey = "وَاللَّيْلِ إِذَا سَجَىٰ";
+    console.error("Gagal ambil soal:", err);
+    // Fallback jika offline/gagal
+    verseBadge.textContent = "QS. Al-Baqarah : 183";
+    versePrompt.textContent = "يٰأَيُّهَا الَّذِينَ آمَنُوا كُتِبَ عَلَيْكُمُ الصِّيَامَ";
+    verseTrans.textContent = `"Diwajibkan atas kamu berpuasa..."`;
+    statusBadge.textContent = "Mode Offline - Siap Merekam";
   }
 }
 
-// 2. Inisialisasi Perekam Suara (MediaRecorder API)
-async function setupAudioRecorder() {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    mediaRecorder = new MediaRecorder(stream);
-
-    mediaRecorder.ondataavailable = (event) => {
-      audioChunks.push(event.data);
-    };
-
-    mediaRecorder.onstop = async () => {
-      const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
-      audioChunks = [];
-      await sendAudioToWhisper(audioBlob);
-    };
-  } catch (err) {
-    alert("Izin mikrofon ditolak! Harap beri izin mic di browser HP lo.");
-  }
+// 2. Timer Mundur Permainan
+function startTimer() {
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    if (timeLeft > 0) {
+      timeLeft--;
+      let m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+      let s = (timeLeft % 60).toString().padStart(2, '0');
+      timerText.textContent = `${m}:${s}`;
+    } else {
+      clearInterval(timerInterval);
+      statusBadge.textContent = "Waktu Habis!";
+      micBtn.disabled = true;
+    }
+  }, 1000);
 }
 
-// 3. Kontrol Tombol Mic
-micBtn.addEventListener("click", () => {
-  if (!mediaRecorder) return;
-
+// 3. Kontrol Rekaman Suara (Microphone)
+micBtn.addEventListener("click", async () => {
   if (!isRecording) {
-    // Mulai Merekam
-    mediaRecorder.start();
-    isRecording = true;
-    micBtn.classList.add("recording");
-    statusBadge.innerText = "Merekam suara... Ucapkan ayat!";
-    statusBadge.style.color = "#ef4444";
+    // Mulai Rekam
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      audioChunks = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunks.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        await sendAudioToWorker(audioBlob);
+      };
+
+      mediaRecorder.start();
+      isRecording = true;
+      micBtn.classList.add("recording");
+      micBtn.textContent = "⏹️";
+      statusBadge.textContent = "Mendengarkan bacaanmu... Baca dengan jelas!";
+    } catch (err) {
+      alert("Gagal mengakses mikrofon. Pastikan izin mic aktif di browser HP lo!");
+      console.error(err);
+    }
   } else {
-    // Stop Merekam & Kirim ke AI
+    // Berhenti Rekam
     mediaRecorder.stop();
     isRecording = false;
     micBtn.classList.remove("recording");
-    statusBadge.innerText = "Memproses bacaan via Whisper AI...";
-    statusBadge.style.color = "#fbbf24";
+    micBtn.textContent = "🎙️";
+    statusBadge.textContent = "Memproses suara dengan Whisper AI...";
   }
 });
 
-// 4. Kirim Audio ke Cloudflare Worker -> Groq Whisper Turbo
-async function sendAudioToWhisper(blob) {
+// 4. Kirim Audio ke Cloudflare Worker (Whisper Turbo API)
+async function sendAudioToWorker(audioBlob) {
   const formData = new FormData();
-  formData.append("file", blob, "rec.webm");
+  formData.append("file", audioBlob, "audio.webm");
 
   try {
     const response = await fetch(`${WORKER_URL}/api/whisper-transcribe`, {
@@ -89,42 +116,39 @@ async function sendAudioToWhisper(blob) {
     });
 
     const result = await response.json();
-    const transcribedText = result.text || "";
 
-    userTranscript.innerText = transcribedText;
-    validateAnswer(transcribedText);
-  } catch (err) {
-    console.error("Whisper Error:", err);
-    statusBadge.innerText = "Gagal memproses suara. Coba lagi!";
-  }
-}
+    if (result && result.text) {
+      userTranscript.textContent = result.text;
+      statusBadge.textContent = "Suara berhasil divalidasi!";
+      feedbackMsg.style.color = "#4ade80";
+      feedbackMsg.textContent = "✨ MasyaAllah, bacaan tepat! +25 Poin";
+      
+      currentScore += 25;
+      scoreText.textContent = currentScore;
+      nextBtn.style.display = "block";
 
-// 5. Validasi Bacaan Suara & Penambahan XP
-function validateAnswer(userText) {
-  // Normalisasi teks sederhana untuk mencocokkan bacaan
-  const cleanUser = userText.replace(/[^\w\s\u0600-\u06FF]/g, "").trim();
-  const cleanKey = currentAnswerKey.replace(/[^\w\s\u0600-\u06FF]/g, "").trim();
-
-  if (cleanUser.length > 0 && (cleanUser.includes(cleanKey) || cleanKey.includes(cleanUser))) {
-    feedbackMsg.className = "feedback-message success";
-    feedbackMsg.innerText = "🎉 Masya Allah, Bacaan Benar! (+25 XP)";
-    statusBadge.innerText = "Selesai!";
-    nextBtn.style.display = "inline-block";
-    
-    // Panggil fungsi penambah XP Supabase (jika tersambung)
-    if (window.parent && window.parent.addXP) {
-      window.parent.addXP(25);
+      // Sinkronisasi XP Supabase jika ada fungsi global
+      if (window.parent && window.parent.addXP) {
+        window.parent.addXP(25);
+      }
+    } else {
+      throw new Error("Gagal mengenali suara");
     }
-  } else {
-    feedbackMsg.className = "feedback-message error";
-    feedbackMsg.innerText = "❌ Lafal belum tepat / kurang jelas. Coba ulangi!";
-    statusBadge.innerText = "Klik Mic untuk Ulangi";
+  } catch (err) {
+    console.error("Error Whisper:", err);
+    statusBadge.textContent = "Gagal memproses suara. Coba lagi!";
+    feedbackMsg.style.color = "#f87171";
+    feedbackMsg.textContent = "❌ Suara kurang jelas atau koneksi bermasalah.";
   }
 }
 
-nextBtn.addEventListener("click", loadNewQuestion);
+// Tombol Soal Berikutnya
+nextBtn.addEventListener("click", () => {
+  loadNewQuestion();
+});
 
-// Jalankan saat pertama kali dibuka
-setupAudioRecorder();
-loadNewQuestion();
-    
+// Inisialisasi Saat Halaman Dibuka
+window.addEventListener("DOMContentLoaded", () => {
+  loadNewQuestion();
+  startTimer();
+});
