@@ -1,6 +1,5 @@
 // Konfigurasi Cloudflare Worker Endpoint (Backend Groq)
-const WORKER_URL = "https://hafalan-voice-api.rkidul416.workers.dev/"; // Ganti dengan URL Worker lo nanti
-
+const WORKER_URL = "https://hafalan-voice-api.rkidul416.workers.dev/";
 let mediaRecorder;
 let audioChunks = [];
 let isRecording = false;
