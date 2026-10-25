@@ -25,16 +25,15 @@ let mediaRecorder;
 let audioChunks = [];
 let isRecording = false;
 let currentAnswerKey = ""; 
-let userTotalXP = 0;     
-let userCoins = 0;
+let userTotalXP = 120;     
+let userCoins = 1250;
 let timeLeft = 90; 
 let timerInterval;
 
-// Ambil Data Akun & Poin User yang Aktif
+// Ambil Data Sesi & Akun dari Supabase / LocalStorage Utama
 async function loadUserData() {
   if (!supabaseClient) return;
   try {
-    // Cek sesi user aktif di Supabase
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (session && session.user) {
       const { data: profile } = await supabaseClient
@@ -44,30 +43,27 @@ async function loadUserData() {
         .single();
       
       if (profile) {
-        userTotalXP = profile.xp || 0;
+        userTotalXP = profile.xp || 120;
         userCoins = profile.coins || 1250;
-        
-        scoreText.textContent = userTotalXP;
-        if (xpDisplay) xpDisplay.textContent = `⭐ ${userTotalXP} XP`;
-        if (coinDisplay) coinDisplay.textContent = `🪙 ${userCoins}`;
       }
-    } else {
-      // Fallback ambil dari localStorage jika disimpan lokal oleh halaman utama
-      const localXP = localStorage.getItem('user_xp');
-      const localCoins = localStorage.getItem('user_coins');
-      if (localXP) userTotalXP = parseInt(localXP);
-      if (localCoins) userCoins = parseInt(localCoins);
-      
-      scoreText.textContent = userTotalXP;
-      if (xpDisplay) xpDisplay.textContent = `⭐ ${userTotalXP} XP`;
-      if (coinDisplay) coinDisplay.textContent = `🪙 ${userCoins}`;
     }
   } catch (err) {
-    console.log("Error mengambil data user:", err);
+    console.log("Menggunakan data lokal sesi.");
   }
+
+  // Sinkron dengan localStorage yang biasa dipakai halaman utama
+  const savedXP = localStorage.getItem('user_xp') || localStorage.getItem('xp');
+  const savedCoins = localStorage.getItem('user_coins') || localStorage.getItem('coins');
+  
+  if (savedXP) userTotalXP = parseInt(savedXP);
+  if (savedCoins) userCoins = parseInt(savedCoins);
+
+  scoreText.textContent = userTotalXP;
+  if (xpDisplay) xpDisplay.textContent = `⭐ ${userTotalXP} XP`;
+  if (coinDisplay) coinDisplay.textContent = `🪙 ${userCoins}`;
 }
 
-// 1. Ambil Soal Baru dari Cloudflare Worker (GPT-OSS)
+// 1. Ambil Soal Baru dari Cloudflare Worker (Tanpa Membocorkan Jawaban)
 async function loadNewQuestion() {
   statusBadge.textContent = "Memuat soal dari AI...";
   feedbackMsg.textContent = "";
@@ -82,22 +78,21 @@ async function loadNewQuestion() {
     if (data) {
       surahInfo.textContent = `QS. ${data.surah_name} : Ayat ${data.verse_number}`;
       
-      // TAMPILKAN AYAT FULL DI ATAS (Prompt Verse + Expected Continuation)
-      // Sesuai permintaan: ayat dibuat full, user tinggal lanjutkan
-      const fullAyatText = `${data.prompt_verse} ${data.expected_continuation || ''}`;
-      versePrompt.textContent = fullAyatText;
+      // HANYA TAMPILKAN AYAT PEMANCING (Prompt Verse saja, jawaban disembunyikan!)
+      versePrompt.textContent = data.prompt_verse;
+      verseTrans.textContent = `"Lanjutkan ayat berikutnya dengan hafalanmu..."`;
       
-      verseTrans.textContent = `Lanjutkan bacaan ayat berikutnya dengan suara...`;
+      // Simpan kunci jawaban secara rahasia divariabel, TIDAK DITAMPILKAN DI HTML
       currentAnswerKey = data.expected_continuation || ""; 
       statusBadge.textContent = "Tekan Tombol Mic untuk Mulai Merekam";
     }
   } catch (err) {
     console.error("Gagal ambil soal:", err);
     // Fallback demo
-    surahInfo.textContent = "QS. Al-Fatihah : Ayat 1-2";
-    versePrompt.textContent = "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ ٱلْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ";
-    verseTrans.textContent = "Lanjutkan bacaan ayat berikutnya...";
-    currentAnswerKey = "الرَّحْمَٰنِ الرَّحِيمِ";
+    surahInfo.textContent = "QS. Al-Baqarah : 183";
+    versePrompt.textContent = "يٰأَيُّهَا الَّذِينَ آمَنُوا كُتِبَ عَلَيْكُمُ الصِّيَامَ";
+    verseTrans.textContent = `"Lanjutkan ayat berikutnya..."`;
+    currentAnswerKey = "كَمَا كُتِبَ عَلَى الَّذِينَ مِنْ قَبْلِكُمْ";
     statusBadge.textContent = "Mode Offline - Siap Merekam";
   }
 }
@@ -169,6 +164,8 @@ async function sendAudioToWorker(audioBlob) {
     const transcribedText = result.text || "";
 
     userTranscript.textContent = transcribedText;
+    
+    // Validasi ketat bacaan user vs kunci jawaban rahasia AI
     validateAnswer(transcribedText);
 
   } catch (err) {
@@ -179,14 +176,14 @@ async function sendAudioToWorker(audioBlob) {
   }
 }
 
-// 5. Fungsi Validasi Bacaan (Anti-Asal)
+// 5. Fungsi Validasi Bacaan (Anti-Asal & Anti-Bocor)
 function validateAnswer(userText) {
   const cleanUser = userText.replace(/[^\w\s\u0600-\u06FF]/g, "").trim();
   const cleanKey = currentAnswerKey.replace(/[^\w\s\u0600-\u06FF]/g, "").trim();
 
   const isMatch = cleanUser.length > 2 && (cleanUser.includes(cleanKey) || cleanKey.includes(cleanUser) || similarityCheck(cleanUser, cleanKey));
 
-  if (isMatch || (currentAnswerKey === "" && cleanUser.length > 3)) {
+  if (isMatch) {
     // BENAR
     statusBadge.textContent = "Bacaan Tepat!";
     feedbackMsg.style.color = "#4ade80";
@@ -199,13 +196,9 @@ function validateAnswer(userText) {
 
     // Simpan ke localStorage agar sinkron dengan halaman utama
     localStorage.setItem('user_xp', userTotalXP);
-
-    // Sinkronisasi ke window parent jika ada
-    if (window.parent && window.parent.addXP) {
-      window.parent.addXP(25);
-    }
+    localStorage.setItem('xp', userTotalXP);
   } else {
-    // SALAH / JAWAB ASAL
+    // SALAH / JAWAB ASAL / TIDAK SESUAI
     statusBadge.textContent = "Lafal Belum Tepat";
     feedbackMsg.style.color = "#f87171";
     feedbackMsg.textContent = "❌ Bacaan belum sesuai ayat berikutnya. Coba ulangi!";
