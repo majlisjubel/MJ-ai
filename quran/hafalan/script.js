@@ -468,19 +468,45 @@ function filterSuratByRank(suratList, rank) {
   }
 }
 
-function generateRandomQuestions(suratList, totalSoal, mode) {
+// Ganti fungsi generateRandomQuestions yang lama dengan yang ini:
+async function generateRandomQuestions(suratList, totalSoal, mode) {
   let questions = [];
+  
+  // Ambil beberapa surat secara acak untuk dijadikan bank soal dinamis
   for (let i = 0; i < totalSoal; i++) {
     let randomSurat = suratList[Math.floor(Math.random() * suratList.length)];
-    questions.push({
-      suratNama: randomSurat.namaLatin,
-      verseText: `Uji hafalan Surah ${randomSurat.namaLatin} (${randomSurat.arti})`,
-      correctAnswer: randomSurat.namaLatin,
-      options: [randomSurat.namaLatin, "Al-Fatihah", "Al-Baqarah", "An-Nas"].sort(() => Math.random() - 0.5)
-    });
+    
+    try {
+      // Ambil detail ayat asli dari endpoint surat equran.id
+      let res = await fetch(`https://equran.id/api/v2/surat/${randomSurat.nomor}`);
+      let json = await res.json();
+      let ayatList = json.data.ayat;
+      
+      if (ayatList && ayatList.length > 0) {
+        let randomAyat = ayatList[Math.floor(Math.random() * ayatList.length)];
+        
+        // Buat opsi pilihan ganda berisi nama-nama surah
+        let options = [randomSurat.namaLatin];
+        while (options.length < 4) {
+          let decoy = suratList[Math.floor(Math.random() * suratList.length)].namaLatin;
+          if (!options.includes(decoy)) options.push(decoy);
+        }
+        options.sort(() => Math.random() - 0.5);
+
+        questions.push({
+          suratNama: randomSurat.namaLatin,
+          verseText: randomAyat.teksArab, // Teks Arab asli dari Kemenag RI
+          correctAnswer: randomSurat.namaLatin,
+          options: options
+        });
+      }
+    } catch (e) {
+      console.error("Gagal ambil detail ayat:", e);
+    }
   }
   return questions;
 }
+
 
 function openQuizModalUI() {
   const modal = $("#gameModal");
