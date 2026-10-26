@@ -488,7 +488,10 @@ function openQuizModalUI() {
   document.body.style.overflow = "hidden";
   const nextBtn = $("#continueButton");
   if (nextBtn) nextBtn.hidden = true;
+  const verseBox = $("#verseBox");
+  if (verseBox) verseBox.hidden = false;
 }
+
 
 function loadQuizQuestion() {
   if (quizSession.currentIndex >= quizSession.questions.length) {
@@ -502,14 +505,21 @@ function loadQuizQuestion() {
 
   setText("#modalTitle", `Soal ${quizSession.currentIndex + 1} dari 50`);
   setText("#modalKicker", "JUZ & RANK MATCH");
-  setText("#modalDescription", `Surah: ${q.suratNama}`);
-  setText("#verseBox", q.verseText);
+  setText("#modalDescription", `Tebak Surah Berdasarkan Petunjuk:`);
+  
+  // Pastikan verseBox dimunculkan dan diisi teks soalnya dengan jelas
+  const verseBox = $("#verseBox");
+  if (verseBox) {
+    verseBox.hidden = false;
+    verseBox.textContent = q.verseText;
+  }
+
   setText("#answerFeedback", `⏱️ Waktu: 15 detik`);
   
   let list = $("#answerList");
   if (list) {
     list.replaceChildren();
-    q.options.forEach((opt, idx) => {
+    q.options.forEach((opt) => {
       let btn = document.createElement("button");
       btn.className = "answer-option";
       btn.textContent = opt;
@@ -520,6 +530,7 @@ function loadQuizQuestion() {
 
   startCountdownTimer();
 }
+
 
 function startCountdownTimer() {
   clearInterval(quizSession.timer);
